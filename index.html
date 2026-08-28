@@ -847,19 +847,12 @@
             </div>
           </div>
 
-          <!-- Slider: Ancien nominal (% du fixe) -->
-          <div class="space-y-2">
-            <div class="flex justify-between items-center text-xs">
-              <label for="adv-bonus-pct" class="font-semibold text-slate-700">Ancien Nominal (% du Fixe)</label>
-              <span id="adv-val-bonus-pct" class="font-mono font-bold text-slate-700 text-sm bg-slate-100 px-2 py-0.5 rounded-md">10.0%</span>
-            </div>
-            <input type="range" id="adv-bonus-pct" min="0" max="30" step="0.5" value="10" class="w-full cursor-pointer accent-slate-600">
-            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
-              <span class="absolute left-[0%] -translate-x-1/2">0%</span>
-              <span class="absolute left-[33.33%] -translate-x-1/2">10%</span>
-              <span class="absolute left-[56.67%] -translate-x-1/2">17%</span>
-              <span class="absolute left-[66.67%] -translate-x-1/2">20%</span>
-              <span class="absolute left-[100%] -translate-x-1/2">30%</span>
+          <!-- Ancien nominal en € -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Ancien Nominal (versé à 100%)</label>
+            <div class="relative">
+              <input type="number" id="adv-nominal-old-input" value="5000" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
             </div>
           </div>
 
@@ -890,14 +883,10 @@
             </div>
           </div>
 
-          <!-- Nominaux -->
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <div class="p-2 bg-slate-100 rounded-xl text-[11px] text-slate-600 flex flex-col">
-              <span class="text-slate-400 font-medium">Nominal Actuel :</span>
-              <span id="adv-nominal-old" class="font-mono font-bold text-slate-700">5 000 €</span>
-            </div>
-            <div class="p-2 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-700 flex flex-col">
-              <span class="text-orange-400 font-medium">Nominal Nouveau :</span>
+          <!-- Nominal nouveau -->
+          <div class="pt-1">
+            <div class="p-2 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-700 flex justify-between items-center">
+              <span class="text-orange-400 font-medium">Nominal Nouveau (à 100%) :</span>
               <span id="adv-nominal-new" class="font-mono font-bold">10 000 €</span>
             </div>
           </div>
@@ -1676,16 +1665,15 @@
 
     // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
     let advChartInstance = null;
-    const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, bonusPct: 10, fixedSalary: 50000, min100E: 0, min200E: 0 };
+    const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
 
     // Hybrid scheme core. All amounts in €, expressed back in % of the rep's OLD nominal.
     // New nominal = max(target share (20%), € minimum entered, old nominal)
     // Value at 200% = max(2 × new nominal, € minimum entered)
     // Base new curve: linear 0→100% up to the new nominal, then linear 100%→200%.
     // The transition passage blends pointwise (linearly) from the old curve to the new curve.
-    function advNominals(oldBonusPct) {
+    function advNominals(oldNomE) {
       const fixed = advState.fixedSalary;
-      const oldNomE = fixed * oldBonusPct / 100;
       const newNomE = Math.max(fixed * state.newVarShare / 100, advState.min100E, oldNomE);
       const val200E = Math.max(2 * newNomE, advState.min200E);
       return { oldNomE, newNomE, val200E };
@@ -1701,8 +1689,8 @@
       return nom.val200E;
     }
 
-    function evalHybridE(x, oldBonusPct) {
-      const n = advNominals(oldBonusPct);
+    function evalHybridE(x, oldNomE) {
+      const n = advNominals(oldNomE);
       if (x < advState.zeroThreshold) return 0;
       if (x < advState.t1) return evalOldE(x, n.oldNomE);
       if (x <= advState.t2) {
@@ -1713,13 +1701,13 @@
       return evalNewBaseE(x, n);
     }
 
-    function evalHybridPayoutOldNominal(x, oldBonusPct) {
-      const n = advNominals(oldBonusPct);
-      return n.oldNomE > 0 ? evalHybridE(x, oldBonusPct) / n.oldNomE * 100 : 0;
+    function evalHybridPayoutOldNominal(x, oldNomE) {
+      const n = advNominals(oldNomE);
+      return n.oldNomE > 0 ? evalHybridE(x, oldNomE) / n.oldNomE * 100 : 0;
     }
 
-    function evalNewBasePayoutOldNominal(x, oldBonusPct) {
-      const n = advNominals(oldBonusPct);
+    function evalNewBasePayoutOldNominal(x, oldNomE) {
+      const n = advNominals(oldNomE);
       return n.oldNomE > 0 ? evalNewBaseE(x, n) / n.oldNomE * 100 : 0;
     }
 
@@ -1837,19 +1825,19 @@
       const x = advState.x;
       const targetIncrease = advState.targetIncrease;
       const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
-      const bonusPct = advState.bonusPct;
+      const oldNomE = advState.oldNominalE;
 
       // Calibrated achievement: objectives rise → achievement drops (absolute pp shift)
       const calibrated = Math.max(0, x - targetIncrease);
 
-      const nom = advNominals(bonusPct);
+      const nom = advNominals(oldNomE);
       const r = nom.oldNomE > 0 ? nom.newNomE / nom.oldNomE : 1;
       const oldNominal = nom.oldNomE;
       const newNominal = nom.newNomE;
 
       // Before: old scheme on historical perf / After: hybrid on calibrated perf
       const paidOld = evalOldE(x, oldNominal);
-      const paidHyb = evalHybridE(calibrated, bonusPct);
+      const paidHyb = evalHybridE(calibrated, oldNomE);
       const paidNew = evalNewBaseE(calibrated, nom);
 
       // Badges & nominaux
@@ -1867,9 +1855,7 @@
       const track = document.getElementById('adv-dual-track');
       track.style.left = (t1 / 2) + '%';
       track.style.width = (Math.max(0, t2 - t1) / 2) + '%';
-      document.getElementById('adv-val-bonus-pct').innerText = bonusPct.toFixed(1) + '%';
-      document.getElementById('adv-badge-r').innerText = bonusPct > 0 ? `\u00D7${r.toFixed(2)} nom.` : 'Fixe pur';
-      document.getElementById('adv-nominal-old').innerText = Math.round(oldNominal).toLocaleString('fr-FR') + ' €';
+      document.getElementById('adv-badge-r').innerText = oldNomE > 0 ? `\u00D7${r.toFixed(2)} nom.` : '—';
       document.getElementById('adv-nominal-new').innerText = Math.round(newNominal).toLocaleString('fr-FR') + ' €';
 
       // KPI cards
@@ -1894,8 +1880,8 @@
       for (let v = 20; v <= 220; v += 1) {
         labels.push(v);
         oldVals.push(Math.min(v, state.payoutCap));
-        hybVals.push(evalHybridPayoutOldNominal(v, bonusPct));
-        newVals.push(evalNewBasePayoutOldNominal(v, bonusPct));
+        hybVals.push(evalHybridPayoutOldNominal(v, oldNomE));
+        newVals.push(evalNewBasePayoutOldNominal(v, oldNomE));
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
       }
@@ -1907,16 +1893,17 @@
       advChartInstance.data.datasets[4].data = afterPoints;
       advChartInstance.update();
 
-      // Aggregate mass impact (average nominal oldVarShare -> newVarShare)
+      // Aggregate mass impact (average nominal oldVarShare% of the reference fixed salary)
       const oldExp = calculateExpectedPayout(false);
       const oldTargetPEX_M = oldExp > 0 ? state.currentPEX / (oldExp / 100) : 0;
+      const avgOldNomE = advState.fixedSalary * state.oldVarShare / 100;
       const rAvg = state.oldVarShare > 0 ? state.newVarShare / state.oldVarShare : 1;
       const mu = state.muInit, sigma = state.sigmaInit;
       let totW = 0, totD = 0;
       for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
         const d = normalPdf(v, mu, sigma) * 0.5;
         totD += d;
-        totW += evalHybridPayoutOldNominal(v, state.oldVarShare) * d;
+        totW += evalHybridPayoutOldNominal(v, avgOldNomE) * d;
       }
       const Ehyb = totD > 0 ? totW / totD : 0;
       const pexHyb = oldTargetPEX_M * Ehyb / 100;
@@ -2153,8 +2140,8 @@
         updateAdvancedView();
       });
 
-      document.getElementById('adv-bonus-pct').addEventListener('input', (e) => {
-        advState.bonusPct = parseFloat(e.target.value);
+      document.getElementById('adv-nominal-old-input').addEventListener('input', (e) => {
+        advState.oldNominalE = Math.max(0, parseFloat(e.target.value) || 0);
         updateAdvancedView();
       });
 
