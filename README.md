@@ -47,7 +47,7 @@ Intégration de la courbe hybride (nominal moyen 11% → 20%) sur la gaussienne 
 Dans la vue avancée, le bouton **"Charger depuis le Google Sheet"** remplace la moyenne unique par
 les vrais nominaux :
 
-- **Feuille attendue** : en-tête en **ligne 4**, colonnes
+- **Onglet lu** : `Data dynamic distributions` — en-tête en **ligne 4**, colonnes
   `A=Orga, B=Position, C=Country, D=ID, E–F=(ignorées), G=Base Salary, H=Amount`
 - Pour chaque commercial : E[versé] = ∫ sa courbe hybride personnelle × densité gaussienne (µ, σ globaux)
 - **Sorties** : PEX actuel / hybride / tout-nouveau réels, nb de perdants, perte max, perte moyenne,

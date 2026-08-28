@@ -9,7 +9,8 @@
  *   À la première exécution, Google demandera l'autorisation d'accéder au classeur.
  *
  * Le fichier HTML doit s'appeler "index".
- * Attendu dans la feuille : en-tête en ligne 4, colonnes
+ * Données lues dans l'onglet "Data dynamic distributions" :
+ * en-tête en ligne 4, colonnes
  * A=Orga, B=Position, C=Country, D=ID, E-F=(ignorées), G=Base Salary, H=Amount
  */
 
@@ -22,10 +23,17 @@ const COL = { ORGA: 1, POSITION: 2, COUNTRY: 3, ID: 4, BASE_SALARY: 7, AMOUNT: 8
  * Laisser vide si le script est lié au Sheet (Extensions > Apps Script).
  */
 const SHEET_ID = '';
+const SHEET_NAME = 'Data dynamic distributions';
 
 function getSpreadsheet() {
   if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
   return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+function getDataSheet() {
+  const sh = getSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh) throw new Error('Feuille "' + SHEET_NAME + '" introuvable dans le classeur');
+  return sh;
 }
 
 function doGet() {
@@ -35,7 +43,7 @@ function doGet() {
 }
 
 function getPopulation() {
-  const sh = getSpreadsheet().getSheets()[0];
+  const sh = getDataSheet();
   const lastRow = sh.getLastRow();
   if (lastRow <= HEADER_ROW) return [];
   const values = sh.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, 8).getValues();
