@@ -62,6 +62,21 @@
     input[type=range]::-webkit-slider-thumb:hover {
       transform: scale(1.15);
     }
+    /* Dual-range slider (two overlapping handles) */
+    input[type=range].dual-range {
+      background: transparent;
+      height: 24px;
+      pointer-events: none;
+    }
+    input[type=range].dual-range::-webkit-slider-thumb {
+      pointer-events: auto;
+    }
+    input[type=range].dual-range.dual-t1::-webkit-slider-thumb {
+      background: #d97706;
+    }
+    input[type=range].dual-range.dual-t2::-webkit-slider-thumb {
+      background: #ea580c;
+    }
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -746,9 +761,10 @@
         <h2 class="font-bold text-slate-900 text-sm">Schéma Hybride : transition du nominal entre 90% et 100%</h2>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed">
-        <strong>En dessous de <span id="adv-desc-thr1" class="font-mono">90%</span></strong> d'atteinte : ancien schéma (linéaire 1:1 sur l'ancien nominal, rien ne change).
-        <strong>De <span id="adv-desc-thr2" class="font-mono">90%</span> à 100%</strong> : le montant versé passe linéairement de <span id="adv-desc-thr3" class="font-mono">90%</span> de l'ancien nominal à 100% du nouveau nominal.
-        <strong>Au-dessus de 100%</strong> : nouvelle courbe (paliers) sur le nouveau nominal (max 20%, acquis préservés).
+        En dessous de <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> d'atteinte : <strong>0 versé</strong>.
+        De <span id="adv-desc-zero2" class="font-mono">0%</span> à <span id="adv-desc-t1a" class="font-mono">90%</span> : ancien schéma (linéaire 1:1 sur l'ancien nominal).
+        De <span id="adv-desc-t1b" class="font-mono">90%</span> à <span id="adv-desc-t2a" class="font-mono">100%</span> : passage linéaire de l'ancien au nouveau nominal.
+        Au-dessus de <span id="adv-desc-t2b" class="font-mono">100%</span> : nouvelle courbe (paliers) sur le nouveau nominal (max 20%, acquis préservés).
         La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
         Un commercial déjà &ge; 20% (grand-père) a un ratio de 1 : son hybride est identique à l'ancien schéma.
       </p>
@@ -782,7 +798,8 @@
               <span class="absolute left-[0%] -translate-x-1/2">20%</span>
               <span class="absolute left-[16.67%] -translate-x-1/2">50%</span>
               <span class="absolute left-[33.33%] -translate-x-1/2">80%</span>
-              <span class="absolute left-[44.44%] -translate-x-1/2" id="adv-tick-threshold">90%</span>
+              <span class="absolute left-[38.89%] -translate-x-1/2 text-amber-600 font-bold" id="adv-tick-t1">90%</span>
+              <span class="absolute left-[44.44%] -translate-x-1/2 text-orange-600 font-bold" id="adv-tick-t2">100%</span>
               <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
               <span class="absolute left-[100%] -translate-x-1/2">200%</span>
             </div>
@@ -802,17 +819,44 @@
             </div>
           </div>
 
-          <!-- Slider: Seuil de transition (ancien schéma en dessous, blend au-dessus) -->
+          <!-- Slider: Seuil de déclenchement (en dessous : 0 versé) -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
-              <label for="adv-threshold" class="font-semibold text-slate-700">Seuil de Transition</label>
-              <span id="adv-val-threshold" class="font-mono font-bold text-amber-600 text-sm bg-amber-50 px-2 py-0.5 rounded-md">90%</span>
+              <label for="adv-zero-threshold" class="font-semibold text-slate-700">Seuil de Déclenchement (0 en dessous)</label>
+              <span id="adv-val-zero" class="font-mono font-bold text-rose-600 text-sm bg-rose-50 px-2 py-0.5 rounded-md">0%</span>
             </div>
-            <input type="range" id="adv-threshold" min="50" max="100" step="1" value="90" class="w-full cursor-pointer accent-amber-600">
+            <input type="range" id="adv-zero-threshold" min="0" max="200" step="1" value="0" class="w-full cursor-pointer accent-rose-600">
             <div class="relative h-4 text-[10px] text-slate-400 font-mono">
-              <span class="absolute left-[0%] -translate-x-1/2">50%</span>
-              <span class="absolute left-[50%] -translate-x-1/2">75%</span>
-              <span class="absolute left-[100%] -translate-x-1/2">100%</span>
+              <span class="absolute left-[0%] -translate-x-1/2">0%</span>
+              <span class="absolute left-[25%] -translate-x-1/2">50%</span>
+              <span class="absolute left-[50%] -translate-x-1/2">100%</span>
+              <span class="absolute left-[75%] -translate-x-1/2">150%</span>
+              <span class="absolute left-[100%] -translate-x-1/2">200%</span>
+            </div>
+          </div>
+
+          <!-- Dual slider: début → fin du passage au nouveau nominal -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <label class="font-semibold text-slate-700">Passage au Nouveau Nominal (d&eacute;but &rarr; fin)</label>
+              <div class="flex items-center gap-1.5 font-mono text-xs">
+                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">90%</span>
+                <span class="text-slate-400 font-bold">&rarr;</span>
+                <span id="adv-val-t2" class="font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md">100%</span>
+              </div>
+            </div>
+            <div class="relative h-6">
+              <div class="absolute w-full top-1/2 -translate-y-1/2 h-2 bg-slate-200 rounded-full"></div>
+              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:45%; width:5%"></div>
+              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="90" class="dual-range dual-t1 absolute inset-0 w-full m-0">
+              <input type="range" id="adv-dual-t2" min="0" max="200" step="1" value="100" class="dual-range dual-t2 absolute inset-0 w-full m-0">
+            </div>
+            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+              <span class="absolute left-[0%] -translate-x-1/2">0%</span>
+              <span class="absolute left-[25%] -translate-x-1/2">50%</span>
+              <span class="absolute left-[50%] -translate-x-1/2">100%</span>
+              <span class="absolute left-[75%] -translate-x-1/2">150%</span>
+              <span class="absolute left-[100%] -translate-x-1/2">200%</span>
             </div>
           </div>
 
@@ -1627,21 +1671,25 @@
 
     // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
     let advChartInstance = null;
-    const advState = { x: 110, targetIncrease: 0, threshold: 90, bonusPct: 10, fixedSalary: 50000 };
+    const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, bonusPct: 10, fixedSalary: 50000 };
 
     // Hybrid payout expressed in % of the rep's OLD nominal:
-    // x < thr   : old linear scheme (min(x, cap))
-    // thr..100  : linear blend from thr% of old nominal (continuity) to 100% of new nominal
-    // x > 100   : new piecewise curve scaled by nominal ratio r = newNominal/oldNominal
-    function evalHybridPayoutOldNominal(x, oldBonusPct, threshold) {
-      const thr = threshold ?? 90;
+    // x < zero : nothing paid (trigger threshold)
+    // zero..T1 : old linear scheme (min(x, cap))
+    // T1..T2   : linear blend from old-scheme value at T1 to new-scheme value at T2
+    // x > T2   : new piecewise curve scaled by nominal ratio r = newNominal/oldNominal
+    function evalHybridPayoutOldNominal(x, oldBonusPct) {
+      const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
       const newBonus = getEffectiveNewBonusPct(oldBonusPct);
       const r = oldBonusPct > 0 ? newBonus / oldBonusPct : 1;
-      if (x < thr) return Math.min(x, state.payoutCap);
-      if (x <= 100) {
-        if (thr >= 100) return 100 * r;
-        const t = (x - thr) / (100 - thr);
-        return thr + t * (100 * r - thr);
+      if (x < zero) return 0;
+      if (x < t1) return Math.min(x, state.payoutCap);
+      if (x <= t2) {
+        if (t2 <= t1) return evalNewPayout(x) * r;
+        const t = (x - t1) / (t2 - t1);
+        const start = Math.min(t1, state.payoutCap);
+        const end = evalNewPayout(t2) * r;
+        return start + t * (end - start);
       }
       return evalNewPayout(x) * r;
     }
@@ -1759,7 +1807,7 @@
       if (!advChartInstance) return;
       const x = advState.x;
       const targetIncrease = advState.targetIncrease;
-      const threshold = advState.threshold;
+      const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
       const bonusPct = advState.bonusPct;
       const fixed = advState.fixedSalary;
 
@@ -1780,13 +1828,25 @@
       document.getElementById('adv-val-achieve-before').innerText = x + '%';
       document.getElementById('adv-val-achieve-after').innerText = calibrated.toFixed(1) + '%';
       document.getElementById('adv-val-target-increase').innerText = '+' + targetIncrease.toFixed(1) + '%';
-      document.getElementById('adv-val-threshold').innerText = threshold + '%';
-      document.getElementById('adv-desc-thr1').innerText = threshold + '%';
-      document.getElementById('adv-desc-thr2').innerText = threshold + '%';
-      document.getElementById('adv-desc-thr3').innerText = threshold + '%';
-      const tick = document.getElementById('adv-tick-threshold');
-      tick.innerText = threshold + '%';
-      tick.style.left = ((threshold - 20) / 180 * 100).toFixed(2) + '%';
+      document.getElementById('adv-val-zero').innerText = zero + '%';
+      document.getElementById('adv-val-t1').innerText = t1 + '%';
+      document.getElementById('adv-val-t2').innerText = t2 + '%';
+      document.getElementById('adv-desc-zero').innerText = zero + '%';
+      document.getElementById('adv-desc-zero2').innerText = zero + '%';
+      document.getElementById('adv-desc-t1a').innerText = t1 + '%';
+      document.getElementById('adv-desc-t1b').innerText = t1 + '%';
+      document.getElementById('adv-desc-t2a').innerText = t2 + '%';
+      document.getElementById('adv-desc-t2b').innerText = t2 + '%';
+      const clampPos = v => Math.max(0, Math.min(100, (v - 20) / 180 * 100)).toFixed(2) + '%';
+      const tickT1 = document.getElementById('adv-tick-t1');
+      const tickT2 = document.getElementById('adv-tick-t2');
+      tickT1.style.left = clampPos(t1);
+      tickT1.innerText = t1 + '%';
+      tickT2.style.left = clampPos(t2);
+      tickT2.innerText = t2 + '%';
+      const track = document.getElementById('adv-dual-track');
+      track.style.left = (t1 / 2) + '%';
+      track.style.width = (Math.max(0, t2 - t1) / 2) + '%';
       document.getElementById('adv-val-bonus-pct').innerText = bonusPct.toFixed(1) + '%';
       document.getElementById('adv-badge-r').innerText = bonusPct > 0 ? `\u00D7${r.toFixed(2)} nom.` : 'Fixe pur';
       document.getElementById('adv-nominal-old').innerText = Math.round(oldNominal).toLocaleString('fr-FR') + ' €';
@@ -1814,7 +1874,7 @@
       for (let v = 20; v <= 220; v += 1) {
         labels.push(v);
         oldVals.push(Math.min(v, state.payoutCap));
-        hybVals.push(evalHybridPayoutOldNominal(v, bonusPct, threshold));
+        hybVals.push(evalHybridPayoutOldNominal(v, bonusPct));
         newVals.push(evalNewPayout(v) * r);
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
@@ -1836,7 +1896,7 @@
       for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
         const d = normalPdf(v, mu, sigma) * 0.5;
         totD += d;
-        totW += evalHybridPayoutOldNominal(v, state.oldVarShare, threshold) * d;
+        totW += evalHybridPayoutOldNominal(v, state.oldVarShare) * d;
       }
       const Ehyb = totD > 0 ? totW / totD : 0;
       const pexHyb = oldTargetPEX_M * Ehyb / 100;
@@ -2052,8 +2112,24 @@
         updateAdvancedView();
       });
 
-      document.getElementById('adv-threshold').addEventListener('input', (e) => {
-        advState.threshold = parseFloat(e.target.value);
+      document.getElementById('adv-zero-threshold').addEventListener('input', (e) => {
+        advState.zeroThreshold = parseFloat(e.target.value);
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-dual-t1').addEventListener('input', (e) => {
+        advState.t1 = Math.min(parseFloat(e.target.value), advState.t2);
+        e.target.value = advState.t1;
+        e.target.style.zIndex = 5;
+        document.getElementById('adv-dual-t2').style.zIndex = 3;
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-dual-t2').addEventListener('input', (e) => {
+        advState.t2 = Math.max(parseFloat(e.target.value), advState.t1);
+        e.target.value = advState.t2;
+        e.target.style.zIndex = 5;
+        document.getElementById('adv-dual-t1').style.zIndex = 3;
         updateAdvancedView();
       });
 
