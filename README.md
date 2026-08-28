@@ -51,7 +51,7 @@ les vrais nominaux :
   `A=Orga, B=Position, C=Country, D=ID, E–F=(ignorées), G=Base Salary, H=Amount`
 - Pour chaque commercial : E[versé] = ∫ sa courbe hybride personnelle × densité gaussienne (µ, σ globaux)
 - **Sorties** : PEX actuel / hybride / tout-nouveau réels, nb de perdants, perte max, perte moyenne,
-  table triée par delta € avec statut (Grand-père / Gagnant / Perdant)
+  table triée par delta € avec statut (Acquis préservé / Gagnant / Perdant)
 
 La carte se recalcule en temps réel quand les paramètres de la courbe changent. Les données restent
 dans le navigateur.

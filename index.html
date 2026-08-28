@@ -754,7 +754,7 @@
         Au-delà : nouvelle courbe — linéaire de 0 à 100% jusqu'au nouveau nominal, puis linéaire de 100% à 200%.
         <strong>Nouveau nominal</strong> = max(cible 20%, nominal minimum €, acquis) &bull; <strong>Valeur à 200%</strong> = max(2&times; nouveau nominal, montant minimum €).
         La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
-        Un commercial déjà &ge; 20% (grand-père) a un ratio de 1 : son hybride est identique à l'ancien schéma.
+        Un commercial déjà &ge; 20% a un ratio de 1 : son hybride est identique à l'ancien schéma (acquis préservés).
       </p>
     </div>
 
@@ -1746,9 +1746,8 @@
     // Value at 200% = max(2 × new nominal, € minimum entered)
     // Base new curve: linear 0→100% up to the new nominal, then linear 100%→200%.
     // The transition passage blends pointwise (linearly) from the old curve to the new curve.
-    function advNominals(oldNomE) {
-      const fixed = advState.fixedSalary;
-      const newNomE = Math.max(fixed * state.newVarShare / 100, advState.min100E, oldNomE);
+    function advNominals(oldNomE, fixedE) {
+      const newNomE = Math.max(fixedE * state.newVarShare / 100, advState.min100E, oldNomE);
       const val200E = Math.max(2 * newNomE, advState.min200E);
       return { oldNomE, newNomE, val200E };
     }
@@ -1763,8 +1762,8 @@
       return nom.val200E;
     }
 
-    function evalHybridE(x, oldNomE) {
-      const n = advNominals(oldNomE);
+    function evalHybridE(x, oldNomE, fixedE) {
+      const n = advNominals(oldNomE, fixedE);
       if (x < advState.zeroThreshold) return 0;
       if (x < advState.t1) return evalOldE(x, n.oldNomE);
       if (x <= advState.t2) {
@@ -1778,13 +1777,13 @@
       return evalNewBaseE(x, n);
     }
 
-    function evalHybridPayoutOldNominal(x, oldNomE) {
-      const n = advNominals(oldNomE);
-      return n.oldNomE > 0 ? evalHybridE(x, oldNomE) / n.oldNomE * 100 : 0;
+    function evalHybridPayoutOldNominal(x, oldNomE, fixedE) {
+      const n = advNominals(oldNomE, fixedE);
+      return n.oldNomE > 0 ? evalHybridE(x, oldNomE, fixedE) / n.oldNomE * 100 : 0;
     }
 
-    function evalNewBasePayoutOldNominal(x, oldNomE) {
-      const n = advNominals(oldNomE);
+    function evalNewBasePayoutOldNominal(x, oldNomE, fixedE) {
+      const n = advNominals(oldNomE, fixedE);
       return n.oldNomE > 0 ? evalNewBaseE(x, n) / n.oldNomE * 100 : 0;
     }
 
@@ -1907,14 +1906,14 @@
       // Calibrated achievement: objectives rise → achievement drops (absolute pp shift)
       const calibrated = Math.max(0, x - targetIncrease);
 
-      const nom = advNominals(oldNomE);
+      const nom = advNominals(oldNomE, advState.fixedSalary);
       const r = nom.oldNomE > 0 ? nom.newNomE / nom.oldNomE : 1;
       const oldNominal = nom.oldNomE;
       const newNominal = nom.newNomE;
 
       // Before: old scheme on historical perf / After: hybrid on calibrated perf
       const paidOld = evalOldE(x, oldNominal);
-      const paidHyb = evalHybridE(calibrated, oldNomE);
+      const paidHyb = evalHybridE(calibrated, oldNomE, advState.fixedSalary);
       const paidNew = evalNewBaseE(calibrated, nom);
 
       // Badges & nominaux
@@ -1957,8 +1956,8 @@
       for (let v = 20; v <= 220; v += 1) {
         labels.push(v);
         oldVals.push(Math.min(v, state.payoutCap));
-        hybVals.push(evalHybridPayoutOldNominal(v, oldNomE));
-        newVals.push(evalNewBasePayoutOldNominal(v, oldNomE));
+        hybVals.push(evalHybridPayoutOldNominal(v, oldNomE, advState.fixedSalary));
+        newVals.push(evalNewBasePayoutOldNominal(v, oldNomE, advState.fixedSalary));
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
       }
@@ -1980,7 +1979,7 @@
       for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
         const d = normalPdf(v, mu, sigma) * 0.5;
         totD += d;
-        totW += evalHybridPayoutOldNominal(v, avgOldNomE) * d;
+        totW += evalHybridPayoutOldNominal(v, avgOldNomE, advState.fixedSalary) * d;
       }
       const Ehyb = totD > 0 ? totW / totD : 0;
       const pexHyb = oldTargetPEX_M * Ehyb / 100;
@@ -2042,13 +2041,13 @@
       let pexOld = 0, pexHyb = 0, pexNew = 0, losers = 0, worstLoss = 0, lossSum = 0;
       const rows = [];
       advPopulation.forEach(rep => {
-        const nom = advNominals(rep.nominal);
+        const nom = advNominals(rep.nominal, rep.fixed);
         let eOld = 0, eHyb = 0, eNew = 0;
         let i = 0;
         for (let x = minX; x <= maxX; x += step, i++) {
           const w = dens[i] / densSum;
           eOld += evalOldE(x, rep.nominal) * w;
-          eHyb += evalHybridE(x, rep.nominal) * w;
+          eHyb += evalHybridE(x, rep.nominal, rep.fixed) * w;
           eNew += evalNewBaseE(x, nom) * w;
         }
         pexOld += eOld; pexHyb += eHyb; pexNew += eNew;
@@ -2074,7 +2073,7 @@
       rows.sort((a, b) => a.delta - b.delta);
       const tbody = document.getElementById('pop-table-body');
       tbody.innerHTML = rows.map(r => {
-        const statut = r.isGF ? '<span class="text-slate-400">Grand-père</span>'
+        const statut = r.isGF ? '<span class="text-slate-400">Acquis préservé</span>'
           : r.delta >= 0 ? '<span class="text-emerald-600 font-bold">Gagnant</span>'
           : '<span class="text-rose-600 font-bold">Perdant</span>';
         return '<tr class="hover:bg-slate-50/80">' +
