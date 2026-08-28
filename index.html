@@ -1821,7 +1821,7 @@
 
       // Before: old scheme on historical perf / After: hybrid on calibrated perf
       const paidOld = (Math.min(x, state.payoutCap) / 100) * oldNominal;
-      const paidHyb = (evalHybridPayoutOldNominal(calibrated, bonusPct, threshold) / 100) * oldNominal;
+      const paidHyb = (evalHybridPayoutOldNominal(calibrated, bonusPct) / 100) * oldNominal;
       const paidNew = (evalNewPayout(calibrated) / 100) * newNominal;
 
       // Badges & nominaux
