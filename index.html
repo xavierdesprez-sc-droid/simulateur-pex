@@ -749,10 +749,10 @@
       </div>
       <p class="text-xs text-slate-500 leading-relaxed">
         En dessous de <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> d'atteinte : <strong>0 versé</strong>.
-        De <span id="adv-desc-zero2" class="font-mono">0%</span> à <span id="adv-desc-t1a" class="font-mono">90%</span> : ancien schéma (linéaire 1:1 sur l'ancien nominal).
-        De <span id="adv-desc-t1b" class="font-mono">90%</span> à <span id="adv-desc-t2a" class="font-mono">100%</span> : passage linéaire de l'ancien au nouveau nominal.
-        Au-dessus de <span id="adv-desc-t2b" class="font-mono">100%</span> : nouvelle courbe (paliers) sur le nouveau nominal (max 20%, acquis préservés).
-        <strong>Montants minimum en &euro;</strong> : en dessous de la fin de transition rien ne change ; entre celle-ci et 200%, la montée s'effectue linéairement (plus vite) pour atteindre les montants garantis à 100% et/ou 200%.
+        De <span id="adv-desc-zero2" class="font-mono">0%</span> à <span id="adv-desc-t1a" class="font-mono">90%</span> : ancien schéma (linéaire sur l'ancien nominal).
+        De <span id="adv-desc-t1b" class="font-mono">90%</span> à <span id="adv-desc-t2a" class="font-mono">100%</span> : passage linéaire de l'ancienne courbe à la nouvelle.
+        Au-delà : nouvelle courbe — linéaire de 0 à 100% jusqu'au nouveau nominal, puis linéaire de 100% à 200%.
+        <strong>Nouveau nominal</strong> = max(cible 20%, nominal minimum €, acquis) &bull; <strong>Valeur à 200%</strong> = max(2&times; nouveau nominal, montant minimum €).
         La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
         Un commercial déjà &ge; 20% (grand-père) a un ratio de 1 : son hybride est identique à l'ancien schéma.
       </p>
@@ -872,17 +872,17 @@
             </div>
           </div>
 
-          <!-- Montants minimums garantis (€) -->
+          <!-- Nominaux minimums garantis (€) -->
           <div class="grid grid-cols-2 gap-3 pt-1">
             <div>
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Montant min &agrave; 100%</label>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nominal min. (&agrave; 100%)</label>
               <div class="relative">
                 <input type="number" id="adv-min-100" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
                 <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
               </div>
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Montant min &agrave; 200%</label>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Montant min. &agrave; 200%</label>
               <div class="relative">
                 <input type="number" id="adv-min-200" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
                 <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
@@ -939,8 +939,8 @@
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-indigo-600 mt-1.5 shrink-0 border-t border-dashed border-indigo-600"></span>
               <div>
-                <span class="font-bold text-indigo-700">Tout-Nouveau</span>
-                <p class="text-[10px] text-slate-400">&times; ratio nominal</p>
+                <span class="font-bold text-indigo-700">Nouvelle Courbe</span>
+                <p class="text-[10px] text-slate-400">Base lin&eacute;aire 0&rarr;200%</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
@@ -1678,66 +1678,49 @@
     let advChartInstance = null;
     const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, bonusPct: 10, fixedSalary: 50000, min100E: 0, min200E: 0 };
 
-    // Hybrid payout expressed in % of the rep's OLD nominal:
-    // x < zero : nothing paid (trigger threshold)
-    // zero..T1 : old linear scheme (min(x, cap))
-    // T1..T2   : linear blend from old-scheme value at T1 to new-scheme value at T2
-    // x > T2   : new piecewise curve scaled by nominal ratio r = newNominal/oldNominal
+    // Hybrid scheme core. All amounts in €, expressed back in % of the rep's OLD nominal.
+    // New nominal = max(target share (20%), € minimum entered, old nominal)
+    // Value at 200% = max(2 × new nominal, € minimum entered)
+    // Base new curve: linear 0→100% up to the new nominal, then linear 100%→200%.
+    // The transition passage blends pointwise (linearly) from the old curve to the new curve.
+    function advNominals(oldBonusPct) {
+      const fixed = advState.fixedSalary;
+      const oldNomE = fixed * oldBonusPct / 100;
+      const newNomE = Math.max(fixed * state.newVarShare / 100, advState.min100E, oldNomE);
+      const val200E = Math.max(2 * newNomE, advState.min200E);
+      return { oldNomE, newNomE, val200E };
+    }
+
+    function evalOldE(x, oldNomE) {
+      return Math.min(x, state.payoutCap) / 100 * oldNomE;
+    }
+
+    function evalNewBaseE(x, nom) {
+      if (x <= 100) return x / 100 * nom.newNomE;
+      if (x <= 200) return nom.newNomE + (x - 100) / 100 * (nom.val200E - nom.newNomE);
+      return nom.val200E;
+    }
+
+    function evalHybridE(x, oldBonusPct) {
+      const n = advNominals(oldBonusPct);
+      if (x < advState.zeroThreshold) return 0;
+      if (x < advState.t1) return evalOldE(x, n.oldNomE);
+      if (x <= advState.t2) {
+        if (advState.t2 <= advState.t1) return evalNewBaseE(x, n);
+        const t = (x - advState.t1) / (advState.t2 - advState.t1);
+        return (1 - t) * evalOldE(x, n.oldNomE) + t * evalNewBaseE(x, n);
+      }
+      return evalNewBaseE(x, n);
+    }
+
     function evalHybridPayoutOldNominal(x, oldBonusPct) {
-      const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
-      const newBonus = getEffectiveNewBonusPct(oldBonusPct);
-      const r = oldBonusPct > 0 ? newBonus / oldBonusPct : 1;
-      // € minimums at 100% / 200% converted to % of this rep's old nominal
-      const oldNomE = (advState.fixedSalary * oldBonusPct) / 100;
-      const m100 = (oldNomE > 0 && advState.min100E > 0) ? (advState.min100E / oldNomE) * 100 : 0;
-      const m200 = (oldNomE > 0 && advState.min200E > 0) ? (advState.min200E / oldNomE) * 100 : 0;
-      if (x < zero) return 0;
-      if (x < t1) return Math.min(x, state.payoutCap);
-      if (x <= t2) {
-        if (t2 <= t1) return evalNewPayout(x) * r;
-        const t = (x - t1) / (t2 - t1);
-        const start = Math.min(t1, state.payoutCap);
-        let end = evalNewPayout(t2) * r;
-        if (t2 === 100 && m100 > end) end = m100; // 100% minimum lifts the blend end
-        return start + t * (end - start);
-      }
-      // Above T2: new curve scaled by r, with optional € floors at 100% and 200%
-      const v100 = Math.max(evalNewPayout(100) * r, m100); // anchored value at the 100% point
-      if (t2 >= 100) {
-        // 100% lies inside (or at the end of) the blend zone: single segment up to the 200% anchor
-        const xStart = Math.max(t2, 100);
-        const vStart = t2 === 100 ? v100 : evalNewPayout(t2) * r;
-        const v200 = Math.max(evalNewPayout(200) * r, m200, vStart);
-        if (v200 > vStart) {
-          if (x <= 200) {
-            const t = (x - xStart) / (200 - xStart);
-            return vStart + t * (v200 - vStart);
-          }
-          return Math.max(evalNewPayout(x) * r, v200);
-        }
-        // No floor effect: normal curve, kept above the lifted 100% value if any
-        return Math.max(evalNewPayout(x) * r, vStart);
-      }
-      if (x <= 100) {
-        // Steeper linear rise T2 -> 100, only if the 100% floor is binding
-        if (m100 > evalNewPayout(100) * r) {
-          const t = (x - t2) / (100 - t2);
-          const vT2 = evalNewPayout(t2) * r;
-          return vT2 + t * (v100 - vT2);
-        }
-        return evalNewPayout(x) * r;
-      }
-      const v200 = Math.max(evalNewPayout(200) * r, m200, v100);
-      if (v200 > v100) {
-        // Steeper linear rise 100 -> 200 to reach the 200% floor
-        if (x <= 200) {
-          const t = (x - 100) / 100;
-          return v100 + t * (v200 - v100);
-        }
-        return Math.max(evalNewPayout(x) * r, v200);
-      }
-      // 100% floor at/above the 200% level: flat floor from 100 onward
-      return Math.max(evalNewPayout(x) * r, v100);
+      const n = advNominals(oldBonusPct);
+      return n.oldNomE > 0 ? evalHybridE(x, oldBonusPct) / n.oldNomE * 100 : 0;
+    }
+
+    function evalNewBasePayoutOldNominal(x, oldBonusPct) {
+      const n = advNominals(oldBonusPct);
+      return n.oldNomE > 0 ? evalNewBaseE(x, n) / n.oldNomE * 100 : 0;
     }
 
     function initAdvChart() {
@@ -1855,20 +1838,19 @@
       const targetIncrease = advState.targetIncrease;
       const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
       const bonusPct = advState.bonusPct;
-      const fixed = advState.fixedSalary;
 
       // Calibrated achievement: objectives rise → achievement drops (absolute pp shift)
       const calibrated = Math.max(0, x - targetIncrease);
 
-      const newBonus = getEffectiveNewBonusPct(bonusPct);
-      const r = bonusPct > 0 ? newBonus / bonusPct : 1;
-      const oldNominal = fixed * (bonusPct / 100);
-      const newNominal = fixed * (newBonus / 100);
+      const nom = advNominals(bonusPct);
+      const r = nom.oldNomE > 0 ? nom.newNomE / nom.oldNomE : 1;
+      const oldNominal = nom.oldNomE;
+      const newNominal = nom.newNomE;
 
       // Before: old scheme on historical perf / After: hybrid on calibrated perf
-      const paidOld = (Math.min(x, state.payoutCap) / 100) * oldNominal;
-      const paidHyb = (evalHybridPayoutOldNominal(calibrated, bonusPct) / 100) * oldNominal;
-      const paidNew = (evalNewPayout(calibrated) / 100) * newNominal;
+      const paidOld = evalOldE(x, oldNominal);
+      const paidHyb = evalHybridE(calibrated, bonusPct);
+      const paidNew = evalNewBaseE(calibrated, nom);
 
       // Badges & nominaux
       document.getElementById('adv-val-achieve-before').innerText = x + '%';
@@ -1882,7 +1864,6 @@
       document.getElementById('adv-desc-t1a').innerText = t1 + '%';
       document.getElementById('adv-desc-t1b').innerText = t1 + '%';
       document.getElementById('adv-desc-t2a').innerText = t2 + '%';
-      document.getElementById('adv-desc-t2b').innerText = t2 + '%';
       const track = document.getElementById('adv-dual-track');
       track.style.left = (t1 / 2) + '%';
       track.style.width = (Math.max(0, t2 - t1) / 2) + '%';
@@ -1914,7 +1895,7 @@
         labels.push(v);
         oldVals.push(Math.min(v, state.payoutCap));
         hybVals.push(evalHybridPayoutOldNominal(v, bonusPct));
-        newVals.push(evalNewPayout(v) * r);
+        newVals.push(evalNewBasePayoutOldNominal(v, bonusPct));
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
       }
