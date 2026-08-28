@@ -1060,8 +1060,8 @@
                     <th class="py-2 px-3">ID</th>
                     <th class="py-2 px-3">Fixe</th>
                     <th class="py-2 px-3">Nominal</th>
-                    <th class="py-2 px-3">Avant</th>
-                    <th class="py-2 px-3">Hybride</th>
+                    <th class="py-2 px-3">Espérance actuelle</th>
+                    <th class="py-2 px-3">Espérance hybride</th>
                     <th class="py-2 px-3">&Delta; &euro;</th>
                     <th class="py-2 px-3">Statut</th>
                   </tr>
@@ -1213,19 +1213,26 @@
       document.getElementById('val-resulting-mu').innerText = muCalibrated.toFixed(1) + '%';
       document.getElementById('val-init-mu').innerText = state.muInit.toFixed(1) + '%';
 
-      // Old baseline: Current PEX is paid on historical performance
-      const oldExpectedPayoutPct = calculateExpectedPayout(false);
-      const oldTargetPEX_M = state.currentPEX / (oldExpectedPayoutPct / 100);
-      
-      // When transitioning variable share from oldVarShare (11%) to newVarShare (20%):
-      const varScaleFactor = state.oldVarShare > 0 ? (state.newVarShare / state.oldVarShare) : 1;
-      const newTargetPEX_M = oldTargetPEX_M * varScaleFactor;
-      document.getElementById('val-new-target-pex').innerText = newTargetPEX_M.toFixed(2);
+      // Population réelle chargée → PEX réels par commercial (sinon modèle moyen)
+      if (advPopulation.length) refreshPopulation();
 
-      // Expected new payout % and new total PEX paid
-      const newExpectedPayoutPct = calculateExpectedPayout(true);
-      const newPexM = newTargetPEX_M * (newExpectedPayoutPct / 100);
-      const oldPexM = state.currentPEX;
+      let oldPexM, newPexM, newTargetPEX_M, newExpectedPayoutPct, oldTargetPEX_M;
+      if (realAgg) {
+        oldPexM = realAgg.stdOld / 1e6;
+        newPexM = realAgg.stdNew / 1e6;
+        newTargetPEX_M = realAgg.targetNew / 1e6;
+        oldTargetPEX_M = realAgg.targetOld / 1e6;
+        newExpectedPayoutPct = realAgg.targetNew > 0 ? realAgg.stdNew / realAgg.targetNew * 100 : 0;
+      } else {
+        const oldExpectedPayoutPct = calculateExpectedPayout(false);
+        oldTargetPEX_M = state.currentPEX / (oldExpectedPayoutPct / 100);
+        const varScaleFactor = state.oldVarShare > 0 ? (state.newVarShare / state.oldVarShare) : 1;
+        newTargetPEX_M = oldTargetPEX_M * varScaleFactor;
+        newExpectedPayoutPct = calculateExpectedPayout(true);
+        newPexM = newTargetPEX_M * (newExpectedPayoutPct / 100);
+        oldPexM = state.currentPEX;
+      }
+      document.getElementById('val-new-target-pex').innerText = newTargetPEX_M.toFixed(2);
 
       const pexDiffM = oldPexM - newPexM; // Positive means savings vs current 2.5M
       const pexDiffPct = oldPexM > 0 ? ((newPexM - oldPexM) / oldPexM) * 100 : 0;
@@ -1974,7 +1981,7 @@
       const oldTargetPEX_M = oldExp > 0 ? state.currentPEX / (oldExp / 100) : 0;
       const avgOldNomE = advState.fixedSalary * state.oldVarShare / 100;
       const rAvg = state.oldVarShare > 0 ? state.newVarShare / state.oldVarShare : 1;
-      const mu = state.muInit, sigma = state.sigmaInit;
+      const mu = getCalibratedAchievement(state.muInit), sigma = state.sigmaInit;
       let totW = 0, totD = 0;
       for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
         const d = normalPdf(v, mu, sigma) * 0.5;
@@ -1996,7 +2003,7 @@
       aggDeltaNew.innerText = (pexNew - pexOld >= 0 ? '+' : '') + (pexNew - pexOld).toFixed(2) + ' M€';
 
       // Real population (CSV) — recompute with current curve parameters
-      renderPopulation();
+      refreshPopulation();
     }
 
     // ===== POPULATION RÉELLE (Google Sheet via Apps Script) =====
@@ -2017,7 +2024,7 @@
           st.innerText = advPopulation.length
             ? advPopulation.length + ' commercial(aux) chargé(s) depuis le Sheet'
             : 'Aucune ligne valide trouvée dans le Sheet (vérifie la ligne d\'en-tête 4 et les colonnes ID / Base Salary / Amount)';
-          renderPopulation();
+          refreshPopulation();
         })
         .withFailureHandler(err => {
           st.innerText = 'Erreur de chargement : ' + (err && err.message ? err.message : err);
@@ -2025,37 +2032,55 @@
         .getPopulation();
     }
 
-    function renderPopulation() {
+    let realAgg = null; // agrégats réels (€) quand une population est chargée
+
+    function refreshPopulation() {
       const has = advPopulation.length > 0;
       document.getElementById('pop-results').classList.toggle('hidden', !has);
       document.getElementById('pop-clear-btn').classList.toggle('hidden', !has);
       document.getElementById('pop-input-zone').classList.toggle('hidden', has);
-      if (!has) return;
+      if (!has) { realAgg = null; return; }
 
-      // Per-rep expectation over the global Gaussian (same integration as the rest of the tool)
-      const mu = state.muInit, sigma = state.sigmaInit, step = 0.5;
-      const minX = Math.max(0, mu - 4.5 * sigma), maxX = mu + 4.5 * sigma;
-      const dens = []; let densSum = 0;
-      for (let x = minX; x <= maxX; x += step) { const d = normalPdf(x, mu, sigma) * step; dens.push(d); densSum += d; }
+      // Deux distributions : historique (schéma actuel) et calibrée (hausse des objectifs)
+      const mu0 = state.muInit;
+      const muC = getCalibratedAchievement(state.muInit);
+      const sigma = state.sigmaInit, step = 0.5;
+      const minX = Math.max(0, mu0 - 4.5 * sigma), maxX0 = mu0 + 4.5 * sigma;
+      const minXc = Math.max(0, muC - 4.5 * sigma), maxXc = muC + 4.5 * sigma;
+      const d0 = [], dc = []; let w0 = 0, wc = 0;
+      for (let x = minX; x <= maxX0; x += step) { const d = normalPdf(x, mu0, sigma) * step; d0.push(d); w0 += d; }
+      for (let x = minXc; x <= maxXc; x += step) { const d = normalPdf(x, muC, sigma) * step; dc.push(d); wc += d; }
 
-      let pexOld = 0, pexHyb = 0, pexNew = 0, losers = 0, worstLoss = 0, lossSum = 0;
+      let pexOld = 0, pexHyb = 0, pexNew = 0, stdOld = 0, stdNew = 0, targetOld = 0, targetNew = 0;
+      let losers = 0, worstLoss = 0, lossSum = 0;
       const rows = [];
       advPopulation.forEach(rep => {
-        const nom = advNominals(rep.nominal, rep.fixed);
-        let eOld = 0, eHyb = 0, eNew = 0;
-        let i = 0;
-        for (let x = minX; x <= maxX; x += step, i++) {
-          const w = dens[i] / densSum;
-          eOld += evalOldE(x, rep.nominal) * w;
-          eHyb += evalHybridE(x, rep.nominal, rep.fixed) * w;
-          eNew += evalNewBaseE(x, nom) * w;
+        // Vue standard : plancher 20% du fixe du rep, courbe à paliers
+        const newNomStd = Math.max(rep.fixed * state.newVarShare / 100, rep.nominal);
+        const nomAdv = advNominals(rep.nominal, rep.fixed);
+        let eStdOld = 0, eStdNew = 0, eHyb = 0, eNewFull = 0;
+        let i0 = 0;
+        for (let x = minX; x <= maxX0; x += step, i0++) {
+          eStdOld += Math.min(x, state.payoutCap) / 100 * rep.nominal * d0[i0];
         }
-        pexOld += eOld; pexHyb += eHyb; pexNew += eNew;
-        const delta = eHyb - eOld;
-        const isGF = Math.abs(nom.newNomE - rep.nominal) < 0.005 && nom.val200E <= 2 * nom.newNomE + 0.01;
+        eStdOld /= w0;
+        let ic = 0;
+        for (let x = minXc; x <= maxXc; x += step, ic++) {
+          const w = dc[ic] / wc;
+          eStdNew += evalNewPayout(x) / 100 * newNomStd * w;
+          eHyb += evalHybridE(x, rep.nominal, rep.fixed) * w;
+          eNewFull += evalNewBaseE(x, nomAdv) * w;
+        }
+        pexOld += eStdOld; stdOld += eStdOld;
+        stdNew += eStdNew; targetOld += rep.nominal; targetNew += newNomStd;
+        pexHyb += eHyb; pexNew += eNewFull;
+        const delta = eHyb - eStdOld;
+        const isGF = Math.abs(nomAdv.newNomE - rep.nominal) < 0.005 && nomAdv.val200E <= 2 * nomAdv.newNomE + 0.01;
         if (delta < -0.5) { losers++; worstLoss = Math.min(worstLoss, delta); lossSum += delta; }
-        rows.push({ rep, eOld, eHyb, delta, isGF });
+        rows.push({ rep, eOld: eStdOld, eHyb, delta, isGF });
       });
+
+      realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew };
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
       const fmtE = v => Math.round(v).toLocaleString('fr-FR') + ' €';
@@ -2338,7 +2363,7 @@
       document.getElementById('pop-clear-btn').addEventListener('click', () => {
         advPopulation = [];
         document.getElementById('pop-status').classList.add('hidden');
-        renderPopulation();
+        refreshPopulation();
       });
     }
 
