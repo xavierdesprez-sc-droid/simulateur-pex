@@ -771,7 +771,11 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
               <label for="adv-achievement" class="font-semibold text-slate-700">Position d'Atteinte</label>
-              <span id="adv-val-achievement" class="font-mono font-bold text-orange-600 text-sm bg-orange-50 px-2 py-0.5 rounded-md">110%</span>
+              <div class="flex items-center gap-1.5 font-mono">
+                <span id="adv-val-achieve-before" class="font-bold text-slate-700 text-sm bg-slate-100 px-2 py-0.5 rounded-md">110%</span>
+                <span class="text-slate-400 font-bold">&rarr;</span>
+                <span id="adv-val-achieve-after" class="font-bold text-orange-600 text-sm bg-orange-50 px-2 py-0.5 rounded-md">110.0%</span>
+              </div>
             </div>
             <input type="range" id="adv-achievement" min="20" max="200" step="1" value="110" class="w-full cursor-pointer accent-orange-600">
             <div class="relative h-4 text-[10px] text-slate-400 font-mono">
@@ -781,6 +785,20 @@
               <span class="absolute left-[44.44%] -translate-x-1/2">90%</span>
               <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
               <span class="absolute left-[100%] -translate-x-1/2">200%</span>
+            </div>
+          </div>
+
+          <!-- Slider: Hausse des objectifs (décale l'atteinte calibrée) -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <label for="adv-target-increase" class="font-semibold text-slate-700">Hausse des Objectifs</label>
+              <span id="adv-val-target-increase" class="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-2 py-0.5 rounded-md">+0.0%</span>
+            </div>
+            <input type="range" id="adv-target-increase" min="0" max="60" step="0.5" value="0" class="w-full cursor-pointer accent-indigo-600">
+            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+              <span class="absolute left-[0%] -translate-x-1/2">0 pp</span>
+              <span class="absolute left-[50%] -translate-x-1/2">+30 pp</span>
+              <span class="absolute left-[100%] -translate-x-1/2">+60 pp</span>
             </div>
           </div>
 
@@ -840,7 +858,7 @@
           <div class="relative h-[380px] w-full">
             <canvas id="advChart"></canvas>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs pt-2 border-t border-slate-100">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs pt-2 border-t border-slate-100">
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-slate-400 mt-1.5 shrink-0 border-t border-dashed border-slate-400"></span>
               <div>
@@ -863,10 +881,17 @@
               </div>
             </div>
             <div class="flex items-start gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-500 mt-0.5 shrink-0"></span>
+              <div>
+                <span class="font-bold text-slate-700">Point Avant</span>
+                <p class="text-[10px] text-slate-400">Ancien schéma</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-orange-600 mt-0.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-orange-700">Position</span>
-                <p class="text-[10px] text-slate-400">Sur l'hybride</p>
+                <span class="font-bold text-orange-700">Point Apr&egrave;s</span>
+                <p class="text-[10px] text-slate-400">Sur l'hybride (calibr&eacute;)</p>
               </div>
             </div>
           </div>
@@ -1588,7 +1613,7 @@
 
     // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
     let advChartInstance = null;
-    const advState = { x: 110, bonusPct: 10, fixedSalary: 50000 };
+    const advState = { x: 110, targetIncrease: 0, bonusPct: 10, fixedSalary: 50000 };
 
     // Hybrid payout expressed in % of the rep's OLD nominal:
     // x < 90  : old linear scheme (min(x, cap))
@@ -1644,7 +1669,19 @@
               order: 3
             },
             {
-              label: 'Position du commercial',
+              label: 'Point Avant (Ancien schéma)',
+              data: [],
+              borderColor: '#64748b',
+              backgroundColor: '#64748b',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 7,
+              pointHoverRadius: 10,
+              showLine: false,
+              order: 1
+            },
+            {
+              label: 'Point Après (Hybride calibré)',
               data: [],
               borderColor: '#ea580c',
               backgroundColor: '#ea580c',
@@ -1705,20 +1742,27 @@
     function updateAdvancedView() {
       if (!advChartInstance) return;
       const x = advState.x;
+      const targetIncrease = advState.targetIncrease;
       const bonusPct = advState.bonusPct;
       const fixed = advState.fixedSalary;
+
+      // Calibrated achievement: objectives rise → achievement drops (absolute pp shift)
+      const calibrated = Math.max(0, x - targetIncrease);
 
       const newBonus = getEffectiveNewBonusPct(bonusPct);
       const r = bonusPct > 0 ? newBonus / bonusPct : 1;
       const oldNominal = fixed * (bonusPct / 100);
       const newNominal = fixed * (newBonus / 100);
 
+      // Before: old scheme on historical perf / After: hybrid on calibrated perf
       const paidOld = (Math.min(x, state.payoutCap) / 100) * oldNominal;
-      const paidHyb = (evalHybridPayoutOldNominal(x, bonusPct) / 100) * oldNominal;
-      const paidNew = (evalNewPayout(x) / 100) * newNominal;
+      const paidHyb = (evalHybridPayoutOldNominal(calibrated, bonusPct) / 100) * oldNominal;
+      const paidNew = (evalNewPayout(calibrated) / 100) * newNominal;
 
       // Badges & nominaux
-      document.getElementById('adv-val-achievement').innerText = x + '%';
+      document.getElementById('adv-val-achieve-before').innerText = x + '%';
+      document.getElementById('adv-val-achieve-after').innerText = calibrated.toFixed(1) + '%';
+      document.getElementById('adv-val-target-increase').innerText = '+' + targetIncrease.toFixed(1) + '%';
       document.getElementById('adv-val-bonus-pct').innerText = bonusPct.toFixed(1) + '%';
       document.getElementById('adv-badge-r').innerText = bonusPct > 0 ? `\u00D7${r.toFixed(2)} nom.` : 'Fixe pur';
       document.getElementById('adv-nominal-old').innerText = Math.round(oldNominal).toLocaleString('fr-FR') + ' €';
@@ -1741,19 +1785,22 @@
       const oldVals = [];
       const hybVals = [];
       const newVals = [];
-      const repPoints = [];
+      const beforePoints = [];
+      const afterPoints = [];
       for (let v = 20; v <= 220; v += 1) {
         labels.push(v);
         oldVals.push(Math.min(v, state.payoutCap));
         hybVals.push(evalHybridPayoutOldNominal(v, bonusPct));
         newVals.push(evalNewPayout(v) * r);
-        repPoints.push(v === x ? hybVals[hybVals.length - 1] : null);
+        beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
+        afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
       }
       advChartInstance.data.labels = labels;
       advChartInstance.data.datasets[0].data = oldVals;
       advChartInstance.data.datasets[1].data = hybVals;
       advChartInstance.data.datasets[2].data = newVals;
-      advChartInstance.data.datasets[3].data = repPoints;
+      advChartInstance.data.datasets[3].data = beforePoints;
+      advChartInstance.data.datasets[4].data = afterPoints;
       advChartInstance.update();
 
       // Aggregate mass impact (average nominal oldVarShare -> newVarShare)
@@ -1973,6 +2020,11 @@
       // Advanced view controls
       document.getElementById('adv-achievement').addEventListener('input', (e) => {
         advState.x = parseFloat(e.target.value);
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-target-increase').addEventListener('input', (e) => {
+        advState.targetIncrease = parseFloat(e.target.value);
         updateAdvancedView();
       });
 
