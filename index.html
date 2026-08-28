@@ -2002,6 +2002,7 @@
 
     // ===== POPULATION RÉELLE (Google Sheet via Apps Script) =====
     let advPopulation = []; // { id, orga, position, country, fixed, nominal }
+    let popAutoLoaded = false;
 
     function loadPopulationFromSheet() {
       const st = document.getElementById('pop-status');
@@ -2101,6 +2102,11 @@
         // Lazy init: Chart.js needs a visible container to size correctly
         if (!advChartInstance) initAdvChart();
         updateAdvancedView();
+        // Auto-load the Sheet population on first visit to the advanced view
+        if (!popAutoLoaded) {
+          popAutoLoaded = true;
+          loadPopulationFromSheet();
+        }
       }
     }
 
