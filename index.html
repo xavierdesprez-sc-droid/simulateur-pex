@@ -87,8 +87,16 @@
         </div>
       </div>
 
-      <!-- Presets & Action Buttons -->
+      <!-- View Tabs -->
       <div class="flex items-center gap-2 sm:gap-3">
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button id="tab-standard" onclick="setView('standard')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm">
+            Vue Standard
+          </button>
+          <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
+            Vue Avancée
+          </button>
+        </div>
         <div class="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
           <button onclick="applyPreset('initial')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
             Situation Actuelle (Moyenne 110%)
@@ -108,7 +116,20 @@
   </header>
 
   <!-- Main Content Grid -->
-  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+  <main id="view-standard" class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+    <!-- Tab Navigation -->
+    <div class="flex gap-1 bg-slate-100 rounded-xl p-1 mb-4" id="tab-nav">
+      <button onclick="switchTab('standard')" id="tab-btn-standard" class="flex-1 py-2 px-4 text-sm font-semibold rounded-lg bg-white shadow-sm text-indigo-600 transition-all">
+        <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-1"></i> Vue Standard
+      </button>
+      <button onclick="switchTab('transition')" id="tab-btn-transition" class="flex-1 py-2 px-4 text-sm font-semibold rounded-lg text-slate-500 hover:text-slate-700 transition-all">
+        <i data-lucide="git-compare" class="w-4 h-4 inline mr-1"></i> Vue Transition
+      </button>
+    </div>
+
+    <!-- Tab Panel: Vue Standard (existing content) -->
+    <div id="tab-panel-standard">
 
     <!-- KPI Metric Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -713,6 +734,196 @@
       </div>
     </div>
 
+  </main>
+
+  <!-- ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% ===== -->
+  <main id="view-advanced" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+    <!-- Règle expliquée -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="flask-conical" class="w-4 h-4"></i></div>
+        <h2 class="font-bold text-slate-900 text-sm">Schéma Hybride : transition du nominal entre 90% et 100%</h2>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        <strong>En dessous de 90%</strong> d'atteinte : ancien schéma (linéaire 1:1 sur l'ancien nominal, rien ne change).
+        <strong>De 90% à 100%</strong> : le montant versé passe linéairement de 90% de l'ancien nominal à 100% du nouveau nominal.
+        <strong>Au-dessus de 100%</strong> : nouvelle courbe (paliers) sur le nouveau nominal (max 20%, acquis préservés).
+        La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
+        Un commercial déjà &ge; 20% (grand-père) a un ratio de 1 : son hybride est identique à l'ancien schéma.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT: Controls -->
+      <div class="lg:col-span-4 space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="user-check" class="w-4 h-4"></i></div>
+              <h2 class="font-bold text-slate-900 text-sm">Commercial Testé</h2>
+            </div>
+            <span id="adv-badge-r" class="font-mono text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200">&times;2.00 nom.</span>
+          </div>
+
+          <!-- Slider: Position d'atteinte -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <label for="adv-achievement" class="font-semibold text-slate-700">Position d'Atteinte</label>
+              <span id="adv-val-achievement" class="font-mono font-bold text-orange-600 text-sm bg-orange-50 px-2 py-0.5 rounded-md">110%</span>
+            </div>
+            <input type="range" id="adv-achievement" min="20" max="200" step="1" value="110" class="w-full cursor-pointer accent-orange-600">
+            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+              <span class="absolute left-[0%] -translate-x-1/2">20%</span>
+              <span class="absolute left-[16.67%] -translate-x-1/2">50%</span>
+              <span class="absolute left-[33.33%] -translate-x-1/2">80%</span>
+              <span class="absolute left-[44.44%] -translate-x-1/2">90%</span>
+              <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
+              <span class="absolute left-[100%] -translate-x-1/2">200%</span>
+            </div>
+          </div>
+
+          <!-- Slider: Ancien nominal (% du fixe) -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <label for="adv-bonus-pct" class="font-semibold text-slate-700">Ancien Nominal (% du Fixe)</label>
+              <span id="adv-val-bonus-pct" class="font-mono font-bold text-slate-700 text-sm bg-slate-100 px-2 py-0.5 rounded-md">10.0%</span>
+            </div>
+            <input type="range" id="adv-bonus-pct" min="0" max="30" step="0.5" value="10" class="w-full cursor-pointer accent-slate-600">
+            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+              <span class="absolute left-[0%] -translate-x-1/2">0%</span>
+              <span class="absolute left-[33.33%] -translate-x-1/2">10%</span>
+              <span class="absolute left-[56.67%] -translate-x-1/2">17%</span>
+              <span class="absolute left-[66.67%] -translate-x-1/2">20%</span>
+              <span class="absolute left-[100%] -translate-x-1/2">30%</span>
+            </div>
+          </div>
+
+          <!-- Salaire fixe -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Salaire Fixe Annuel</label>
+            <div class="relative">
+              <input type="number" id="adv-fixed-salary" value="50000" step="1000" min="10000" max="250000" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+            </div>
+          </div>
+
+          <!-- Nominaux -->
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <div class="p-2 bg-slate-100 rounded-xl text-[11px] text-slate-600 flex flex-col">
+              <span class="text-slate-400 font-medium">Nominal Actuel :</span>
+              <span id="adv-nominal-old" class="font-mono font-bold text-slate-700">5 000 €</span>
+            </div>
+            <div class="p-2 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-700 flex flex-col">
+              <span class="text-orange-400 font-medium">Nominal Nouveau :</span>
+              <span id="adv-nominal-new" class="font-mono font-bold">10 000 €</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Chart + KPIs + Aggregate -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- Chart -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="line-chart" class="w-4 h-4"></i></div>
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Courbe Hybride vs Ancienne vs Tout-Nouveau</h2>
+                <p class="text-xs text-slate-500">En % de l'ancien nominal du commercial testé</p>
+              </div>
+            </div>
+          </div>
+          <div class="relative h-[380px] w-full">
+            <canvas id="advChart"></canvas>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs pt-2 border-t border-slate-100">
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-slate-400 mt-1.5 shrink-0 border-t border-dashed border-slate-400"></span>
+              <div>
+                <span class="font-bold text-slate-700">Ancienne</span>
+                <p class="text-[10px] text-slate-400">Linéaire 1:1</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-orange-600 mt-1.5 shrink-0"></span>
+              <div>
+                <span class="font-bold text-orange-700">Hybride 90%</span>
+                <p class="text-[10px] text-slate-400">Ce commercial</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-indigo-600 mt-1.5 shrink-0 border-t border-dashed border-indigo-600"></span>
+              <div>
+                <span class="font-bold text-indigo-700">Tout-Nouveau</span>
+                <p class="text-[10px] text-slate-400">&times; ratio nominal</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-600 mt-0.5 shrink-0"></span>
+              <div>
+                <span class="font-bold text-orange-700">Position</span>
+                <p class="text-[10px] text-slate-400">Sur l'hybride</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPIs individuels -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Ancien Versé</span>
+            <div id="adv-kpi-old" class="text-2xl font-black text-slate-700 mt-1">5 500 €</div>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border-2 border-orange-300 shadow-sm">
+            <span class="text-xs font-bold uppercase tracking-wider text-orange-500">Hybride Versé</span>
+            <div id="adv-kpi-hyb" class="text-2xl font-black text-orange-600 mt-1">5 500 €</div>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Tout-Nouveau Versé</span>
+            <div id="adv-kpi-new" class="text-2xl font-black text-indigo-600 mt-1">11 000 €</div>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">&Delta; Hybride vs Ancien</span>
+            <div id="adv-kpi-delta" class="text-2xl font-black text-emerald-600 mt-1">+0 €</div>
+            <p class="text-[10px] text-slate-400 mt-1">Vs tout-nouveau : <span id="adv-kpi-delta-new" class="font-bold text-slate-600">-5 500 €</span></p>
+          </div>
+        </div>
+
+        <!-- Impact agrégé -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="scale" class="w-4 h-4"></i></div>
+              <div>
+                <h2 class="font-bold text-slate-900 text-sm">Impact Masse Agrégé (nominal moyen 11% &rarr; 20%)</h2>
+                <p class="text-xs text-slate-500">Intégration sur la distribution historique (mu = 110%, &sigma; = 30%)</p>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3 text-center text-xs">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+              <span class="text-slate-500 font-semibold block">PEX Actuel</span>
+              <span id="adv-agg-old" class="text-lg font-black font-mono text-slate-700">2.50 M€</span>
+            </div>
+            <div class="p-3 bg-orange-50 rounded-xl border border-orange-200">
+              <span class="text-orange-500 font-semibold block">PEX Hybride</span>
+              <span id="adv-agg-hyb" class="text-lg font-black font-mono text-orange-700">0.00 M€</span>
+              <span id="adv-agg-delta" class="text-[10px] font-bold text-emerald-600 block">(-0.00 M€)</span>
+            </div>
+            <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+              <span class="text-indigo-500 font-semibold block">PEX Tout-Nouveau</span>
+              <span id="adv-agg-new" class="text-lg font-black font-mono text-indigo-700">0.00 M€</span>
+              <span id="adv-agg-delta-new" class="text-[10px] font-bold text-slate-500 block">(-0.00 M€)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </main>
 
   <!-- Footer -->
@@ -1375,6 +1586,219 @@
       updateDashboard();
     }
 
+    // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
+    let advChartInstance = null;
+    const advState = { x: 110, bonusPct: 10, fixedSalary: 50000 };
+
+    // Hybrid payout expressed in % of the rep's OLD nominal:
+    // x < 90  : old linear scheme (min(x, cap))
+    // 90..100 : linear blend from 90% of old nominal (continuity) to 100% of new nominal
+    // x > 100 : new piecewise curve scaled by nominal ratio r = newNominal/oldNominal
+    function evalHybridPayoutOldNominal(x, oldBonusPct) {
+      const newBonus = getEffectiveNewBonusPct(oldBonusPct);
+      const r = oldBonusPct > 0 ? newBonus / oldBonusPct : 1;
+      if (x < 90) return Math.min(x, state.payoutCap);
+      if (x <= 100) {
+        const t = (x - 90) / 10;
+        return 90 + t * (100 * r - 90);
+      }
+      return evalNewPayout(x) * r;
+    }
+
+    function initAdvChart() {
+      const ctx = document.getElementById('advChart').getContext('2d');
+      advChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: 'Ancienne (linéaire 1:1)',
+              data: [],
+              borderColor: '#94a3b8',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              pointRadius: 0,
+              tension: 0,
+              order: 3
+            },
+            {
+              label: 'Hybride 90% (ce commercial)',
+              data: [],
+              borderColor: '#ea580c',
+              backgroundColor: 'rgba(234, 88, 12, 0.06)',
+              borderWidth: 3.5,
+              fill: true,
+              pointRadius: 0,
+              tension: 0,
+              order: 2
+            },
+            {
+              label: 'Tout-Nouveau (× ratio nominal)',
+              data: [],
+              borderColor: '#4f46e5',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              pointRadius: 0,
+              tension: 0,
+              order: 3
+            },
+            {
+              label: 'Position du commercial',
+              data: [],
+              borderColor: '#ea580c',
+              backgroundColor: '#ea580c',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 8,
+              pointHoverRadius: 11,
+              showLine: false,
+              order: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.92)',
+              titleFont: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' },
+              bodyFont: { family: 'JetBrains Mono', size: 11 },
+              padding: 10,
+              cornerRadius: 8
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Taux d’Atteinte de l’Objectif (%)',
+                font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                color: '#64748b'
+              },
+              grid: { color: '#f1f5f9' },
+              ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#64748b' }
+            },
+            y: {
+              min: 0,
+              title: {
+                display: true,
+                text: 'Variable versée (% Ancien Nominal)',
+                font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                color: '#ea580c'
+              },
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                font: { family: 'JetBrains Mono', size: 10 },
+                color: '#ea580c',
+                callback: function(v) { return v + '%'; }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateAdvancedView() {
+      if (!advChartInstance) return;
+      const x = advState.x;
+      const bonusPct = advState.bonusPct;
+      const fixed = advState.fixedSalary;
+
+      const newBonus = getEffectiveNewBonusPct(bonusPct);
+      const r = bonusPct > 0 ? newBonus / bonusPct : 1;
+      const oldNominal = fixed * (bonusPct / 100);
+      const newNominal = fixed * (newBonus / 100);
+
+      const paidOld = (Math.min(x, state.payoutCap) / 100) * oldNominal;
+      const paidHyb = (evalHybridPayoutOldNominal(x, bonusPct) / 100) * oldNominal;
+      const paidNew = (evalNewPayout(x) / 100) * newNominal;
+
+      // Badges & nominaux
+      document.getElementById('adv-val-achievement').innerText = x + '%';
+      document.getElementById('adv-val-bonus-pct').innerText = bonusPct.toFixed(1) + '%';
+      document.getElementById('adv-badge-r').innerText = bonusPct > 0 ? `\u00D7${r.toFixed(2)} nom.` : 'Fixe pur';
+      document.getElementById('adv-nominal-old').innerText = Math.round(oldNominal).toLocaleString('fr-FR') + ' €';
+      document.getElementById('adv-nominal-new').innerText = Math.round(newNominal).toLocaleString('fr-FR') + ' €';
+
+      // KPI cards
+      document.getElementById('adv-kpi-old').innerText = Math.round(paidOld).toLocaleString('fr-FR') + ' €';
+      document.getElementById('adv-kpi-hyb').innerText = Math.round(paidHyb).toLocaleString('fr-FR') + ' €';
+      document.getElementById('adv-kpi-new').innerText = Math.round(paidNew).toLocaleString('fr-FR') + ' €';
+
+      const deltaOld = paidHyb - paidOld;
+      const deltaNewEl = document.getElementById('adv-kpi-delta-new');
+      const deltaEl = document.getElementById('adv-kpi-delta');
+      deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('fr-FR') + ' €';
+      deltaEl.className = 'text-2xl font-black mt-1 ' + (deltaOld >= 0 ? 'text-emerald-600' : 'text-rose-600');
+      deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('fr-FR') + ' €';
+
+      // Chart data (% of old nominal)
+      const labels = [];
+      const oldVals = [];
+      const hybVals = [];
+      const newVals = [];
+      const repPoints = [];
+      for (let v = 20; v <= 220; v += 1) {
+        labels.push(v);
+        oldVals.push(Math.min(v, state.payoutCap));
+        hybVals.push(evalHybridPayoutOldNominal(v, bonusPct));
+        newVals.push(evalNewPayout(v) * r);
+        repPoints.push(v === x ? hybVals[hybVals.length - 1] : null);
+      }
+      advChartInstance.data.labels = labels;
+      advChartInstance.data.datasets[0].data = oldVals;
+      advChartInstance.data.datasets[1].data = hybVals;
+      advChartInstance.data.datasets[2].data = newVals;
+      advChartInstance.data.datasets[3].data = repPoints;
+      advChartInstance.update();
+
+      // Aggregate mass impact (average nominal oldVarShare -> newVarShare)
+      const oldExp = calculateExpectedPayout(false);
+      const oldTargetPEX_M = oldExp > 0 ? state.currentPEX / (oldExp / 100) : 0;
+      const rAvg = state.oldVarShare > 0 ? state.newVarShare / state.oldVarShare : 1;
+      const mu = state.muInit, sigma = state.sigmaInit;
+      let totW = 0, totD = 0;
+      for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
+        const d = normalPdf(v, mu, sigma) * 0.5;
+        totD += d;
+        totW += evalHybridPayoutOldNominal(v, state.oldVarShare) * d;
+      }
+      const Ehyb = totD > 0 ? totW / totD : 0;
+      const pexHyb = oldTargetPEX_M * Ehyb / 100;
+      const pexOld = state.currentPEX;
+      const pexNew = oldTargetPEX_M * calculateExpectedPayout(true) * rAvg / 100;
+
+      document.getElementById('adv-agg-old').innerText = pexOld.toFixed(2) + ' M€';
+      document.getElementById('adv-agg-hyb').innerText = pexHyb.toFixed(2) + ' M€';
+      document.getElementById('adv-agg-new').innerText = pexNew.toFixed(2) + ' M€';
+      const aggDelta = document.getElementById('adv-agg-delta');
+      aggDelta.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + (pexHyb - pexOld).toFixed(2) + ' M€';
+      aggDelta.className = 'text-[10px] font-bold block ' + (pexHyb <= pexOld ? 'text-emerald-600' : 'text-rose-600');
+      const aggDeltaNew = document.getElementById('adv-agg-delta-new');
+      aggDeltaNew.innerText = (pexNew - pexOld >= 0 ? '+' : '') + (pexNew - pexOld).toFixed(2) + ' M€';
+    }
+
+    function setView(view) {
+      const isAdv = view === 'advanced';
+      document.getElementById('view-standard').classList.toggle('hidden', isAdv);
+      document.getElementById('view-advanced').classList.toggle('hidden', !isAdv);
+      document.getElementById('tab-standard').className = isAdv
+        ? 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all'
+        : 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm';
+      document.getElementById('tab-advanced').className = isAdv
+        ? 'px-3 py-1.5 rounded-lg bg-white text-orange-600 shadow-sm'
+        : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
+      if (isAdv) {
+        // Lazy init: Chart.js needs a visible container to size correctly
+        if (!advChartInstance) initAdvChart();
+        updateAdvancedView();
+      }
+    }
+
     // Presets
     function applyPreset(presetKey) {
       document.querySelectorAll('.preset-btn').forEach(b => {
@@ -1544,6 +1968,22 @@
       document.getElementById('input-rep-fixed-salary').addEventListener('input', (e) => {
         state.repFixedSalary = parseFloat(e.target.value) || 50000;
         updateDashboard();
+      });
+
+      // Advanced view controls
+      document.getElementById('adv-achievement').addEventListener('input', (e) => {
+        advState.x = parseFloat(e.target.value);
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-bonus-pct').addEventListener('input', (e) => {
+        advState.bonusPct = parseFloat(e.target.value);
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-fixed-salary').addEventListener('input', (e) => {
+        advState.fixedSalary = parseFloat(e.target.value) || 50000;
+        updateAdvancedView();
       });
     }
 
