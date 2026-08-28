@@ -746,8 +746,8 @@
         <h2 class="font-bold text-slate-900 text-sm">Schéma Hybride : transition du nominal entre 90% et 100%</h2>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed">
-        <strong>En dessous de 90%</strong> d'atteinte : ancien schéma (linéaire 1:1 sur l'ancien nominal, rien ne change).
-        <strong>De 90% à 100%</strong> : le montant versé passe linéairement de 90% de l'ancien nominal à 100% du nouveau nominal.
+        <strong>En dessous de <span id="adv-desc-thr1" class="font-mono">90%</span></strong> d'atteinte : ancien schéma (linéaire 1:1 sur l'ancien nominal, rien ne change).
+        <strong>De <span id="adv-desc-thr2" class="font-mono">90%</span> à 100%</strong> : le montant versé passe linéairement de <span id="adv-desc-thr3" class="font-mono">90%</span> de l'ancien nominal à 100% du nouveau nominal.
         <strong>Au-dessus de 100%</strong> : nouvelle courbe (paliers) sur le nouveau nominal (max 20%, acquis préservés).
         La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
         Un commercial déjà &ge; 20% (grand-père) a un ratio de 1 : son hybride est identique à l'ancien schéma.
@@ -782,7 +782,7 @@
               <span class="absolute left-[0%] -translate-x-1/2">20%</span>
               <span class="absolute left-[16.67%] -translate-x-1/2">50%</span>
               <span class="absolute left-[33.33%] -translate-x-1/2">80%</span>
-              <span class="absolute left-[44.44%] -translate-x-1/2">90%</span>
+              <span class="absolute left-[44.44%] -translate-x-1/2" id="adv-tick-threshold">90%</span>
               <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
               <span class="absolute left-[100%] -translate-x-1/2">200%</span>
             </div>
@@ -799,6 +799,20 @@
               <span class="absolute left-[0%] -translate-x-1/2">0 pp</span>
               <span class="absolute left-[50%] -translate-x-1/2">+30 pp</span>
               <span class="absolute left-[100%] -translate-x-1/2">+60 pp</span>
+            </div>
+          </div>
+
+          <!-- Slider: Seuil de transition (ancien schéma en dessous, blend au-dessus) -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <label for="adv-threshold" class="font-semibold text-slate-700">Seuil de Transition</label>
+              <span id="adv-val-threshold" class="font-mono font-bold text-amber-600 text-sm bg-amber-50 px-2 py-0.5 rounded-md">90%</span>
+            </div>
+            <input type="range" id="adv-threshold" min="50" max="100" step="1" value="90" class="w-full cursor-pointer accent-amber-600">
+            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+              <span class="absolute left-[0%] -translate-x-1/2">50%</span>
+              <span class="absolute left-[50%] -translate-x-1/2">75%</span>
+              <span class="absolute left-[100%] -translate-x-1/2">100%</span>
             </div>
           </div>
 
@@ -1613,19 +1627,21 @@
 
     // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
     let advChartInstance = null;
-    const advState = { x: 110, targetIncrease: 0, bonusPct: 10, fixedSalary: 50000 };
+    const advState = { x: 110, targetIncrease: 0, threshold: 90, bonusPct: 10, fixedSalary: 50000 };
 
     // Hybrid payout expressed in % of the rep's OLD nominal:
-    // x < 90  : old linear scheme (min(x, cap))
-    // 90..100 : linear blend from 90% of old nominal (continuity) to 100% of new nominal
-    // x > 100 : new piecewise curve scaled by nominal ratio r = newNominal/oldNominal
-    function evalHybridPayoutOldNominal(x, oldBonusPct) {
+    // x < thr   : old linear scheme (min(x, cap))
+    // thr..100  : linear blend from thr% of old nominal (continuity) to 100% of new nominal
+    // x > 100   : new piecewise curve scaled by nominal ratio r = newNominal/oldNominal
+    function evalHybridPayoutOldNominal(x, oldBonusPct, threshold) {
+      const thr = threshold ?? 90;
       const newBonus = getEffectiveNewBonusPct(oldBonusPct);
       const r = oldBonusPct > 0 ? newBonus / oldBonusPct : 1;
-      if (x < 90) return Math.min(x, state.payoutCap);
+      if (x < thr) return Math.min(x, state.payoutCap);
       if (x <= 100) {
-        const t = (x - 90) / 10;
-        return 90 + t * (100 * r - 90);
+        if (thr >= 100) return 100 * r;
+        const t = (x - thr) / (100 - thr);
+        return thr + t * (100 * r - thr);
       }
       return evalNewPayout(x) * r;
     }
@@ -1743,6 +1759,7 @@
       if (!advChartInstance) return;
       const x = advState.x;
       const targetIncrease = advState.targetIncrease;
+      const threshold = advState.threshold;
       const bonusPct = advState.bonusPct;
       const fixed = advState.fixedSalary;
 
@@ -1756,13 +1773,20 @@
 
       // Before: old scheme on historical perf / After: hybrid on calibrated perf
       const paidOld = (Math.min(x, state.payoutCap) / 100) * oldNominal;
-      const paidHyb = (evalHybridPayoutOldNominal(calibrated, bonusPct) / 100) * oldNominal;
+      const paidHyb = (evalHybridPayoutOldNominal(calibrated, bonusPct, threshold) / 100) * oldNominal;
       const paidNew = (evalNewPayout(calibrated) / 100) * newNominal;
 
       // Badges & nominaux
       document.getElementById('adv-val-achieve-before').innerText = x + '%';
       document.getElementById('adv-val-achieve-after').innerText = calibrated.toFixed(1) + '%';
       document.getElementById('adv-val-target-increase').innerText = '+' + targetIncrease.toFixed(1) + '%';
+      document.getElementById('adv-val-threshold').innerText = threshold + '%';
+      document.getElementById('adv-desc-thr1').innerText = threshold + '%';
+      document.getElementById('adv-desc-thr2').innerText = threshold + '%';
+      document.getElementById('adv-desc-thr3').innerText = threshold + '%';
+      const tick = document.getElementById('adv-tick-threshold');
+      tick.innerText = threshold + '%';
+      tick.style.left = ((threshold - 20) / 180 * 100).toFixed(2) + '%';
       document.getElementById('adv-val-bonus-pct').innerText = bonusPct.toFixed(1) + '%';
       document.getElementById('adv-badge-r').innerText = bonusPct > 0 ? `\u00D7${r.toFixed(2)} nom.` : 'Fixe pur';
       document.getElementById('adv-nominal-old').innerText = Math.round(oldNominal).toLocaleString('fr-FR') + ' €';
@@ -1790,7 +1814,7 @@
       for (let v = 20; v <= 220; v += 1) {
         labels.push(v);
         oldVals.push(Math.min(v, state.payoutCap));
-        hybVals.push(evalHybridPayoutOldNominal(v, bonusPct));
+        hybVals.push(evalHybridPayoutOldNominal(v, bonusPct, threshold));
         newVals.push(evalNewPayout(v) * r);
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
@@ -1812,7 +1836,7 @@
       for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
         const d = normalPdf(v, mu, sigma) * 0.5;
         totD += d;
-        totW += evalHybridPayoutOldNominal(v, state.oldVarShare) * d;
+        totW += evalHybridPayoutOldNominal(v, state.oldVarShare, threshold) * d;
       }
       const Ehyb = totD > 0 ? totW / totD : 0;
       const pexHyb = oldTargetPEX_M * Ehyb / 100;
@@ -2025,6 +2049,11 @@
 
       document.getElementById('adv-target-increase').addEventListener('input', (e) => {
         advState.targetIncrease = parseFloat(e.target.value);
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-threshold').addEventListener('input', (e) => {
+        advState.threshold = parseFloat(e.target.value);
         updateAdvancedView();
       });
 
