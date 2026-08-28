@@ -42,18 +42,13 @@ commercial testé (chaque commercial a donc sa propre courbe selon son ratio nom
 
 Intégration de la courbe hybride (nominal moyen 11% → 20%) sur la gaussienne globale.
 
-## Population réelle (CSV)
+## Population réelle (Google Sheet)
 
-Dans la vue avancée, un import CSV remplace la moyenne unique par les vrais nominaux :
+Dans la vue avancée, le bouton **"Charger depuis le Google Sheet"** remplace la moyenne unique par
+les vrais nominaux :
 
-```
-id;salaire_fixe;nominal_actuel_eur
-001;52000;6500
-002;48000;9600
-```
-
-- Séparateur `;` ou `,` — en-tête détecté automatiquement (mots-clés : `salaire`/`fixe`,
-  `nominal`/`prime`/`variable`, `id`/`matricule`) — décimales FR acceptées
+- **Feuille attendue** : en-tête en **ligne 4**, colonnes
+  `A=Orga, B=Position, C=Country, D=ID, E–F=(ignorées), G=Base Salary, H=Amount`
 - Pour chaque commercial : E[versé] = ∫ sa courbe hybride personnelle × densité gaussienne (µ, σ globaux)
 - **Sorties** : PEX actuel / hybride / tout-nouveau réels, nb de perdants, perte max, perte moyenne,
   table triée par delta € avec statut (Grand-père / Gagnant / Perdant)
@@ -61,9 +56,21 @@ id;salaire_fixe;nominal_actuel_eur
 La carte se recalcule en temps réel quand les paramètres de la courbe changent. Les données restent
 dans le navigateur.
 
+## Déploiement Google Apps Script
+
+1. Ouvrir le Google Sheet (Extensions → Apps Script)
+2. Coller `Code.gs` dans le fichier `Code.gs`, et le contenu de `index.html` dans un fichier HTML nommé `index`
+3. Déployer → Nouveau déploiement → Application Web
+   - Exécuter en tant que : **moi** (le script lit le Sheet lié)
+   - Accès : selon l'audience visée
+4. Ouvrir l'URL de l'app : la vue avancée peut charger la population directement depuis le Sheet
+
+Ouvert hors Apps Script (fichier local), le bouton de chargement affiche un message d'information —
+le reste de l'outil fonctionne normalement.
+
 ## Technique
 
-- Fichier unique `index.html` — Chart.js, Tailwind CSS, KaTeX, Lucide (CDN)
+- `index.html` (client) + `Code.gs` (backend Apps Script) — Chart.js, Tailwind CSS, KaTeX, Lucide (CDN)
 - Historique git complet ; tags : `v1-sans-transition`, `v2-avec-transition`
-- Moteur de tests : harnais Node avec DOM simulé (voir commits — suites de 1600+ vérifications :
-  continuité aux frontières, égalité avec modèles de référence, parsing CSV)
+- Moteur de tests : harnais Node avec DOM simulé (suites de 1600+ vérifications :
+  continuité aux frontières, égalité avec modèles de référence)

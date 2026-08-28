@@ -1013,8 +1013,10 @@
           </div>
 
           <div id="pop-input-zone" class="space-y-2">
-            <input type="file" id="pop-file-input" accept=".csv,.txt" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
-            <p class="text-[10px] text-slate-400">Format : <code class="font-mono bg-slate-100 px-1 rounded">id;salaire_fixe;nominal_actuel_eur</code> — séparateur <span class="font-mono">;</span> ou <span class="font-mono">,</span>, en-tête détecté automatiquement. Les données restent dans votre navigateur.</p>
+            <button id="pop-sheet-btn" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i> Charger depuis le Google Sheet
+            </button>
+            <p class="text-[10px] text-slate-400">Lit le Sheet connecté (déploiement Apps Script) : en-tête ligne 4, colonnes ID, Base Salary, Amount. Les données restent dans votre navigateur.</p>
           </div>
 
           <p id="pop-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
@@ -1998,46 +2000,29 @@
       renderPopulation();
     }
 
-    // ===== POPULATION RÉELLE (CSV) =====
-    let advPopulation = []; // { id, fixed, nominal }
+    // ===== POPULATION RÉELLE (Google Sheet via Apps Script) =====
+    let advPopulation = []; // { id, orga, position, country, fixed, nominal }
 
-    function parsePopulationCsv(text) {
-      const raw = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-      const reps = []; let errors = 0;
-      if (!raw.length) return { reps, errors };
-      const delim = ((raw[0].match(/;/g) || []).length >= (raw[0].match(/,/g) || []).length) ? ';' : ',';
-      const num = v => {
-        if (v == null) return NaN;
-        v = String(v).replace(/[€\s\u00A0']/g, '');
-        if (delim === ';') v = v.replace(',', '.');
-        return parseFloat(v);
-      };
-      let rows = raw.map(l => l.split(delim).map(c => c.trim()));
-      // Header detection: first row contains letters
-      if (/[a-zA-Zà-ÿÀ-Ÿ]/.test(rows[0].join(' '))) {
-        const h = rows.shift().map(c => c.toLowerCase());
-        const find = (...keys) => h.findIndex(c => keys.some(k => c.includes(k)));
-        const map = {
-          id: find('id', 'matricule', 'nom'),
-          sal: find('salaire', 'fixe'),
-          nom: find('nominal', 'prime', 'variable')
-        };
-        rows = rows.map(r => {
-          const out = [];
-          out[0] = map.id >= 0 ? r[map.id] : r[0];
-          out[1] = map.sal >= 0 ? r[map.sal] : r[1];
-          out[2] = map.nom >= 0 ? r[map.nom] : r[2];
-          return out;
-        });
+    function loadPopulationFromSheet() {
+      const st = document.getElementById('pop-status');
+      st.classList.remove('hidden');
+      if (typeof google === 'undefined' || !google.script || !google.script.run) {
+        st.innerText = 'Chargement Sheet disponible uniquement via le déploiement Apps Script (hors ligne : non disponible).';
+        return;
       }
-      rows.forEach((r, idx) => {
-        const sal = num(r[1]);
-        const nom = num(r[2]);
-        const id = r[0] || ('rep' + (idx + 1));
-        if (isFinite(sal) && sal > 0 && isFinite(nom) && nom >= 0) reps.push({ id, fixed: sal, nominal: nom });
-        else errors++;
-      });
-      return { reps, errors };
+      st.innerText = 'Chargement depuis le Sheet…';
+      google.script.run
+        .withSuccessHandler(reps => {
+          advPopulation = Array.isArray(reps) ? reps : [];
+          st.innerText = advPopulation.length
+            ? advPopulation.length + ' commercial(aux) chargé(s) depuis le Sheet'
+            : 'Aucune ligne valide trouvée dans le Sheet (vérifie la ligne d\'en-tête 4 et les colonnes ID / Base Salary / Amount)';
+          renderPopulation();
+        })
+        .withFailureHandler(err => {
+          st.innerText = 'Erreur de chargement : ' + (err && err.message ? err.message : err);
+        })
+        .getPopulation();
     }
 
     function renderPopulation() {
@@ -2342,24 +2327,8 @@
         updateAdvancedView();
       });
 
-      // Population CSV
-      document.getElementById('pop-file-input').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          const { reps, errors } = parsePopulationCsv(reader.result);
-          advPopulation = reps;
-          const st = document.getElementById('pop-status');
-          st.classList.remove('hidden');
-          st.innerText = reps.length
-            ? reps.length + ' commercial(aux) chargé(s)' + (errors ? ' — ' + errors + ' ligne(s) ignorée(s)' : '')
-            : 'Aucune ligne valide détectée (format attendu : id;salaire_fixe;nominal_actuel_eur)';
-          renderPopulation();
-        };
-        reader.readAsText(f);
-        e.target.value = '';
-      });
+      // Population depuis le Sheet
+      document.getElementById('pop-sheet-btn').addEventListener('click', loadPopulationFromSheet);
 
       document.getElementById('pop-clear-btn').addEventListener('click', () => {
         advPopulation = [];
