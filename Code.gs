@@ -1,17 +1,32 @@
 /**
  * Simulateur Rémunération Variable & PEX — backend Google Apps Script
  *
- * Déploiement :
- * 1. Ouvrir le Google Sheet (Extensions > Apps Script)
- * 2. Coller ce fichier en "Code.gs" et le contenu de index.html dans un fichier HTML nommé "index"
- * 3. Déployer > Nouveau déploiement > Application Web (exécuter en tant que : moi, accès : à définir)
+ * Deux modes de déploiement :
+ * - **Lié au Sheet** : ouvrir le Sheet > Extensions > Apps Script, coller Code.gs + index.html,
+ *   déployer en Application Web. SHEET_ID reste vide.
+ * - **Standalone** : créer un projet Apps Script indépendant (script.google.com), coller les
+ *   fichiers, renseigner SHEET_ID avec l'ID du classeur cible, déployer en Application Web.
+ *   À la première exécution, Google demandera l'autorisation d'accéder au classeur.
  *
+ * Le fichier HTML doit s'appeler "index".
  * Attendu dans la feuille : en-tête en ligne 4, colonnes
  * A=Orga, B=Position, C=Country, D=ID, E-F=(ignorées), G=Base Salary, H=Amount
  */
 
 const HEADER_ROW = 4;
 const COL = { ORGA: 1, POSITION: 2, COUNTRY: 3, ID: 4, BASE_SALARY: 7, AMOUNT: 8 };
+
+/**
+ * Déploiement standalone : coller ici l'ID du Google Sheet
+ * (l'ID est la longue chaîne dans l'URL du Sheet, entre /d/ et /edit).
+ * Laisser vide si le script est lié au Sheet (Extensions > Apps Script).
+ */
+const SHEET_ID = '';
+
+function getSpreadsheet() {
+  if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
@@ -20,7 +35,7 @@ function doGet() {
 }
 
 function getPopulation() {
-  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  const sh = getSpreadsheet().getSheets()[0];
   const lastRow = sh.getLastRow();
   if (lastRow <= HEADER_ROW) return [];
   const values = sh.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, 8).getValues();

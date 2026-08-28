@@ -58,12 +58,18 @@ dans le navigateur.
 
 ## Déploiement Google Apps Script
 
-1. Ouvrir le Google Sheet (Extensions → Apps Script)
-2. Coller `Code.gs` dans le fichier `Code.gs`, et le contenu de `index.html` dans un fichier HTML nommé `index`
+Deux modes possibles (`Code.gs` gère les deux) :
+
+**Lié au Sheet** (plus simple) :
+1. Ouvrir le Google Sheet → Extensions → Apps Script
+2. Coller `Code.gs` dans `Code.gs`, et le contenu de `index.html` dans un fichier HTML nommé `index`
 3. Déployer → Nouveau déploiement → Application Web
-   - Exécuter en tant que : **moi** (le script lit le Sheet lié)
-   - Accès : selon l'audience visée
-4. Ouvrir l'URL de l'app : la vue avancée peut charger la population directement depuis le Sheet
+
+**Standalone** (un seul web app, indépendant du classeur) :
+1. Créer un projet sur script.google.com
+2. Coller les deux fichiers (HTML nommé `index`)
+3. Renseigner `SHEET_ID` en haut de `Code.gs` avec l'ID du classeur (la chaîne dans l'URL entre `/d/` et `/edit`)
+4. Déployer → Application Web — Google demandera l'autorisation d'accès au classeur au premier lancement
 
 Ouvert hors Apps Script (fichier local), le bouton de chargement affiche un message d'information —
 le reste de l'outil fonctionne normalement.
