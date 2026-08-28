@@ -905,12 +905,15 @@
                 <h2 class="font-bold text-slate-900 text-base">Courbe Hybride vs Ancienne vs Tout-Nouveau</h2>
                 <p class="text-xs text-slate-500">En % de l'ancien nominal du commercial testé</p>
               </div>
+              <button id="btn-adv-standard" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">
+                Scénario Standard (paliers)
+              </button>
             </div>
           </div>
           <div class="relative h-[380px] w-full">
             <canvas id="advChart"></canvas>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs pt-2 border-t border-slate-100">
+          <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 text-xs pt-2 border-t border-slate-100">
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-slate-400 mt-1.5 shrink-0 border-t border-dashed border-slate-400"></span>
               <div>
@@ -944,6 +947,13 @@
               <div>
                 <span class="font-bold text-orange-700">Point Apr&egrave;s</span>
                 <p class="text-[10px] text-slate-400">Sur l'hybride (calibr&eacute;)</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-purple-600 mt-1.5 shrink-0 border-t border-dashed border-purple-600"></span>
+              <div>
+                <span class="font-bold text-purple-700">Scénario Standard</span>
+                <p class="text-[10px] text-slate-400">Paliers (masqu&eacute; par d&eacute;faut)</p>
               </div>
             </div>
           </div>
@@ -1855,6 +1865,17 @@
               pointHoverRadius: 11,
               showLine: false,
               order: 0
+            },
+            {
+              label: 'Scénario Standard (paliers)',
+              data: [],
+              borderColor: '#7c3aed',
+              borderWidth: 2,
+              borderDash: [2, 3],
+              pointRadius: 0,
+              tension: 0,
+              hidden: true,
+              order: 3
             }
           ]
         },
@@ -1958,6 +1979,7 @@
       const oldVals = [];
       const hybVals = [];
       const newVals = [];
+      const stdVals = [];
       const beforePoints = [];
       const afterPoints = [];
       for (let v = 20; v <= 220; v += 1) {
@@ -1965,6 +1987,7 @@
         oldVals.push(Math.min(v, state.payoutCap));
         hybVals.push(evalHybridPayoutOldNominal(v, oldNomE, advState.fixedSalary));
         newVals.push(evalNewBasePayoutOldNominal(v, oldNomE, advState.fixedSalary));
+        stdVals.push(evalNewPayout(v) * r);
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
       }
@@ -1974,6 +1997,7 @@
       advChartInstance.data.datasets[2].data = newVals;
       advChartInstance.data.datasets[3].data = beforePoints;
       advChartInstance.data.datasets[4].data = afterPoints;
+      advChartInstance.data.datasets[5].data = stdVals;
       advChartInstance.update();
 
       // Aggregate mass impact (average nominal oldVarShare% of the reference fixed salary)
@@ -2110,6 +2134,16 @@
           '<td class="py-1.5 px-3 font-bold ' + (r.delta >= 0 ? 'text-emerald-600' : 'text-rose-600') + '">' + (r.delta >= 0 ? '+' : '') + fmtE(r.delta) + '</td>' +
           '<td class="py-1.5 px-3 font-sans">' + statut + '</td></tr>';
       }).join('');
+    }
+
+    function toggleDatasetAdv(index) {
+      const ds = advChartInstance.data.datasets[index];
+      ds.hidden = !ds.hidden;
+      advChartInstance.update();
+      const btn = document.getElementById('btn-adv-standard');
+      btn.className = ds.hidden
+        ? 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all'
+        : 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 transition-all';
     }
 
     function setView(view) {
@@ -2359,6 +2393,8 @@
 
       // Population depuis le Sheet
       document.getElementById('pop-sheet-btn').addEventListener('click', loadPopulationFromSheet);
+
+      document.getElementById('btn-adv-standard').addEventListener('click', () => toggleDatasetAdv(5));
 
       document.getElementById('pop-clear-btn').addEventListener('click', () => {
         advPopulation = [];
