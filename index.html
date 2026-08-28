@@ -798,8 +798,7 @@
               <span class="absolute left-[0%] -translate-x-1/2">20%</span>
               <span class="absolute left-[16.67%] -translate-x-1/2">50%</span>
               <span class="absolute left-[33.33%] -translate-x-1/2">80%</span>
-              <span class="absolute left-[38.89%] -translate-x-1/2 text-amber-600 font-bold" id="adv-tick-t1">90%</span>
-              <span class="absolute left-[44.44%] -translate-x-1/2 text-orange-600 font-bold" id="adv-tick-t2">100%</span>
+              <span class="absolute left-[44.44%] -translate-x-1/2">100%</span>
               <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
               <span class="absolute left-[100%] -translate-x-1/2">200%</span>
             </div>
@@ -1837,13 +1836,6 @@
       document.getElementById('adv-desc-t1b').innerText = t1 + '%';
       document.getElementById('adv-desc-t2a').innerText = t2 + '%';
       document.getElementById('adv-desc-t2b').innerText = t2 + '%';
-      const clampPos = v => Math.max(0, Math.min(100, (v - 20) / 180 * 100)).toFixed(2) + '%';
-      const tickT1 = document.getElementById('adv-tick-t1');
-      const tickT2 = document.getElementById('adv-tick-t2');
-      tickT1.style.left = clampPos(t1);
-      tickT1.innerText = t1 + '%';
-      tickT2.style.left = clampPos(t2);
-      tickT2.innerText = t2 + '%';
       const track = document.getElementById('adv-dual-track');
       track.style.left = (t1 / 2) + '%';
       track.style.width = (Math.max(0, t2 - t1) / 2) + '%';
