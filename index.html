@@ -752,6 +752,7 @@
         De <span id="adv-desc-zero2" class="font-mono">0%</span> à <span id="adv-desc-t1a" class="font-mono">90%</span> : ancien schéma (linéaire 1:1 sur l'ancien nominal).
         De <span id="adv-desc-t1b" class="font-mono">90%</span> à <span id="adv-desc-t2a" class="font-mono">100%</span> : passage linéaire de l'ancien au nouveau nominal.
         Au-dessus de <span id="adv-desc-t2b" class="font-mono">100%</span> : nouvelle courbe (paliers) sur le nouveau nominal (max 20%, acquis préservés).
+        <strong>Montants minimum en &euro;</strong> : en dessous de la fin de transition rien ne change ; entre celle-ci et 200%, la montée s'effectue linéairement (plus vite) pour atteindre les montants garantis à 100% et/ou 200%.
         La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
         Un commercial déjà &ge; 20% (grand-père) a un ratio de 1 : son hybride est identique à l'ancien schéma.
       </p>
@@ -868,6 +869,24 @@
             <div class="relative">
               <input type="number" id="adv-fixed-salary" value="50000" step="1000" min="10000" max="250000" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500">
               <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+            </div>
+          </div>
+
+          <!-- Montants minimums garantis (€) -->
+          <div class="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Montant min &agrave; 100%</label>
+              <div class="relative">
+                <input type="number" id="adv-min-100" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
+                <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Montant min &agrave; 200%</label>
+              <div class="relative">
+                <input type="number" id="adv-min-200" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
+                <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+              </div>
             </div>
           </div>
 
@@ -1657,7 +1676,7 @@
 
     // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
     let advChartInstance = null;
-    const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, bonusPct: 10, fixedSalary: 50000 };
+    const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, bonusPct: 10, fixedSalary: 50000, min100E: 0, min200E: 0 };
 
     // Hybrid payout expressed in % of the rep's OLD nominal:
     // x < zero : nothing paid (trigger threshold)
@@ -1668,16 +1687,57 @@
       const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
       const newBonus = getEffectiveNewBonusPct(oldBonusPct);
       const r = oldBonusPct > 0 ? newBonus / oldBonusPct : 1;
+      // € minimums at 100% / 200% converted to % of this rep's old nominal
+      const oldNomE = (advState.fixedSalary * oldBonusPct) / 100;
+      const m100 = (oldNomE > 0 && advState.min100E > 0) ? (advState.min100E / oldNomE) * 100 : 0;
+      const m200 = (oldNomE > 0 && advState.min200E > 0) ? (advState.min200E / oldNomE) * 100 : 0;
       if (x < zero) return 0;
       if (x < t1) return Math.min(x, state.payoutCap);
       if (x <= t2) {
         if (t2 <= t1) return evalNewPayout(x) * r;
         const t = (x - t1) / (t2 - t1);
         const start = Math.min(t1, state.payoutCap);
-        const end = evalNewPayout(t2) * r;
+        let end = evalNewPayout(t2) * r;
+        if (t2 === 100 && m100 > end) end = m100; // 100% minimum lifts the blend end
         return start + t * (end - start);
       }
-      return evalNewPayout(x) * r;
+      // Above T2: new curve scaled by r, with optional € floors at 100% and 200%
+      const v100 = Math.max(evalNewPayout(100) * r, m100); // anchored value at the 100% point
+      if (t2 >= 100) {
+        // 100% lies inside (or at the end of) the blend zone: single segment up to the 200% anchor
+        const xStart = Math.max(t2, 100);
+        const vStart = t2 === 100 ? v100 : evalNewPayout(t2) * r;
+        const v200 = Math.max(evalNewPayout(200) * r, m200, vStart);
+        if (v200 > vStart) {
+          if (x <= 200) {
+            const t = (x - xStart) / (200 - xStart);
+            return vStart + t * (v200 - vStart);
+          }
+          return Math.max(evalNewPayout(x) * r, v200);
+        }
+        // No floor effect: normal curve, kept above the lifted 100% value if any
+        return Math.max(evalNewPayout(x) * r, vStart);
+      }
+      if (x <= 100) {
+        // Steeper linear rise T2 -> 100, only if the 100% floor is binding
+        if (m100 > evalNewPayout(100) * r) {
+          const t = (x - t2) / (100 - t2);
+          const vT2 = evalNewPayout(t2) * r;
+          return vT2 + t * (v100 - vT2);
+        }
+        return evalNewPayout(x) * r;
+      }
+      const v200 = Math.max(evalNewPayout(200) * r, m200, v100);
+      if (v200 > v100) {
+        // Steeper linear rise 100 -> 200 to reach the 200% floor
+        if (x <= 200) {
+          const t = (x - 100) / 100;
+          return v100 + t * (v200 - v100);
+        }
+        return Math.max(evalNewPayout(x) * r, v200);
+      }
+      // 100% floor at/above the 200% level: flat floor from 100 onward
+      return Math.max(evalNewPayout(x) * r, v100);
     }
 
     function initAdvChart() {
@@ -2119,6 +2179,16 @@
 
       document.getElementById('adv-fixed-salary').addEventListener('input', (e) => {
         advState.fixedSalary = parseFloat(e.target.value) || 50000;
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-min-100').addEventListener('input', (e) => {
+        advState.min100E = Math.max(0, parseFloat(e.target.value) || 0);
+        updateAdvancedView();
+      });
+
+      document.getElementById('adv-min-200').addEventListener('input', (e) => {
+        advState.min200E = Math.max(0, parseFloat(e.target.value) || 0);
         updateAdvancedView();
       });
     }
