@@ -1202,6 +1202,54 @@
           }
         }
         return Math.min(bps[bps.length - 1].payout, cap);
+      },
+
+      // ===== Fourchettes IC (facteur commun + aléa individuel indépendant) =====
+      // Modèle : X_i = µ_i + σ_i·(√ρ·Z + √(1−ρ)·ε_i), Z et ε_i ~ N(0,1)
+      // fn(x, i) = valeur € du rep i au taux d'atteinte x (courbes croissantes attendues)
+      // Q_α(Total) ≈ Q_α(Σ f_i(µ_i + σ_i·√ρ·Z)) + z_α·√(Σ Var[f_i(µ_i + σ_i·√(1−ρ)·ε)])
+      // NB : grille z construite inline (densityPoints tronque à x ≥ 0, inutilisable pour z)
+      totalQuantiles(fn, mus, sigmas, rho, alpha = 0.05) {
+        const zCI = 1.959964; // z_{1-α/2} pour α = 0.05
+        const r = Math.sqrt(Math.max(0, Math.min(1, rho)));
+        const s = Math.sqrt(1 - Math.max(0, Math.min(1, rho)));
+        const pts = []; let tot = 0;
+        for (let z = -4.5; z <= 4.5; z += 0.125) { const d = normalPdf(z, 0, 1) * 0.125; pts.push({ x: z, d }); tot += d; }
+        const grid = pts.map(p => ({ x: p.x, w: p.d / tot }));
+
+        // Partie commune : C(z) = Σ f_i(µ_i + σ_i·r·z), CDF par tri des valeurs
+        const common = grid.map(p => {
+          let c = 0;
+          for (let i = 0; i < mus.length; i++) c += fn(mus[i] + sigmas[i] * r * p.x, i);
+          return { v: c, w: p.w };
+        }).sort((a, b) => a.v - b.v);
+        const qCommon = q => {
+          let acc = 0;
+          for (let k = 0; k < common.length; k++) {
+            const next = acc + common[k].w;
+            if (next >= q) {
+              if (k === 0) return common[k].v;
+              const t = (q - acc) / (next - acc); // interpolation entre les 2 points de grille encadrants
+              return common[k - 1].v + t * (common[k].v - common[k - 1].v);
+            }
+            acc = next;
+          }
+          return common[common.length - 1].v;
+        };
+
+        // Partie indépendante : Var[f_i(µ_i + σ_i·s·ε)] cumulée sur les rép
+        let varIdio = 0;
+        for (let i = 0; i < mus.length; i++) {
+          let e1 = 0, e2 = 0;
+          for (const p of grid) {
+            const v = fn(mus[i] + sigmas[i] * s * p.x, i);
+            e1 += v * p.w; e2 += v * v * p.w;
+          }
+          varIdio += Math.max(0, e2 - e1 * e1);
+        }
+        const sdIdio = Math.sqrt(varIdio);
+
+        return { lo: qCommon(alpha / 2) - zCI * sdIdio, hi: qCommon(1 - alpha / 2) + zCI * sdIdio };
       }
     };
 
