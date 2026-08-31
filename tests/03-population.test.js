@@ -139,6 +139,29 @@ module.exports = function suite(__h) {
   check('Δ nouveau ≤ −20 € en rouge', tblNew.indexOf('text-rose-600') > -1);
   state.targetIncrease = 0;
 
+  // ===== Matrice salaire × performance : calcul =====
+  advPopulation = [
+    { id: 'L1', fixed: 40000, nominal: 5000 },
+    { id: 'L2', fixed: 45000, nominal: 5000 },
+    { id: 'H1', fixed: 80000, nominal: 14000 },
+    { id: 'H2', fixed: 90000, nominal: 14000 }
+  ];
+  refreshPopulation();
+  check('matrice calculée', !!popMatrix && !!popMatrix.quadrants);
+  check('effectifs quadrants = population', popMatrix.count.low + popMatrix.count.high === 4);
+  check('salaire bas = fixes < moyenne', popMatrix.count.low === 2 && popMatrix.meanFixed > 45000 && popMatrix.meanFixed < 80000);
+  ['low', 'high'].forEach(q => {
+    check('quadrant ' + q + ' : hyb et new positifs', popMatrix.quadrants[q].hyb > 0 && popMatrix.quadrants[q].new > 0);
+    check('quadrant ' + q + ' : new ≥ hyb', popMatrix.quadrants[q].new >= popMatrix.quadrants[q].hyb);
+  });
+  check('conditionnel low ≤ inconditionnel (actuel, salaire bas)', popMatrix.quadrants.low.old <= realAgg.pexOld / 4 + 1);
+  const savedPop = advPopulation;
+  advPopulation = [];
+  refreshPopulation();
+  check('population vide → popMatrix null', popMatrix === null);
+  advPopulation = savedPop;
+  refreshPopulation();
+
   // ===== Réinitialisation → modèle moyen =====
   advPopulation = [];
   refreshPopulation();

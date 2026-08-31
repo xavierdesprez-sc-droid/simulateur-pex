@@ -2093,7 +2093,7 @@
       document.getElementById('pop-results').classList.toggle('hidden', !has);
       document.getElementById('pop-clear-btn').classList.toggle('hidden', !has);
       document.getElementById('pop-input-zone').classList.toggle('hidden', has);
-      if (!has) { realAgg = null; return; }
+      if (!has) { realAgg = null; popMatrix = null; return; }
 
       populatePopFilters();
       const population = filteredPopulation();
@@ -2131,6 +2131,7 @@
       });
 
       realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew, count: population.length };
+      popMatrix = computeMatrix(population, pts0, ptsC, mu0, muC);
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
       const fmtE = v => Math.round(v).toLocaleString('fr-FR') + ' €';
@@ -2161,6 +2162,38 @@
           '<td class="py-1.5 px-3 font-bold text-indigo-700">' + fmtE(r.eNew) + '</td>' +
           '<td class="py-1.5 px-3 font-bold ' + deltaNewCls + '">' + (r.deltaNew > 0 ? '+' : '') + fmtE(r.deltaNew) + '</td></tr>';
       }).join('');
+    }
+
+    let matrixMode = 'levels';
+    let popMatrix = null;
+
+    // E[fn(X) | moitié de distribution] : densité renormalisée sur x < mu (low) ou x > mu (high)
+    function halfInt(pts, mu, side) {
+      const f = pts.filter(p => side === 'low' ? p.x < mu : p.x > mu);
+      const tot = f.reduce((a, p) => a + p.w, 0);
+      if (!tot) return () => 0;
+      return fn => { let a = 0; for (const p of f) a += fn(p.x) * p.w / tot; return a; };
+    }
+
+    function computeMatrix(population, pts0, ptsC, mu0, muC) {
+      if (!population.length) return null;
+      const meanFixed = population.reduce((a, r) => a + r.fixed, 0) / population.length;
+      const out = { meanFixed, count: { low: 0, high: 0 }, quadrants: { low: { old: 0, hyb: 0, new: 0 }, high: { old: 0, hyb: 0, new: 0 } } };
+      ['low', 'high'].forEach(q => {
+        const reps = population.filter(r => q === 'low' ? r.fixed < meanFixed : r.fixed >= meanFixed);
+        out.count[q] = reps.length;
+        if (!reps.length) return;
+        const i0 = halfInt(pts0, mu0, q), iC = halfInt(ptsC, muC, q);
+        let sOld = 0, sHyb = 0, sNew = 0;
+        reps.forEach(rep => {
+          const nomAdv = advNominals(rep.nominal, rep.fixed);
+          sOld += i0(x => Engine.oldE(x, { oldNomE: rep.nominal, cap: state.payoutCap }));
+          sHyb += iC(x => Engine.hybridE(x, nomAdv));
+          sNew += iC(x => Engine.newBaseE(x, nomAdv));
+        });
+        out.quadrants[q] = { old: sOld / reps.length, hyb: sHyb / reps.length, new: sNew / reps.length };
+      });
+      return out;
     }
 
     function toggleDatasetAdv(index) {
