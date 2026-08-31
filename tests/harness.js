@@ -76,6 +76,7 @@ function runSuite(suiteFile) {
     els,
     mock: mocks,
     check: record,
+    htmlSrc: fs.readFileSync(HTML_PATH, 'utf8'),
     assertClose(name, got, exp, tol = 0.01) {
       record(`${name} (got ${got}, exp ${exp})`, Math.abs(got - exp) <= tol);
     }

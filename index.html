@@ -980,35 +980,6 @@
           </div>
         </div>
 
-        <!-- Impact agrégé -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div class="flex items-center gap-2">
-              <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="scale" class="w-4 h-4"></i></div>
-              <div>
-                <h2 class="font-bold text-slate-900 text-sm">Impact Masse Agrégé (nominal moyen <span id="agg-nominal">&rarr;</span>)</h2>
-                <p class="text-xs text-slate-500">Intégration sur la distribution calibrée (mu = <span id="agg-mu">110%</span>)</p>
-              </div>
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-3 text-center text-xs">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-              <span class="text-slate-500 font-semibold block">PEX Actuel</span>
-              <span id="adv-agg-old" class="text-lg font-black font-mono text-slate-700">2.50 M€</span>
-            </div>
-            <div class="p-3 bg-orange-50 rounded-xl border border-orange-200">
-              <span class="text-orange-500 font-semibold block">PEX Hybride</span>
-              <span id="adv-agg-hyb" class="text-lg font-black font-mono text-orange-700">0.00 M€</span>
-              <span id="adv-agg-delta" class="text-[10px] font-bold text-emerald-600 block">(-0.00 M€)</span>
-            </div>
-            <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-              <span class="text-indigo-500 font-semibold block">PEX Tout-Nouveau</span>
-              <span id="adv-agg-new" class="text-lg font-black font-mono text-indigo-700">0.00 M€</span>
-              <span id="adv-agg-delta-new" class="text-[10px] font-bold text-slate-500 block">(-0.00 M€)</span>
-            </div>
-          </div>
-        </div>
-
         <!-- POPULATION RÉELLE (CSV) -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1032,6 +1003,21 @@
           <p id="pop-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
 
           <div id="pop-results" class="hidden space-y-4">
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Orga</label>
+                <select id="pop-filter-orga" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">Tous</option></select>
+              </div>
+              <div>
+                <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Pays</label>
+                <select id="pop-filter-country" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">Tous</option></select>
+              </div>
+              <div>
+                <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Position</label>
+                <select id="pop-filter-position" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">Tous</option></select>
+              </div>
+            </div>
+
             <div class="grid grid-cols-3 gap-3 text-center text-xs">
               <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
                 <span class="text-slate-500 font-semibold block">PEX Actuel (réel)</span>
@@ -1066,14 +1052,15 @@
             <div class="overflow-x-auto custom-scrollbar max-h-72 overflow-y-auto border border-slate-200 rounded-xl">
               <table class="w-full text-xs text-left border-collapse">
                 <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
-                  <tr>
+                  <tr id="pop-table-head">
                     <th class="py-2 px-3">ID</th>
                     <th class="py-2 px-3">Fixe</th>
                     <th class="py-2 px-3">Nominal</th>
                     <th class="py-2 px-3">Espérance actuelle</th>
                     <th class="py-2 px-3">Espérance hybride</th>
                     <th class="py-2 px-3">&Delta; &euro;</th>
-                    <th class="py-2 px-3">Statut</th>
+                    <th class="py-2 px-3">Espérance nouveau</th>
+                    <th class="py-2 px-3">&Delta; &euro; nouveau</th>
                   </tr>
                 </thead>
                 <tbody id="pop-table-body" class="divide-y divide-slate-100 font-mono">
@@ -1317,19 +1304,17 @@
       updateIndividualRep();
 
       // 4. Update Segments Table
-      const avgOldVarPerRep = (oldTargetPEX_M * 1_000_000) / state.headcount;
-      const avgNewVarPerRep = (newTargetPEX_M * 1_000_000) / state.headcount;
-      updateSegmentsTable(avgOldVarPerRep, avgNewVarPerRep);
+      const effectiveHeadcount = realAgg ? realAgg.count : state.headcount;
+      const avgOldVarPerRep = (oldTargetPEX_M * 1_000_000) / effectiveHeadcount;
+      const avgNewVarPerRep = (newTargetPEX_M * 1_000_000) / effectiveHeadcount;
+      updateSegmentsTable(avgOldVarPerRep, avgNewVarPerRep, effectiveHeadcount);
 
       // 5. Update Chart with auto-adapting Y scale
       updateChartData();
 
       // 6. Textes dynamiques
-      const muC = getCalibratedAchievement(state.muInit);
       document.getElementById('legend-mu').innerHTML = '&mu; = ' + state.muInit.toFixed(0) + '%';
       document.getElementById('segments-sigma').innerHTML = '&sigma; = ' + state.sigmaInit.toFixed(0) + '%';
-      document.getElementById('agg-nominal').innerHTML = state.oldVarShare.toFixed(0) + '% &rarr; ' + state.newVarShare.toFixed(0) + '%';
-      document.getElementById('agg-mu').innerHTML = muC.toFixed(0) + '%';
       document.getElementById('footer-sigma').innerHTML = state.sigmaInit.toFixed(0) + '%';
       document.getElementById('footer-pex').innerHTML = state.currentPEX.toFixed(1) + ' M€';
 
@@ -1420,9 +1405,10 @@
     }
 
     // Population Segments Table breakdown
-    function updateSegmentsTable(avgOldVarPerRep, avgNewVarPerRep) {
+    function updateSegmentsTable(avgOldVarPerRep, avgNewVarPerRep, effectiveHeadcount) {
       const muCalibrated = getCalibratedAchievement(state.muInit);
       const sigmaCalibrated = state.sigmaInit; // Fixed sigma
+      const totalHeadcount = effectiveHeadcount || state.headcount;
 
       // Define segments
       const segments = [
@@ -1455,7 +1441,7 @@
         const weightedNew = acc[si].n;
 
         const popPct = Math.min(100, Math.max(0, segDensity * 100));
-        const headCountInSeg = Math.round((popPct / 100) * state.headcount);
+        const headCountInSeg = Math.round((popPct / 100) * totalHeadcount);
         const avgOldPayout = segDensity > 0 ? (weightedOld / segDensity) : 0;
         const avgNewPayout = segDensity > 0 ? (weightedNew / segDensity) : 0;
 
@@ -2040,27 +2026,6 @@
       advChartInstance.data.datasets[5].data = stdVals;
       advChartInstance.update();
 
-      // Aggregate mass impact (average nominal oldVarShare% of the reference fixed salary)
-      const oldExp = calculateExpectedPayout(false);
-      const oldTargetPEX_M = oldExp > 0 ? state.currentPEX / (oldExp / 100) : 0;
-      const avgOldNomE = advState.fixedSalary * state.oldVarShare / 100;
-      const rAvg = state.oldVarShare > 0 ? state.newVarShare / state.oldVarShare : 1;
-      const mu = getCalibratedAchievement(state.muInit), sigma = state.sigmaInit;
-      const ctxAvg = advNominals(avgOldNomE, advState.fixedSalary);
-      const Ehyb = Engine.integrate(x => Engine.hybridE(x, ctxAvg) / ctxAvg.oldNomE * 100, mu, sigma);
-      const pexHyb = oldTargetPEX_M * Ehyb / 100;
-      const pexOld = state.currentPEX;
-      const pexNew = oldTargetPEX_M * calculateExpectedPayout(true) * rAvg / 100;
-
-      document.getElementById('adv-agg-old').innerText = pexOld.toFixed(2) + ' M€';
-      document.getElementById('adv-agg-hyb').innerText = pexHyb.toFixed(2) + ' M€';
-      document.getElementById('adv-agg-new').innerText = pexNew.toFixed(2) + ' M€';
-      const aggDelta = document.getElementById('adv-agg-delta');
-      aggDelta.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + (pexHyb - pexOld).toFixed(2) + ' M€';
-      aggDelta.className = 'text-[10px] font-bold block ' + (pexHyb <= pexOld ? 'text-emerald-600' : 'text-rose-600');
-      const aggDeltaNew = document.getElementById('adv-agg-delta-new');
-      aggDeltaNew.innerText = (pexNew - pexOld >= 0 ? '+' : '') + (pexNew - pexOld).toFixed(2) + ' M€';
-
       // Real population (CSV) — recompute with current curve parameters
       refreshPopulation();
     }
@@ -2093,12 +2058,48 @@
 
     let realAgg = null; // agrégats réels (€) quand une population est chargée
 
+    let popFilters = { orga: '', country: '', position: '' };
+
+    const escapeHtmlStr = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
+
+    // Repeuple les options des filtres depuis la population chargée,
+    // en conservant la sélection si elle existe encore (sinon « Tous »).
+    function populatePopFilters() {
+      [['orga', 'pop-filter-orga'], ['country', 'pop-filter-country'], ['position', 'pop-filter-position']].forEach(([key, id]) => {
+        const sel = document.getElementById(id);
+        const vals = [...new Set(advPopulation.map(r => String(r[key] || '').trim()).filter(Boolean))].sort();
+        if (vals.indexOf(popFilters[key]) === -1) popFilters[key] = '';
+        sel.innerHTML = '<option value="">Tous</option>' + vals.map(v => '<option value="' + escapeHtmlStr(v) + '">' + escapeHtmlStr(v) + '</option>').join('');
+        sel.value = popFilters[key];
+      });
+    }
+
+    function filteredPopulation() {
+      return advPopulation.filter(r =>
+        (!popFilters.orga || String(r.orga || '').trim() === popFilters.orga) &&
+        (!popFilters.country || String(r.country || '').trim() === popFilters.country) &&
+        (!popFilters.position || String(r.position || '').trim() === popFilters.position));
+    }
+
+    function onPopFilterChange() {
+      popFilters.orga = document.getElementById('pop-filter-orga').value || '';
+      popFilters.country = document.getElementById('pop-filter-country').value || '';
+      popFilters.position = document.getElementById('pop-filter-position').value || '';
+      refreshPopulation();
+    }
+
     function refreshPopulation() {
       const has = advPopulation.length > 0;
       document.getElementById('pop-results').classList.toggle('hidden', !has);
       document.getElementById('pop-clear-btn').classList.toggle('hidden', !has);
       document.getElementById('pop-input-zone').classList.toggle('hidden', has);
       if (!has) { realAgg = null; return; }
+
+      populatePopFilters();
+      const population = filteredPopulation();
+      if (popFilters.orga || popFilters.country || popFilters.position) {
+        document.getElementById('pop-status').innerText = advPopulation.length + ' chargé(s), ' + population.length + ' affiché(s)';
+      }
 
       // Deux distributions : historique (schéma actuel) et calibrée (hausse des objectifs)
       const mu0 = state.muInit;
@@ -2113,7 +2114,7 @@
       let pexOld = 0, pexHyb = 0, pexNew = 0, stdOld = 0, stdNew = 0, targetOld = 0, targetNew = 0;
       let losers = 0, worstLoss = 0, lossSum = 0;
       const rows = [];
-      advPopulation.forEach(rep => {
+      population.forEach(rep => {
         // Vue standard : plancher 20% du fixe du rep, courbe à paliers
         const newNomStd = Math.max(rep.fixed * state.newVarShare / 100, rep.nominal);
         const nomAdv = advNominals(rep.nominal, rep.fixed);
@@ -2125,12 +2126,11 @@
         stdNew += eStdNew; targetOld += rep.nominal; targetNew += newNomStd;
         pexHyb += eHyb; pexNew += eNewFull;
         const delta = eHyb - eStdOld;
-        const isGF = Math.abs(nomAdv.newNomE - rep.nominal) < 0.005 && nomAdv.val200E <= 2 * nomAdv.newNomE + 0.01;
         if (delta < -0.5) { losers++; worstLoss = Math.min(worstLoss, delta); lossSum += delta; }
-        rows.push({ rep, eOld: eStdOld, eHyb, delta, isGF });
+        rows.push({ rep, eOld: eStdOld, eHyb, delta, eNew: eNewFull, deltaNew: eNewFull - eStdOld });
       });
 
-      realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew };
+      realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew, count: population.length };
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
       const fmtE = v => Math.round(v).toLocaleString('fr-FR') + ' €';
@@ -2141,7 +2141,7 @@
       pd.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + ((pexHyb - pexOld) / 1e6).toFixed(2) + ' M€ vs actuel';
       pd.className = 'text-[10px] font-bold block ' + (pexHyb <= pexOld ? 'text-emerald-600' : 'text-rose-600');
 
-      document.getElementById('pop-risk-count').innerText = losers + ' / ' + advPopulation.length;
+      document.getElementById('pop-risk-count').innerText = losers + ' / ' + population.length;
       document.getElementById('pop-risk-max').innerText = losers ? fmtE(worstLoss) : '—';
       document.getElementById('pop-risk-avg').innerText = losers ? fmtE(lossSum / losers) : '—';
 
@@ -2149,17 +2149,17 @@
       rows.sort((a, b) => a.delta - b.delta);
       const tbody = document.getElementById('pop-table-body');
       tbody.innerHTML = rows.map(r => {
-        const statut = r.isGF ? '<span class="text-slate-400">Acquis préservé</span>'
-          : r.delta >= 0 ? '<span class="text-emerald-600 font-bold">Gagnant</span>'
-          : '<span class="text-rose-600 font-bold">Perdant</span>';
+        const deltaCls = r.delta > 20 ? 'text-emerald-600' : r.delta < -20 ? 'text-rose-600' : 'text-slate-400';
+        const deltaNewCls = r.deltaNew > 20 ? 'text-emerald-600' : r.deltaNew < -20 ? 'text-rose-600' : 'text-slate-400';
         return '<tr class="hover:bg-slate-50/80">' +
           '<td class="py-1.5 px-3 text-slate-500">' + escapeHtml(r.rep.id) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.fixed) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.nominal) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-500">' + fmtE(r.eOld) + '</td>' +
           '<td class="py-1.5 px-3 font-bold text-orange-700">' + fmtE(r.eHyb) + '</td>' +
-          '<td class="py-1.5 px-3 font-bold ' + (r.delta >= 0 ? 'text-emerald-600' : 'text-rose-600') + '">' + (r.delta >= 0 ? '+' : '') + fmtE(r.delta) + '</td>' +
-          '<td class="py-1.5 px-3 font-sans">' + statut + '</td></tr>';
+          '<td class="py-1.5 px-3 font-bold ' + deltaCls + '">' + (r.delta > 0 ? '+' : '') + fmtE(r.delta) + '</td>' +
+          '<td class="py-1.5 px-3 font-bold text-indigo-700">' + fmtE(r.eNew) + '</td>' +
+          '<td class="py-1.5 px-3 font-bold ' + deltaNewCls + '">' + (r.deltaNew > 0 ? '+' : '') + fmtE(r.deltaNew) + '</td></tr>';
       }).join('');
     }
 

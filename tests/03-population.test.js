@@ -1,7 +1,7 @@
 'use strict';
 /** Population réelle : chargement Sheet, calculs par rep, PEX réels, échappement. */
 module.exports = function suite(__h) {
-  const { check, els, mock } = __h;
+  const { check, els, mock, assertClose, htmlSrc } = __h;
   const S = advState;
   setView('advanced');
   S.oldNominalE = 5000; S.t1 = 90; S.t2 = 100; S.zeroThreshold = 0; S.min100E = 0; S.min200E = 0;
@@ -39,8 +39,45 @@ module.exports = function suite(__h) {
   check('plancher par rep: A relevé à 10000', advNominals(5000, 50000).newNomE === 10000);
   check('plancher par rep: B préservé à 14000', advNominals(14000, 60000).newNomE === 14000);
   const tbl = els['pop-table-body'].innerHTML;
-  check('statut acquis préservé présent', tbl.indexOf('Acquis pr') > -1);
-  check('statut gagnant présent', tbl.indexOf('Gagnant') > -1);
+  check('plus de colonne statut', tbl.indexOf('Gagnant') === -1 && tbl.indexOf('Acquis pr') === -1);
+  check('delta > +20 € en vert', tbl.indexOf('text-emerald-600') > -1);
+  check('delta neutre (±20 €) en gris', tbl.indexOf('text-slate-400') > -1);
+
+  // ===== Delta ≤ −20 € en rouge =====
+  state.targetIncrease = 30;
+  refreshPopulation();
+  check('delta ≤ −20 € en rouge', els['pop-table-body'].innerHTML.indexOf('text-rose-600') > -1);
+  state.targetIncrease = 0;
+
+  // ===== Filtres orga / pays / position =====
+  advPopulation = [
+    { id: 'F1', orga: 'FR', country: 'France', position: 'AE', fixed: 50000, nominal: 5000 },
+    { id: 'F2', orga: 'FR', country: 'Espagne', position: 'AE', fixed: 50000, nominal: 5000 },
+    { id: 'F3', orga: 'DE', country: 'France', position: 'KAM', fixed: 50000, nominal: 5000 }
+  ];
+  popFilters.orga = ''; popFilters.country = ''; popFilters.position = '';
+  refreshPopulation();
+  check('options orga peuplées (DE, FR)', els['pop-filter-orga'].innerHTML.indexOf('>DE<') > -1 && els['pop-filter-orga'].innerHTML.indexOf('>FR<') > -1);
+  const pexAllF = realAgg.pexHyb;
+  popFilters.orga = 'DE';
+  refreshPopulation();
+  check('filtre orga: 1 ligne affichée', els['pop-table-body'].innerHTML.split('<tr').length - 1 === 1);
+  assertClose('filtre orga: agrégats réduits au tiers', realAgg.pexHyb, pexAllF / 3, 1);
+  popFilters.orga = 'FR'; popFilters.country = 'Espagne';
+  refreshPopulation();
+  check('filtres cumulés (ET): F2 seul', els['pop-table-body'].innerHTML.indexOf('F2') > -1 && els['pop-table-body'].innerHTML.indexOf('F1') === -1);
+  popFilters.orga = ''; popFilters.country = ''; popFilters.position = 'KAM';
+  refreshPopulation();
+  check('filtre position: F3 seul', els['pop-table-body'].innerHTML.indexOf('F3') > -1 && els['pop-table-body'].innerHTML.indexOf('F2') === -1);
+  check('statut affiche chargés / affichés', els['pop-status'].innerText.indexOf('1 affiché') > -1);
+  els['pop-filter-orga'].value = 'FR'; els['pop-filter-country'].value = ''; els['pop-filter-position'].value = '';
+  onPopFilterChange();
+  check('onPopFilterChange lit les selects', popFilters.orga === 'FR' && els['pop-table-body'].innerHTML.indexOf('F1') > -1 && els['pop-table-body'].innerHTML.indexOf('F3') === -1);
+  els['pop-filter-orga'].value = 'XX';
+  onPopFilterChange();
+  check('filtre obsolète réinitialisé à Tous', popFilters.orga === '' && els['pop-filter-orga'].value === '');
+  popFilters.orga = ''; popFilters.country = ''; popFilters.position = '';
+  refreshPopulation();
 
   // ===== Le slider fixe ne change PAS le PEX réel =====
   refreshPopulation();
@@ -76,6 +113,31 @@ module.exports = function suite(__h) {
   refreshPopulation();
   const tblHtml = els['pop-table-body'].innerHTML;
   check('ID échappé', tblHtml.indexOf('&lt;b&gt;&amp;x') > -1 && tblHtml.indexOf('<b>') === -1);
+
+  // ===== Espérance nouveau + Δ nouveau dans le tableau =====
+  state.targetIncrease = 30;
+  advPopulation = [
+    { id: 'A', fixed: 50000, nominal: 5000 },
+    { id: 'B', fixed: 60000, nominal: 14000 }
+  ];
+  refreshPopulation();
+  check('entête contient Espérance nouveau', /<tr id="pop-table-head">[\s\S]*?Espérance nouveau/.test(htmlSrc));
+  const tblNew = els['pop-table-body'].innerHTML;
+  check('8 cellules par ligne (2 nouvelles colonnes)', tblNew.split('<td').length - 1 === 16);
+  const muCt = getCalibratedAchievement(state.muInit);
+  const ptsCt = Engine.densityPoints(muCt, state.sigmaInit);
+  let expNewA = 0, expNewTot = 0;
+  advPopulation.forEach(rep => {
+    const na = advNominals(rep.nominal, rep.fixed);
+    let s = 0;
+    for (const { x, w } of ptsCt) s += Engine.newBaseE(x, na) * w;
+    expNewTot += s;
+    if (rep.id === 'A') expNewA = s;
+  });
+  check('cellule espérance nouveau du rep A affichée', tblNew.indexOf(Math.round(expNewA).toLocaleString('fr-FR')) > -1);
+  assertClose('somme espérances nouveau ≈ agrégat pexNew', expNewTot, realAgg.pexNew, 1);
+  check('Δ nouveau ≤ −20 € en rouge', tblNew.indexOf('text-rose-600') > -1);
+  state.targetIncrease = 0;
 
   // ===== Réinitialisation → modèle moyen =====
   advPopulation = [];
