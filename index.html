@@ -1772,7 +1772,7 @@
     // Value at 200% = max(2 × new nominal, € minimum entered)
     // Base new curve: linear 0→100% up to the new nominal, then linear 100%→200%.
     // The transition passage blends pointwise (linearly) from the old curve to the new curve.
-    function advNominals(oldNomE, fixedE) {
+    function advNominals(oldNomE, fixedE = advState.fixedSalary) {
       const newNomE = Math.max(fixedE * state.newVarShare / 100, advState.min100E, oldNomE);
       const val200E = Math.max(2 * newNomE, advState.min200E);
       return { oldNomE, newNomE, val200E };
@@ -1788,7 +1788,7 @@
       return nom.val200E;
     }
 
-    function evalHybridE(x, oldNomE, fixedE) {
+    function evalHybridE(x, oldNomE, fixedE = advState.fixedSalary) {
       const n = advNominals(oldNomE, fixedE);
       if (x < advState.zeroThreshold) return 0;
       if (x < advState.t1) return evalOldE(x, n.oldNomE);

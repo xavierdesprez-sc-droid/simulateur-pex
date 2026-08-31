@@ -74,9 +74,22 @@ Deux modes possibles (`Code.gs` gère les deux) :
 Ouvert hors Apps Script (fichier local), le bouton de chargement affiche un message d'information —
 le reste de l'outil fonctionne normalement.
 
+## Tests
+
+```
+node tests/run.js
+```
+
+75 vérifications en 4 suites (DOM simulé, aucune dépendance) :
+
+- `01-model` : courbes (paliers, base linéaire, hybride), blend linéaire, planchers €, seuil 0,
+  continuité aux frontières, égalité avec modèle de référence (8 configs × 201 points)
+- `02-advanced-ui` : scénario standard superposable, sliders synchronisés, calibrage unifié
+- `03-population` : chargement Sheet mocké, plancher 20% par rep, hausse d'objectifs,
+  planchers €, échappement HTML, retour au modèle moyen
+- `04-standard-ui` : textes dynamiques, badges archétype, modèle moyen, reset
+
 ## Technique
 
 - `index.html` (client) + `Code.gs` (backend Apps Script) — Chart.js, Tailwind CSS, KaTeX, Lucide (CDN)
 - Historique git complet ; tags : `v1-sans-transition`, `v2-avec-transition`
-- Moteur de tests : harnais Node avec DOM simulé (suites de 1600+ vérifications :
-  continuité aux frontières, égalité avec modèles de référence)
