@@ -1756,7 +1756,7 @@
 
     // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
     let advChartInstance = null;
-    const advState = { x: 110, targetIncrease: 0, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
+    const advState = { x: 110, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
 
     // Hybrid scheme core. All amounts in €, expressed back in % of the rep's OLD nominal.
     // New nominal = max(target share (20%), € minimum entered, old nominal)
@@ -1927,12 +1927,11 @@
     function updateAdvancedView() {
       if (!advChartInstance) return;
       const x = advState.x;
-      const targetIncrease = advState.targetIncrease;
       const zero = advState.zeroThreshold, t1 = advState.t1, t2 = advState.t2;
       const oldNomE = advState.oldNominalE;
 
-      // Calibrated achievement: objectives rise → achievement drops (absolute pp shift)
-      const calibrated = Math.max(0, x - targetIncrease);
+      // Calibrated achievement: same formula as the aggregate (targets rise + overperformance)
+      const calibrated = Math.max(0, getCalibratedAchievement(x));
 
       const nom = advNominals(oldNomE, advState.fixedSalary);
       const r = nom.oldNomE > 0 ? nom.newNomE / nom.oldNomE : 1;
@@ -1947,7 +1946,7 @@
       // Badges & nominaux
       document.getElementById('adv-val-achieve-before').innerText = x + '%';
       document.getElementById('adv-val-achieve-after').innerText = calibrated.toFixed(1) + '%';
-      document.getElementById('adv-val-target-increase').innerText = '+' + targetIncrease.toFixed(1) + '%';
+      syncTargetSliders();
       document.getElementById('adv-val-zero').innerText = zero + '%';
       document.getElementById('adv-val-t1').innerText = t1 + '%';
       document.getElementById('adv-val-t2').innerText = t2 + '%';
@@ -2146,6 +2145,19 @@
         : 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 transition-all';
     }
 
+    function syncTargetSliders() {
+      const v = state.targetIncrease;
+      const s1 = document.getElementById('slider-target-increase');
+      const s2 = document.getElementById('adv-target-increase');
+      if (s1) s1.value = v;
+      if (s2) s2.value = v;
+      const label = (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+      const l1 = document.getElementById('val-target-increase');
+      const l2 = document.getElementById('adv-val-target-increase');
+      if (l1) l1.innerText = label;
+      if (l2) l2.innerText = label;
+    }
+
     function setView(view) {
       const isAdv = view === 'advanced';
       document.getElementById('view-standard').classList.toggle('hidden', isAdv);
@@ -2224,6 +2236,8 @@
     function syncInputsFromState() {
       document.getElementById('slider-target-increase').value = state.targetIncrease;
       document.getElementById('val-target-increase').innerText = (state.targetIncrease >= 0 ? '+' : '') + state.targetIncrease.toFixed(1) + '%';
+      document.getElementById('adv-target-increase').value = state.targetIncrease;
+      document.getElementById('adv-val-target-increase').innerText = (state.targetIncrease >= 0 ? '+' : '') + state.targetIncrease.toFixed(1) + '%';
       
       document.getElementById('slider-overperf').value = state.overperf;
       document.getElementById('val-overperf').innerText = (state.overperf >= 0 ? '+' : '') + state.overperf.toFixed(1) + '%';
@@ -2248,7 +2262,7 @@
       // Slider Target Increase
       document.getElementById('slider-target-increase').addEventListener('input', (e) => {
         state.targetIncrease = parseFloat(e.target.value);
-        document.getElementById('val-target-increase').innerText = '+' + state.targetIncrease.toFixed(1) + '%';
+        syncTargetSliders();
         updateDashboard();
       });
 
@@ -2346,7 +2360,9 @@
       });
 
       document.getElementById('adv-target-increase').addEventListener('input', (e) => {
-        advState.targetIncrease = parseFloat(e.target.value);
+        state.targetIncrease = parseFloat(e.target.value);
+        syncTargetSliders();
+        updateDashboard();
         updateAdvancedView();
       });
 
