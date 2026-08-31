@@ -1140,6 +1140,71 @@
       }
     }
 
+    // ============================================================
+    // ===== MOTEUR DE CALCUL (pur — aucune référence DOM ici) ====
+    // ============================================================
+    const Engine = {
+      // Densité normalisée : [{x, w}] avec Σw = 1 sur la fenêtre ±4.5σ
+      densityPoints(mu, sigma, step = 0.5) {
+        const minX = Math.max(0, mu - 4.5 * sigma), maxX = mu + 4.5 * sigma;
+        const pts = []; let total = 0;
+        for (let x = minX; x <= maxX; x += step) { const d = normalPdf(x, mu, sigma) * step; pts.push({ x, d }); total += d; }
+        return pts.map(p => ({ x: p.x, w: p.d / total }));
+      },
+
+      // E[fn(X)] avec X ~ N(mu, sigma) tronquée à ±4.5σ
+      integrate(fn, mu, sigma, step = 0.5) {
+        let acc = 0;
+        for (const { x, w } of this.densityPoints(mu, sigma, step)) acc += fn(x) * w;
+        return acc;
+      },
+
+      // Contexte de courbe d'un commercial (tout en €)
+      hybridContext(oldNomE, fixedE, targetSharePct, min100E, min200E, zero, t1, t2, cap) {
+        const newNomE = Math.max(fixedE * targetSharePct / 100, min100E, oldNomE);
+        const val200E = Math.max(2 * newNomE, min200E);
+        return { oldNomE, newNomE, val200E, zero, t1, t2, cap };
+      },
+
+      oldE(x, ctx) { return Math.min(x, ctx.cap) / 100 * ctx.oldNomE; },
+
+      newBaseE(x, ctx) {
+        if (x <= 100) return x / 100 * ctx.newNomE;
+        if (x <= 200) return ctx.newNomE + (x - 100) / 100 * (ctx.val200E - ctx.newNomE);
+        return ctx.val200E;
+      },
+
+      hybridE(x, ctx) {
+        if (x < ctx.zero) return 0;
+        if (x < ctx.t1) return Engine.oldE(x, ctx);
+        if (x <= ctx.t2) {
+          if (ctx.t2 <= ctx.t1) return Engine.newBaseE(x, ctx);
+          const t = (x - ctx.t1) / (ctx.t2 - ctx.t1);
+          const start = Engine.oldE(ctx.t1, ctx);
+          return start + t * (Engine.newBaseE(ctx.t2, ctx) - start);
+        }
+        return Engine.newBaseE(x, ctx);
+      },
+
+      // Courbe à paliers (vue standard) — pilotée par la table, sans hypothèse cachée :
+      // le palier d'atteinte 0 ancre le payout "sous le seuil" (le seuil = 2e palier)
+      paliers(x, breakpoints, cap) {
+        const bps = [...breakpoints].sort((a, b) => a.achievement - b.achievement);
+        const belowPayout = bps[0].achievement === 0 ? bps[0].payout : 0;
+        const threshold = bps.length > 1 ? bps[1].achievement : bps[0].achievement;
+        if (x < threshold) return Math.min(belowPayout, cap);
+        for (let i = 1; i < bps.length - 1; i++) {
+          const p1 = bps[i], p2 = bps[i + 1];
+          if (x >= p1.achievement && x <= p2.achievement) {
+            if (p1.achievement === p2.achievement) return Math.min(p2.payout, cap);
+            const t = (x - p1.achievement) / (p2.achievement - p1.achievement);
+            return Math.min(p1.payout + t * (p2.payout - p1.payout), cap);
+          }
+        }
+        return Math.min(bps[bps.length - 1].payout, cap);
+      }
+    };
+
     // Normal probability density function with constant sigma
     function normalPdf(x, mu, sigma) {
       const coeff = 1 / (sigma * Math.sqrt(2 * Math.PI));
@@ -1153,32 +1218,9 @@
       return Math.min(achievement, state.payoutCap);
     }
 
-    // Evaluate new piecewise linear payout curve
+    // Evaluate new piecewise linear payout curve (délégué au moteur)
     function evalNewPayout(achievement) {
-      if (achievement <= 0) return 0;
-      const bp = [...state.breakpoints].sort((a, b) => a.achievement - b.achievement);
-      
-      // If below the first positive threshold
-      if (achievement < bp[1].achievement) {
-        // Below 50% threshold: 0% payout
-        return 0;
-      }
-
-      // Find segment
-      for (let i = 0; i < bp.length - 1; i++) {
-        const p1 = bp[i];
-        const p2 = bp[i + 1];
-        if (achievement >= p1.achievement && achievement <= p2.achievement) {
-          if (p1.achievement === p2.achievement) return p2.payout;
-          const ratio = (achievement - p1.achievement) / (p2.achievement - p1.achievement);
-          const val = p1.payout + ratio * (p2.payout - p1.payout);
-          return Math.min(val, state.payoutCap);
-        }
-      }
-
-      // Beyond last breakpoint -> capped
-      const last = bp[bp.length - 1];
-      return Math.min(last.payout, state.payoutCap);
+      return Engine.paliers(achievement, state.breakpoints, state.payoutCap);
     }
 
     // Calculate calibrated achievement: ABSOLUTE additive shift in percentage points.
@@ -1194,26 +1236,13 @@
       return Math.max(state.newVarShare, currentBonusPct);
     }
 
-    // Numerical integration of Expected Payout % (with constant sigma)
+    // Numerical integration of Expected Payout % (délégué au moteur)
     function calculateExpectedPayout(isNewCurve = true) {
       const mu = isNewCurve ? getCalibratedAchievement(state.muInit) : state.muInit;
-      const sigma = state.sigmaInit; // Fixed sigma so distribution shape & height are invariant
-
-      const step = 0.5;
-      const minX = Math.max(0, mu - 4.5 * sigma);
-      const maxX = mu + 4.5 * sigma;
-
-      let totalWeightedPayout = 0;
-      let totalDensity = 0;
-
-      for (let x = minX; x <= maxX; x += step) {
-        const density = normalPdf(x, mu, sigma);
-        const payout = isNewCurve ? evalNewPayout(x) : evalOldPayout(x);
-        totalWeightedPayout += payout * density * step;
-        totalDensity += density * step;
-      }
-
-      return totalDensity > 0 ? (totalWeightedPayout / totalDensity) : 0;
+      const sigma = state.sigmaInit;
+      return isNewCurve
+        ? Engine.integrate(x => Engine.paliers(x, state.breakpoints, state.payoutCap) / 100, mu, sigma) * 100
+        : Engine.integrate(x => Math.min(x, state.payoutCap) / 100, mu, sigma) * 100;
     }
 
     // Update entire dashboard
@@ -1407,19 +1436,23 @@
       const tbody = document.getElementById('segments-table-body');
       tbody.innerHTML = '';
 
-      segments.forEach(seg => {
-        // Integrate normal pdf over segment
-        const step = 0.5;
-        let segDensity = 0;
-        let weightedOld = 0;
-        let weightedNew = 0;
-
-        for (let x = seg.min; x < seg.max; x += step) {
-          const d = normalPdf(x, muCalibrated, sigmaCalibrated) * step;
-          segDensity += d;
-          weightedOld += evalOldPayout(x) * d;
-          weightedNew += evalNewPayout(x) * d;
+      // Une seule passe de densité, accumulée par bande
+      const acc = segments.map(() => ({ d: 0, o: 0, n: 0 }));
+      for (const { x, w } of Engine.densityPoints(muCalibrated, sigmaCalibrated)) {
+        for (let i = 0; i < segments.length; i++) {
+          if (x >= segments[i].min && x < segments[i].max) {
+            acc[i].d += w;
+            acc[i].o += evalOldPayout(x) * w;
+            acc[i].n += evalNewPayout(x) * w;
+            break;
+          }
         }
+      }
+
+      segments.forEach((seg, si) => {
+        const segDensity = acc[si].d;
+        const weightedOld = acc[si].o;
+        const weightedNew = acc[si].n;
 
         const popPct = Math.min(100, Math.max(0, segDensity * 100));
         const headCountInSeg = Math.round((popPct / 100) * state.headcount);
@@ -1773,9 +1806,8 @@
     // Base new curve: linear 0→100% up to the new nominal, then linear 100%→200%.
     // The transition passage blends pointwise (linearly) from the old curve to the new curve.
     function advNominals(oldNomE, fixedE = advState.fixedSalary) {
-      const newNomE = Math.max(fixedE * state.newVarShare / 100, advState.min100E, oldNomE);
-      const val200E = Math.max(2 * newNomE, advState.min200E);
-      return { oldNomE, newNomE, val200E };
+      return Engine.hybridContext(oldNomE, fixedE, state.newVarShare, advState.min100E, advState.min200E,
+        advState.zeroThreshold, advState.t1, advState.t2, state.payoutCap);
     }
 
     function evalOldE(x, oldNomE) {
@@ -2014,13 +2046,8 @@
       const avgOldNomE = advState.fixedSalary * state.oldVarShare / 100;
       const rAvg = state.oldVarShare > 0 ? state.newVarShare / state.oldVarShare : 1;
       const mu = getCalibratedAchievement(state.muInit), sigma = state.sigmaInit;
-      let totW = 0, totD = 0;
-      for (let v = Math.max(0, mu - 4.5 * sigma); v <= mu + 4.5 * sigma; v += 0.5) {
-        const d = normalPdf(v, mu, sigma) * 0.5;
-        totD += d;
-        totW += evalHybridPayoutOldNominal(v, avgOldNomE, advState.fixedSalary) * d;
-      }
-      const Ehyb = totD > 0 ? totW / totD : 0;
+      const ctxAvg = advNominals(avgOldNomE, advState.fixedSalary);
+      const Ehyb = Engine.integrate(x => Engine.hybridE(x, ctxAvg) / ctxAvg.oldNomE * 100, mu, sigma);
       const pexHyb = oldTargetPEX_M * Ehyb / 100;
       const pexOld = state.currentPEX;
       const pexNew = oldTargetPEX_M * calculateExpectedPayout(true) * rAvg / 100;
@@ -2076,12 +2103,12 @@
       // Deux distributions : historique (schéma actuel) et calibrée (hausse des objectifs)
       const mu0 = state.muInit;
       const muC = getCalibratedAchievement(state.muInit);
-      const sigma = state.sigmaInit, step = 0.5;
-      const minX = Math.max(0, mu0 - 4.5 * sigma), maxX0 = mu0 + 4.5 * sigma;
-      const minXc = Math.max(0, muC - 4.5 * sigma), maxXc = muC + 4.5 * sigma;
-      const d0 = [], dc = []; let w0 = 0, wc = 0;
-      for (let x = minX; x <= maxX0; x += step) { const d = normalPdf(x, mu0, sigma) * step; d0.push(d); w0 += d; }
-      for (let x = minXc; x <= maxXc; x += step) { const d = normalPdf(x, muC, sigma) * step; dc.push(d); wc += d; }
+      const sigma = state.sigmaInit;
+      // Densités pré-calculées une fois pour toutes les reps
+      const pts0 = Engine.densityPoints(mu0, sigma);
+      const ptsC = Engine.densityPoints(muC, sigma);
+      const int0 = fn => { let a = 0; for (const { x, w } of pts0) a += fn(x) * w; return a; };
+      const intC = fn => { let a = 0; for (const { x, w } of ptsC) a += fn(x) * w; return a; };
 
       let pexOld = 0, pexHyb = 0, pexNew = 0, stdOld = 0, stdNew = 0, targetOld = 0, targetNew = 0;
       let losers = 0, worstLoss = 0, lossSum = 0;
@@ -2090,19 +2117,10 @@
         // Vue standard : plancher 20% du fixe du rep, courbe à paliers
         const newNomStd = Math.max(rep.fixed * state.newVarShare / 100, rep.nominal);
         const nomAdv = advNominals(rep.nominal, rep.fixed);
-        let eStdOld = 0, eStdNew = 0, eHyb = 0, eNewFull = 0;
-        let i0 = 0;
-        for (let x = minX; x <= maxX0; x += step, i0++) {
-          eStdOld += Math.min(x, state.payoutCap) / 100 * rep.nominal * d0[i0];
-        }
-        eStdOld /= w0;
-        let ic = 0;
-        for (let x = minXc; x <= maxXc; x += step, ic++) {
-          const w = dc[ic] / wc;
-          eStdNew += evalNewPayout(x) / 100 * newNomStd * w;
-          eHyb += evalHybridE(x, rep.nominal, rep.fixed) * w;
-          eNewFull += evalNewBaseE(x, nomAdv) * w;
-        }
+        const eStdOld = int0(x => Engine.oldE(x, { oldNomE: rep.nominal, cap: state.payoutCap }));
+        const eStdNew = intC(x => Engine.paliers(x, state.breakpoints, state.payoutCap) / 100 * newNomStd);
+        const eHyb = intC(x => Engine.hybridE(x, nomAdv));
+        const eNewFull = intC(x => Engine.newBaseE(x, nomAdv));
         pexOld += eStdOld; stdOld += eStdOld;
         stdNew += eStdNew; targetOld += rep.nominal; targetNew += newNomStd;
         pexHyb += eHyb; pexNew += eNewFull;

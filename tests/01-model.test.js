@@ -21,6 +21,13 @@ module.exports = function suite(__h) {
   assertClose('getCalibratedAchievement = mu - hausse + surperf', getCalibratedAchievement(110), 88);
   state.targetIncrease = 0; state.overperf = 0;
 
+  // ===== Moteur : intégration et table de paliers pilotée =====
+  assertClose('Engine.integrate: E[X] ≈ mu', Engine.integrate(x => x, 110, 30), 110, 0.1);
+  const bpEdit = [{ achievement: 0, payout: 20 }, { achievement: 50, payout: 10 }, { achievement: 80, payout: 50 }, { achievement: 100, payout: 100 }, { achievement: 200, payout: 200 }];
+  assertClose('palier 0 édité → payout sous le seuil', Engine.paliers(30, bpEdit, 200), 20);
+  const bpNoZero = [{ achievement: 50, payout: 10 }, { achievement: 80, payout: 50 }, { achievement: 100, payout: 100 }, { achievement: 200, payout: 200 }];
+  assertClose('palier 0 supprimé → 0 sous le seuil', Engine.paliers(30, bpNoZero, 200), 0);
+
   // ===== Courbe hybride : zones =====
   // (ancien nominal 5000€, nouveau 10000€ → r=2)
   assertClose('sous T1 : ancien schéma', H(85, 5000), 85);
