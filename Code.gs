@@ -45,16 +45,16 @@ function doGet() {
 function getPopulation() {
   const sh = getDataSheet();
   const lastRow = sh.getLastRow();
-  if (lastRow <= HEADER_ROW) return [];
+  if (lastRow <= HEADER_ROW) return { reps: [], ignored: 0 };
   const values = sh.getRange(HEADER_ROW + 1, 1, lastRow - HEADER_ROW, 8).getValues();
-  return values
-    .map((r, i) => ({
-      id: String(r[COL.ID - 1] || 'rep' + (i + 1)),
-      orga: String(r[COL.ORGA - 1] || ''),
-      position: String(r[COL.POSITION - 1] || ''),
-      country: String(r[COL.COUNTRY - 1] || ''),
-      fixed: Number(r[COL.BASE_SALARY - 1]) || 0,
-      nominal: Number(r[COL.AMOUNT - 1]) || 0
-    }))
-    .filter(r => r.fixed > 0 && r.nominal >= 0);
+  const mapped = values.map((r, i) => ({
+    id: String(r[COL.ID - 1] || 'rep' + (i + 1)),
+    orga: String(r[COL.ORGA - 1] || ''),
+    position: String(r[COL.POSITION - 1] || ''),
+    country: String(r[COL.COUNTRY - 1] || ''),
+    fixed: Number(r[COL.BASE_SALARY - 1]) || 0,
+    nominal: Number(r[COL.AMOUNT - 1]) || 0
+  }));
+  const reps = mapped.filter(r => r.fixed > 0 && r.nominal >= 0);
+  return { reps, ignored: mapped.length - reps.length };
 }
