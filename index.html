@@ -355,17 +355,6 @@
               </div>
             </div>
 
-            <!-- Corrélation inter-commerciaux (fourchettes IC 95%) -->
-            <div class="grid grid-cols-2 gap-3 pt-1">
-              <div>
-                <label class="block font-semibold text-slate-700 mb-1">Corrélation Inter-Commerciaux (&rho;)</label>
-                <input type="number" id="input-rho" value="0.3" step="0.05" min="0" max="1" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
-              </div>
-              <div class="flex items-end">
-                <p class="text-[10px] text-slate-400 leading-tight">0 = perf. indépendantes, 1 = aléa de marché commun. Pilote la largeur des IC 95%.</p>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -901,13 +890,6 @@
               <span id="adv-nominal-new" class="font-mono font-bold">10 000 €</span>
             </div>
           </div>
-
-          <!-- Corrélation inter-commerciaux (fourchettes IC 95%) -->
-          <div class="pt-1">
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Corrélation Inter-Commerciaux (&rho;)</label>
-            <input type="number" id="adv-input-rho" value="0.3" step="0.05" min="0" max="1" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500">
-            <p class="text-[10px] text-slate-400 mt-1">0 = perf. indépendantes, 1 = aléa de marché commun. Pilote la largeur des IC 95%.</p>
-          </div>
         </div>
       </div>
 
@@ -1127,7 +1109,6 @@
       oldVarShare: 11,       // % (current average variable share, default 11%)
       newVarShare: 20,       // % (new target variable share, default 20%)
       headcount: 350,        // reps
-      rho: 0.3,              // corrélation inter-commerciaux (0 = indép., 1 = aléa commun)
       payoutCap: 200,        // % max payout
       repInitPerf: 110,      // % individual rep historical perf
       repFixedSalary: 50000, // € individual rep base fixed salary
@@ -1221,54 +1202,6 @@
           }
         }
         return Math.min(bps[bps.length - 1].payout, cap);
-      },
-
-      // ===== Fourchettes IC (facteur commun + aléa individuel indépendant) =====
-      // Modèle : X_i = µ_i + σ_i·(√ρ·Z + √(1−ρ)·ε_i), Z et ε_i ~ N(0,1)
-      // fn(x, i) = valeur € du rep i au taux d'atteinte x (courbes croissantes attendues)
-      // Q_α(Total) ≈ Q_α(Σ f_i(µ_i + σ_i·√ρ·Z)) + z_α·√(Σ Var[f_i(µ_i + σ_i·√(1−ρ)·ε)])
-      // NB : grille z construite inline (densityPoints tronque à x ≥ 0, inutilisable pour z)
-      totalQuantiles(fn, mus, sigmas, rho, alpha = 0.05) {
-        const zCI = 1.959964; // z_{1-α/2} pour α = 0.05
-        const r = Math.sqrt(Math.max(0, Math.min(1, rho)));
-        const s = Math.sqrt(1 - Math.max(0, Math.min(1, rho)));
-        const pts = []; let tot = 0;
-        for (let z = -4.5; z <= 4.5; z += 0.125) { const d = normalPdf(z, 0, 1) * 0.125; pts.push({ x: z, d }); tot += d; }
-        const grid = pts.map(p => ({ x: p.x, w: p.d / tot }));
-
-        // Partie commune : C(z) = Σ f_i(µ_i + σ_i·r·z), CDF par tri des valeurs
-        const common = grid.map(p => {
-          let c = 0;
-          for (let i = 0; i < mus.length; i++) c += fn(mus[i] + sigmas[i] * r * p.x, i);
-          return { v: c, w: p.w };
-        }).sort((a, b) => a.v - b.v);
-        const qCommon = q => {
-          let acc = 0;
-          for (let k = 0; k < common.length; k++) {
-            const next = acc + common[k].w;
-            if (next >= q) {
-              if (k === 0) return common[k].v;
-              const t = (q - acc) / (next - acc); // interpolation entre les 2 points de grille encadrants
-              return common[k - 1].v + t * (common[k].v - common[k - 1].v);
-            }
-            acc = next;
-          }
-          return common[common.length - 1].v;
-        };
-
-        // Partie indépendante : Var[f_i(µ_i + σ_i·s·ε)] cumulée sur les rép
-        let varIdio = 0;
-        for (let i = 0; i < mus.length; i++) {
-          let e1 = 0, e2 = 0;
-          for (const p of grid) {
-            const v = fn(mus[i] + sigmas[i] * s * p.x, i);
-            e1 += v * p.w; e2 += v * v * p.w;
-          }
-          varIdio += Math.max(0, e2 - e1 * e1);
-        }
-        const sdIdio = Math.sqrt(varIdio);
-
-        return { lo: qCommon(alpha / 2) - zCI * sdIdio, hi: qCommon(1 - alpha / 2) + zCI * sdIdio };
       }
     };
 
@@ -2345,8 +2278,6 @@
       document.getElementById('input-base-ca').value = state.baseC2P;
       document.getElementById('input-margin-rate').value = state.marginRate;
       document.getElementById('input-headcount').value = state.headcount;
-      document.getElementById('input-rho').value = state.rho;
-      document.getElementById('adv-input-rho').value = state.rho;
       document.getElementById('input-rep-fixed-salary').value = state.repFixedSalary;
       document.getElementById('slider-rep-bonus-pct').value = state.repCurrentBonusPct;
       document.getElementById('slider-chart-bonus-sync').value = state.repCurrentBonusPct;
@@ -2420,18 +2351,6 @@
       bindNumberInput('input-headcount', 'headcount', 10, 5000, true);
       bindNumberInput('input-payout-cap', 'payoutCap', 100, 500, false);
       bindNumberInput('input-rep-fixed-salary', 'repFixedSalary', 10000, 250000, false);
-
-      // Corrélation inter-commerciaux : les deux inputs restent synchronisés
-      const bindRho = (id, otherId, after) => {
-        document.getElementById(id).addEventListener('input', (e) => {
-          const raw = parseFloat(e.target.value);
-          if (isFinite(raw)) state.rho = Math.min(1, Math.max(0, raw));
-          document.getElementById(otherId).value = state.rho;
-          after();
-        });
-      };
-      bindRho('input-rho', 'adv-input-rho', updateDashboard);
-      bindRho('adv-input-rho', 'input-rho', updateAdvancedView);
 
       // Advanced view controls
       document.getElementById('adv-achievement').addEventListener('input', (e) => {
