@@ -162,6 +162,15 @@ module.exports = function suite(__h) {
   advPopulation = savedPop;
   refreshPopulation();
 
+  // ===== Matrice : rendu DOM et switch =====
+  check('card matrice : 4 cellules rendues', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('text-orange-700') > -1 && els[id].innerHTML.indexOf('text-indigo') > -1));
+  check('effectifs affichés', els['matrix-count-low'].innerText.indexOf('2') > -1 && els['matrix-count-high'].innerText.indexOf('2') > -1);
+  setMatrixMode('deltas');
+  check('switch deltas : cellules en Δ colorés', els['matrix-low-low'].innerHTML.indexOf('text-rose-600') > -1 || els['matrix-low-low'].innerHTML.indexOf('text-emerald-600') > -1);
+  check('switch deltas : bouton actif', els['matrix-mode-deltas'].className.indexOf('text-orange-700') > -1 && els['matrix-mode-levels'].className.indexOf('text-slate-500') > -1);
+  setMatrixMode('levels');
+  check('switch retour niveaux', els['matrix-mode-levels'].className.indexOf('text-orange-700') > -1);
+
   // ===== Réinitialisation → modèle moyen =====
   advPopulation = [];
   refreshPopulation();

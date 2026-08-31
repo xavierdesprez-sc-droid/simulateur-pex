@@ -1067,6 +1067,28 @@
                 </tbody>
               </table>
             </div>
+
+            <div id="matrix-card" class="border border-slate-200 rounded-xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-slate-900 text-sm">Matrice Salaire &times; Performance</h3>
+                <div class="flex gap-1">
+                  <button id="matrix-mode-levels" onclick="setMatrixMode('levels')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-orange-50 text-orange-700 border border-orange-200 transition-all">Espérances</button>
+                  <button id="matrix-mode-deltas" onclick="setMatrixMode('deltas')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">&Delta; vs actuel</button>
+                </div>
+              </div>
+              <div id="matrix-empty" class="hidden text-xs text-slate-400 text-center py-4">Chargez une population pour afficher la matrice.</div>
+              <div id="matrix-grid" class="hidden grid grid-cols-[auto_1fr_1fr] gap-2 text-xs">
+                <div></div>
+                <div class="text-center font-semibold text-slate-500">Low performer<br><span class="text-[10px] font-normal text-slate-400">moitié basse distribution</span></div>
+                <div class="text-center font-semibold text-slate-500">Top performer<br><span class="text-[10px] font-normal text-slate-400">moitié haute distribution</span></div>
+                <div class="self-center font-semibold text-slate-500">Salaire bas<br><span id="matrix-count-low" class="text-[10px] font-normal text-slate-400"></span></div>
+                <div id="matrix-low-low" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
+                <div id="matrix-low-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
+                <div class="self-center font-semibold text-slate-500">Salaire haut<br><span id="matrix-count-high" class="text-[10px] font-normal text-slate-400"></span></div>
+                <div id="matrix-high-low" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
+                <div id="matrix-high-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2162,6 +2184,8 @@
           '<td class="py-1.5 px-3 font-bold text-indigo-700">' + fmtE(r.eNew) + '</td>' +
           '<td class="py-1.5 px-3 font-bold ' + deltaNewCls + '">' + (r.deltaNew > 0 ? '+' : '') + fmtE(r.deltaNew) + '</td></tr>';
       }).join('');
+
+      renderMatrix();
     }
 
     let matrixMode = 'levels';
@@ -2194,6 +2218,49 @@
         out.quadrants[q] = { old: sOld / reps.length, hyb: sHyb / reps.length, new: sNew / reps.length };
       });
       return out;
+    }
+
+    function setMatrixMode(mode) {
+      matrixMode = mode;
+      const on = 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-orange-50 text-orange-700 border border-orange-200 transition-all';
+      const off = 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all';
+      document.getElementById('matrix-mode-levels').className = mode === 'levels' ? on : off;
+      document.getElementById('matrix-mode-deltas').className = mode === 'deltas' ? on : off;
+      renderMatrix();
+    }
+
+    function renderMatrix() {
+      const empty = document.getElementById('matrix-empty');
+      const grid = document.getElementById('matrix-grid');
+      if (!popMatrix) {
+        empty.classList.remove('hidden');
+        grid.classList.add('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      grid.classList.remove('hidden');
+      document.getElementById('matrix-count-low').innerText = popMatrix.count.low + ' comm.';
+      document.getElementById('matrix-count-high').innerText = popMatrix.count.high + ' comm.';
+      const fmtMx = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+      const deltaCls = v => v < 0 ? 'text-rose-600' : 'text-emerald-600';
+      ['low', 'high'].forEach(q => {
+        const el = document.getElementById('matrix-' + q + '-low');
+        const elT = document.getElementById('matrix-' + q + '-top');
+        const d = popMatrix.quadrants[q];
+        if (!popMatrix.count[q]) {
+          el.innerHTML = '<span class="text-slate-300">—</span>';
+          elT.innerHTML = '<span class="text-slate-300">—</span>';
+          return;
+        }
+        if (matrixMode === 'levels') {
+          el.innerHTML = '<span class="block font-bold text-orange-700">' + fmtMx(d.hyb) + '</span><span class="block font-bold text-indigo-600">' + fmtMx(d.new) + '</span>';
+          elT.innerHTML = el.innerHTML;
+        } else {
+          const dh = d.hyb - d.old, dn = d.new - d.old;
+          el.innerHTML = '<span class="block font-bold ' + deltaCls(dh) + '">' + (dh > 0 ? '+' : '') + fmtMx(dh) + '</span><span class="block font-bold ' + deltaCls(dn) + '">' + (dn > 0 ? '+' : '') + fmtMx(dn) + '</span>';
+          elT.innerHTML = el.innerHTML;
+        }
+      });
     }
 
     function toggleDatasetAdv(index) {
