@@ -80,7 +80,7 @@ le reste de l'outil fonctionne normalement.
 node tests/run.js
 ```
 
-75 vérifications en 4 suites (DOM simulé, aucune dépendance) :
+78 vérifications en 4 suites (DOM simulé, aucune dépendance) :
 
 - `01-model` : courbes (paliers, base linéaire, hybride), blend linéaire, planchers €, seuil 0,
   continuité aux frontières, égalité avec modèle de référence (8 configs × 201 points)
@@ -89,7 +89,11 @@ node tests/run.js
   planchers €, échappement HTML, retour au modèle moyen
 - `04-standard-ui` : textes dynamiques, badges archétype, modèle moyen, reset
 
-## Technique
+## Architecture
 
+- **Moteur de calcul** (`Engine`, section dédiée en haut du script) : pur et sans DOM —
+  `integrate` (unique primitive d'intégration gaussienne), courbes en € (`oldE`, `newBaseE`,
+  `hybridE`), courbe à paliers pilotée par la table éditable. L'UI n'est qu'une couche
+  d'affichage au-dessus.
 - `index.html` (client) + `Code.gs` (backend Apps Script) — Chart.js, Tailwind CSS, KaTeX, Lucide (CDN)
 - Historique git complet ; tags : `v1-sans-transition`, `v2-avec-transition`
