@@ -137,6 +137,7 @@ module.exports = function suite(__h) {
   check('rep A expected (new) cell shown', tblNew.indexOf(Math.round(expNewA).toLocaleString('en-US')) > -1);
   assertClose('sum of new expected payouts ≈ pexNew aggregate', expNewTot, realAgg.pexNew, 1);
   check('new Δ ≤ −20 € in red', tblNew.indexOf('text-rose-600') > -1);
+  check('hybrid expected value cell in amber (not orange/red)', tblNew.indexOf('text-amber-600') > -1 && tblNew.indexOf('text-orange-700') === -1);
   state.targetIncrease = 0;
 
   // ===== Salary × performance matrix: calculation =====
