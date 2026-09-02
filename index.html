@@ -1088,10 +1088,31 @@
         <span class="text-[10px] text-slate-400">synced with Standard &amp; Advanced views</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="matrix-controls-zone">
-        <!-- Target increase (filled in Task 4) -->
-        <div id="matrix-ctrl-target"></div>
-        <!-- Min nominal & min 200% (filled in Task 4) -->
-        <div id="matrix-ctrl-mins" class="md:col-span-2"></div>
+        <!-- Target increase -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <label for="matrix-target-increase" class="font-semibold text-slate-700">Target Increase</label>
+            <span id="matrix-val-target-increase" class="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-2 py-0.5 rounded-md">+0.0%</span>
+          </div>
+          <input type="range" id="matrix-target-increase" min="0" max="60" step="0.5" value="0" class="w-full cursor-pointer accent-indigo-600">
+        </div>
+        <!-- Min nominal & min 200% -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Min. Nominal (at 100%)</label>
+            <div class="relative">
+              <input type="number" id="matrix-min-100" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Min. Amount at 200%</label>
+            <div class="relative">
+              <input type="number" id="matrix-min-200" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
+              <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+            </div>
+          </div>
+        </div>
       </div>
       <div id="matrix-filter-zone" class="hidden grid grid-cols-3 gap-3">
         <div>
@@ -2408,6 +2429,19 @@
       const l2 = document.getElementById('adv-val-target-increase');
       if (l1) l1.innerText = label;
       if (l2) l2.innerText = label;
+      const s3 = document.getElementById('matrix-target-increase');
+      if (s3) s3.value = v;
+      const l3 = document.getElementById('matrix-val-target-increase');
+      if (l3) l3.innerText = label;
+    }
+
+    // Keeps the 4 min inputs (Advanced view + Matrix tab) in sync with advState
+    function syncMinInputs() {
+      const pairs = [['adv-min-100', advState.min100E], ['adv-min-200', advState.min200E], ['matrix-min-100', advState.min100E], ['matrix-min-200', advState.min200E]];
+      pairs.forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+      });
     }
 
     function setView(view) {
@@ -2625,12 +2659,37 @@
 
       document.getElementById('adv-min-100').addEventListener('input', (e) => {
         advState.min100E = Math.max(0, parseFloat(e.target.value) || 0);
+        syncMinInputs();
         updateAdvancedView();
+        refreshPopulation();
       });
 
       document.getElementById('adv-min-200').addEventListener('input', (e) => {
         advState.min200E = Math.max(0, parseFloat(e.target.value) || 0);
+        syncMinInputs();
         updateAdvancedView();
+        refreshPopulation();
+      });
+
+      document.getElementById('matrix-target-increase').addEventListener('input', (e) => {
+        state.targetIncrease = parseFloat(e.target.value);
+        syncTargetSliders();
+        updateDashboard();
+        updateAdvancedView();
+      });
+
+      document.getElementById('matrix-min-100').addEventListener('input', (e) => {
+        advState.min100E = Math.max(0, parseFloat(e.target.value) || 0);
+        syncMinInputs();
+        updateAdvancedView();
+        refreshPopulation();
+      });
+
+      document.getElementById('matrix-min-200').addEventListener('input', (e) => {
+        advState.min200E = Math.max(0, parseFloat(e.target.value) || 0);
+        syncMinInputs();
+        updateAdvancedView();
+        refreshPopulation();
       });
 
       // Population from the Sheet
@@ -2659,6 +2718,7 @@
       initChart();
       setupEventListeners();
       syncInputsFromState();
+      syncMinInputs();
       updateDashboard();
       setTimeout(renderMathSafely, 150);
     });

@@ -203,6 +203,23 @@ module.exports = function suite(__h) {
   els['matrix-filter-orga'].value = ''; els['matrix-filter-country'].value = '';
   onMatrixFilterChange();
   check('matrix filters reset', popFilters.orga === '' && popFilters.country === '' && els['pop-filter-orga'].value === '');
+  // Sync target increase & minimums
+  syncTargetSliders();
+  check('matrix target slider synced', els['matrix-target-increase'].value == state.targetIncrease && els['matrix-val-target-increase'].innerText.indexOf('%') > -1);
+  state.targetIncrease = 15;
+  syncTargetSliders();
+  check('matrix target slider follows state', els['matrix-target-increase'].value == 15);
+  state.targetIncrease = 0;
+  syncTargetSliders();
+  advState.min100E = 12000;
+  syncMinInputs();
+  check('matrix min100 synced from state', els['matrix-min-100'].value == 12000 && els['adv-min-100'].value == 12000);
+  const hybBefore = realAgg.pexHyb;
+  advState.min100E = 0;
+  syncMinInputs();
+  refreshPopulation();
+  check('matrix min inputs exist in view', htmlSrc.indexOf('id="matrix-min-100"') > -1 && htmlSrc.indexOf('id="matrix-min-200"') > -1 && htmlSrc.indexOf('id="matrix-target-increase"') > -1);
+  check('min100=0 restores baseline', realAgg.pexHyb === hybBefore);
   setView('standard');
   check('tab-standard active on setView(standard)', els['tab-standard'].className.indexOf('shadow-sm') > -1);
   check('tab-matrix inactive on setView(standard)', els['tab-matrix'].className.indexOf('shadow-sm') === -1);
