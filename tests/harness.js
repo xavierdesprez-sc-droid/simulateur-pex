@@ -1,7 +1,7 @@
 'use strict';
 /**
- * Harnais de test : DOM simulé + chargement du script de la page + helpers.
- * Chaque suite reçoit un état de page FRAIS (le script de index.html est ré-évalué).
+ * Test harness: simulated DOM + page script loading + helpers.
+ * Each suite gets a FRESH page state (the index.html script is re-evaluated).
  */
 const fs = require('fs');
 const path = require('path');
@@ -33,7 +33,7 @@ function runSuite(suiteFile) {
   const suiteFn = require(suiteFile);
   const page = extractPageScript(fs.readFileSync(HTML_PATH, 'utf8'));
 
-  // Environnement DOM neuf pour chaque suite
+  // Fresh DOM environment for each suite
   const els = {};
   global.document = {
     getElementById: (id) => els[id] || (els[id] = makeEl()),
@@ -44,14 +44,14 @@ function runSuite(suiteFile) {
   };
   global.window = { addEventListener: () => {} };
 
-  // Mock Chart.js : les datasets sont exposés pour les assertions
+  // Chart.js mock: datasets are exposed for assertions
   global.Chart = function (ctx, cfg) {
     globalThis.__chartDatasets = cfg.data.datasets;
     return { data: cfg.data, options: { scales: {} }, update() {}, getDatasetMeta() { return { hidden: null }; } };
   };
   global.lucide = { createIcons() {} };
 
-  // Mock google.script.run (contrôlé par la suite via h.mock)
+  // google.script.run mock (controlled by the suite via h.mock)
   const mocks = { sheetReps: [], sheetError: null };
   global.google = { script: {} };
   global.google.script.run = (() => {
@@ -83,11 +83,11 @@ function runSuite(suiteFile) {
   };
   globalThis.__h = h;
 
-  // La fonction de suite est injectée dans le scope du script de la page :
-  // elle accède directement à state, advState, evalHybridE, refreshPopulation, etc.
+  // The suite function is injected into the page script's scope:
+  // it directly accesses state, advState, evalHybridE, refreshPopulation, etc.
   (0, eval)(page + '\n;(' + suiteFn.toString() + ')(__h);');
 
-  console.log(`  ${suiteName}: ${suiteName} terminé`);
+  console.log(`  ${suiteName}: ${suiteName} done`);
 }
 
 module.exports = { runSuite, results, HTML_PATH };

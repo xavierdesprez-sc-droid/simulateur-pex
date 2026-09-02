@@ -1,0 +1,101 @@
+Orga,Position,Country,ID,,,Base Salary,Amount
+EMEA Indirect,Senior AE,USA,REP0001,,,63400,2000
+APAC,Account Executive,France,REP0002,,,31100,6950
+EMEA Indirect,Inside Sales,Germany,REP0003,,,30600,3350
+EMEA Indirect,Inside Sales,UK,REP0004,,,52000,7050
+EMEA Direct,Account Executive,Spain,REP0005,,,41700,4900
+EMEA Direct,Inside Sales,Italy,REP0006,,,30800,7900
+LATAM,Territory Manager,Italy,REP0007,,,32500,6800
+LATAM,Account Executive,Germany,REP0008,,,36500,2700
+LATAM,Senior AE,UK,REP0009,,,77000,9900
+EMEA Direct,Senior AE,Italy,REP0010,,,46300,10100
+EMEA Indirect,Territory Manager,France,REP0011,,,68700,4950
+LATAM,Account Executive,Germany,REP0012,,,38700,2000
+EMEA Indirect,Inside Sales,Spain,REP0013,,,79800,14950
+EMEA Indirect,Senior AE,USA,REP0014,,,78100,13750
+APAC,Territory Manager,Germany,REP0015,,,58700,6400
+EMEA Direct,Account Executive,Germany,REP0016,,,84800,6200
+EMEA Direct,Inside Sales,Spain,REP0017,,,62600,14100
+EMEA Direct,Account Executive,USA,REP0018,,,60800,8250
+LATAM,Account Executive,UK,REP0019,,,78100,18250
+LATAM,Senior AE,Italy,REP0020,,,51100,9400
+EMEA Indirect,Senior AE,UK,REP0021,,,79800,19050
+EMEA Direct,Territory Manager,Spain,REP0022,,,70800,13100
+LATAM,Senior AE,France,REP0023,,,26200,8400
+APAC,Account Executive,Italy,REP0024,,,39500,5250
+EMEA Indirect,Territory Manager,Italy,REP0025,,,71000,4950
+EMEA Indirect,Territory Manager,Spain,REP0026,,,77300,9800
+APAC,Account Executive,Germany,REP0027,,,84700,16350
+EMEA Indirect,Senior AE,France,REP0028,,,38500,5000
+EMEA Direct,Territory Manager,France,REP0029,,,29300,4550
+EMEA Indirect,Inside Sales,Germany,REP0030,,,55800,5900
+EMEA Direct,Inside Sales,UK,REP0031,,,72100,15600
+EMEA Direct,Account Executive,Spain,REP0032,,,50400,8600
+EMEA Indirect,Senior AE,Italy,REP0033,,,68700,14400
+EMEA Indirect,Account Executive,Spain,REP0034,,,51900,6450
+EMEA Direct,Account Executive,Germany,REP0035,,,73500,16450
+APAC,Account Executive,Germany,REP0036,,,35000,4350
+APAC,Territory Manager,Spain,REP0037,,,47700,12250
+APAC,Senior AE,Germany,REP0038,,,66800,15500
+EMEA Direct,Territory Manager,France,REP0039,,,42800,12000
+EMEA Indirect,Account Executive,Italy,REP0040,,,28000,6000
+EMEA Indirect,Inside Sales,France,REP0041,,,29800,2900
+EMEA Direct,Account Executive,Spain,REP0042,,,81500,14700
+LATAM,Senior AE,USA,REP0043,,,64400,10600
+LATAM,Inside Sales,UK,REP0044,,,68000,6200
+EMEA Direct,Account Executive,Italy,REP0045,,,80700,19400
+EMEA Direct,Senior AE,UK,REP0046,,,37800,5650
+LATAM,Account Executive,USA,REP0047,,,42100,6300
+EMEA Indirect,Territory Manager,France,REP0048,,,74000,8950
+LATAM,Senior AE,USA,REP0049,,,78400,15750
+APAC,Territory Manager,France,REP0050,,,45600,10750
+EMEA Direct,Territory Manager,Germany,REP0051,,,30500,3450
+APAC,Account Executive,France,REP0052,,,63200,7450
+EMEA Direct,Territory Manager,Italy,REP0053,,,29500,9050
+LATAM,Account Executive,UK,REP0054,,,58200,6500
+APAC,Senior AE,Germany,REP0055,,,37600,2150
+APAC,Account Executive,Germany,REP0056,,,76900,20000
+EMEA Indirect,Territory Manager,Germany,REP0057,,,69200,10000
+APAC,Senior AE,Germany,REP0058,,,72200,6250
+EMEA Indirect,Senior AE,France,REP0059,,,74000,10350
+EMEA Direct,Territory Manager,UK,REP0060,,,64600,7900
+LATAM,Account Executive,France,REP0061,,,63500,10550
+LATAM,Account Executive,France,REP0062,,,77600,8300
+APAC,Account Executive,Spain,REP0063,,,60800,8600
+APAC,Account Executive,Italy,REP0064,,,79000,4950
+EMEA Indirect,Territory Manager,Spain,REP0065,,,80500,14500
+LATAM,Account Executive,USA,REP0066,,,29200,5150
+LATAM,Inside Sales,USA,REP0067,,,79000,13450
+APAC,Senior AE,Italy,REP0068,,,42700,2700
+LATAM,Territory Manager,Germany,REP0069,,,59100,9450
+APAC,Inside Sales,Spain,REP0070,,,50800,9700
+EMEA Indirect,Account Executive,UK,REP0071,,,65500,11850
+EMEA Indirect,Territory Manager,Germany,REP0072,,,55900,10050
+APAC,Account Executive,Spain,REP0073,,,73400,3700
+APAC,Inside Sales,Spain,REP0074,,,49900,8300
+EMEA Direct,Inside Sales,Germany,REP0075,,,39600,5850
+EMEA Direct,Senior AE,France,REP0076,,,35600,9700
+LATAM,Inside Sales,Italy,REP0077,,,52400,12850
+APAC,Senior AE,USA,REP0078,,,73900,18500
+LATAM,Inside Sales,USA,REP0079,,,76700,12350
+EMEA Indirect,Territory Manager,UK,REP0080,,,39400,6600
+EMEA Indirect,Inside Sales,USA,REP0081,,,44200,6050
+LATAM,Inside Sales,Spain,REP0082,,,34200,2800
+EMEA Direct,Inside Sales,Spain,REP0083,,,28700,6450
+APAC,Senior AE,Spain,REP0084,,,25400,4150
+LATAM,Inside Sales,USA,REP0085,,,38200,3650
+EMEA Direct,Inside Sales,Italy,REP0086,,,34900,3800
+EMEA Indirect,Inside Sales,Germany,REP0087,,,58900,3300
+LATAM,Territory Manager,Spain,REP0088,,,28000,2500
+EMEA Direct,Inside Sales,France,REP0089,,,41700,10850
+EMEA Indirect,Account Executive,USA,REP0090,,,69900,5500
+EMEA Direct,Senior AE,Germany,REP0091,,,27400,2000
+EMEA Indirect,Inside Sales,USA,REP0092,,,32600,6800
+EMEA Direct,Senior AE,UK,REP0093,,,40400,5600
+APAC,Inside Sales,USA,REP0094,,,31500,2000
+EMEA Indirect,Account Executive,USA,REP0095,,,36900,8050
+EMEA Direct,Account Executive,UK,REP0096,,,71300,17800
+LATAM,Account Executive,Spain,REP0097,,,57000,9600
+APAC,Senior AE,Spain,REP0098,,,74300,6700
+APAC,Inside Sales,Spain,REP0099,,,35600,6500
+EMEA Indirect,Account Executive,UK,REP0100,,,74500,12850

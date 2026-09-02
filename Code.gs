@@ -1,26 +1,26 @@
 /**
- * Simulateur Rémunération Variable & PEX — backend Google Apps Script
+ * Variable Compensation & Sales PEX Simulator — Google Apps Script backend
  *
- * Deux modes de déploiement :
- * - **Lié au Sheet** : ouvrir le Sheet > Extensions > Apps Script, coller Code.gs + index.html,
- *   déployer en Application Web. SHEET_ID reste vide.
- * - **Standalone** : créer un projet Apps Script indépendant (script.google.com), coller les
- *   fichiers, renseigner SHEET_ID avec l'ID du classeur cible, déployer en Application Web.
- *   À la première exécution, Google demandera l'autorisation d'accéder au classeur.
+ * Two deployment modes:
+ * - **Bound to the Sheet**: open the Sheet > Extensions > Apps Script, paste Code.gs + index.html,
+ *   deploy as a Web App. SHEET_ID stays empty.
+ * - **Standalone**: create a standalone Apps Script project (script.google.com), paste the
+ *   files, set SHEET_ID to the ID of the target spreadsheet, deploy as a Web App.
+ *   On first run, Google will ask for permission to access the spreadsheet.
  *
- * Le fichier HTML doit s'appeler "index".
- * Données lues dans l'onglet "Data dynamic distributions" :
- * en-tête en ligne 4, colonnes
- * A=Orga, B=Position, C=Country, D=ID, E-F=(ignorées), G=Base Salary, H=Amount
+ * The HTML file must be named "index".
+ * Data is read from the "Data dynamic distributions" tab:
+ * header on row 4, columns
+ * A=Orga, B=Position, C=Country, D=ID, E-F=(ignored), G=Base Salary, H=Amount
  */
 
 const HEADER_ROW = 4;
 const COL = { ORGA: 1, POSITION: 2, COUNTRY: 3, ID: 4, BASE_SALARY: 7, AMOUNT: 8 };
 
 /**
- * Déploiement standalone : coller ici l'ID du Google Sheet
- * (l'ID est la longue chaîne dans l'URL du Sheet, entre /d/ et /edit).
- * Laisser vide si le script est lié au Sheet (Extensions > Apps Script).
+ * Standalone deployment: paste the Google Sheet ID here
+ * (the ID is the long string in the Sheet URL, between /d/ and /edit).
+ * Leave empty if the script is bound to the Sheet (Extensions > Apps Script).
  */
 const SHEET_ID = '';
 const SHEET_NAME = 'Data dynamic distributions';
@@ -32,13 +32,13 @@ function getSpreadsheet() {
 
 function getDataSheet() {
   const sh = getSpreadsheet().getSheetByName(SHEET_NAME);
-  if (!sh) throw new Error('Feuille "' + SHEET_NAME + '" introuvable dans le classeur');
+  if (!sh) throw new Error('Sheet "' + SHEET_NAME + '" not found in the spreadsheet');
   return sh;
 }
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('Simulateur Rémunération Variable & PEX')
+    .setTitle('Variable Compensation & PEX Simulator — Sales Reps')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 

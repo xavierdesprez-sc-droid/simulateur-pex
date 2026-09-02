@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-50">
+<html lang="en" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulateur Rémunération Variable & PEX Commerciaux</title>
+  <title>Variable Compensation & Sales PEX Simulator</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Chart.js -->
@@ -97,8 +97,8 @@
           <i data-lucide="trending-up" class="w-6 h-6"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold text-slate-900 leading-tight">Simulateur Rémunération Variable & PEX</h1>
-          <p class="text-xs text-slate-500 font-medium">Double Gaussienne &bull; Payout Pondéré &bull; Protection des Acquis (&ge; 20%) &bull; Modèle Corridor</p>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">Variable Compensation & PEX Simulator</h1>
+          <p class="text-xs text-slate-500 font-medium">Double Gaussian &bull; Weighted Payout &bull; Grandfathering (&ge; 20%) &bull; Corridor Model</p>
         </div>
       </div>
 
@@ -106,24 +106,24 @@
       <div class="flex items-center gap-2 sm:gap-3">
         <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
           <button id="tab-standard" onclick="setView('standard')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm">
-            Vue Standard
+            Standard View
           </button>
           <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
-            Vue Avancée
+            Advanced View
           </button>
         </div>
         <div class="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
           <button onclick="applyPreset('initial')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
-            Situation Actuelle (Moyenne 110%)
+            Current Situation (110% avg)
           </button>
           <button onclick="applyPreset('targetGroup')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-targetGroup">
-            Cible Groupe (Moyenne 80%)
+            Group Target (80% avg)
           </button>
           <button onclick="applyPreset('highIncentive')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-highIncentive">
-            Scénario Optimisé (+2% surperf)
+            Optimized Scenario (+2% overperf)
           </button>
         </div>
-        <button onclick="resetDefaults()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" title="Réinitialiser les paramètres">
+        <button onclick="resetDefaults()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" title="Reset parameters">
           <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
         </button>
       </div>
@@ -135,27 +135,27 @@
 
     <!-- KPI Metric Cards Grid -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Card 1: PEX Nouveau vs Ancien -->
+      <!-- Card 1: New PEX vs Old -->
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">PEX Variable Nouveau</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">New Variable PEX</span>
           <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-4 h-4"></i></div>
         </div>
         <div class="flex items-baseline gap-2">
           <span id="kpi-pex-new" class="text-2xl font-black text-slate-900">0.00 M€</span>
-          <span id="kpi-pex-payout-rate" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0% moy.</span>
+          <span id="kpi-pex-payout-rate" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0% avg.</span>
         </div>
         <div class="mt-2 text-xs flex items-center gap-1.5" id="kpi-pex-diff-badge">
-          <span class="text-slate-500">PEX Actuel :</span>
+          <span class="text-slate-500">Current PEX:</span>
           <span id="kpi-pex-old" class="font-bold text-slate-700">2.50 M€</span>
           <span id="kpi-pex-diff" class="font-bold">(-0.0%)</span>
         </div>
       </div>
 
-      <!-- Card 2: Économie / Surcoût PEX -->
+      <!-- Card 2: PEX Savings / Overrun -->
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Impact Masse Salariale (&Delta;PEX)</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Payroll Impact (&Delta;PEX)</span>
           <div class="p-2 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="scale" class="w-4 h-4"></i></div>
         </div>
         <div class="flex items-baseline gap-2">
@@ -163,14 +163,14 @@
         </div>
         <p class="mt-2 text-xs text-slate-500 flex items-center gap-1">
           <i data-lucide="info" class="w-3.5 h-3.5"></i>
-          <span id="kpi-pex-savings-label">Économie budgétaire nette</span>
+          <span id="kpi-pex-savings-label">Net budget savings</span>
         </p>
       </div>
 
       <!-- Card 3: Gain C2P sur Surperformance -->
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Gain C2P Additionnel</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Additional C2P Gain</span>
           <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="badge-percent" class="w-4 h-4"></i></div>
         </div>
         <div class="flex items-baseline gap-2">
@@ -178,14 +178,14 @@
           <span id="kpi-c2p-gain" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">+0 M€ C2P</span>
         </div>
         <p class="mt-2 text-xs text-slate-500">
-          Formule : <span class="font-mono font-medium text-slate-700">C2P Total &times; Surperf &times; Corridor</span>
+          Formula: <span class="font-mono font-medium text-slate-700">C2P Total &times; Overperf &times; Corridor</span>
         </p>
       </div>
 
-      <!-- Card 4: ROI / Bilan Net Entreprise -->
+      <!-- Card 4: ROI / Net Company Result -->
       <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-5 rounded-2xl shadow-md relative overflow-hidden group">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Bilan Net Entreprise (P&amp;L)</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Net Company Result (P&amp;L)</span>
           <div class="p-2 bg-white/10 text-indigo-200 rounded-xl"><i data-lucide="circle-dollar-sign" class="w-4 h-4"></i></div>
         </div>
         <div class="flex items-baseline gap-2">
@@ -193,7 +193,7 @@
         </div>
         <p class="mt-2 text-xs text-indigo-200 flex items-center gap-1">
           <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i>
-          <span>Gain C2P + Économie PEX</span>
+          <span>C2P Gain + PEX Savings</span>
         </p>
       </div>
     </div>
@@ -204,39 +204,39 @@
       <!-- LEFT COLUMN: CONTROLS & CONFIGURATION (4 cols on lg) -->
       <div class="lg:col-span-4 space-y-6">
 
-        <!-- 1. SLIDERS STRATÉGIQUES & GAUSSIENNE -->
+        <!-- 1. STRATEGIC LEVERS & GAUSSIAN -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="sliders" class="w-4 h-4"></i></div>
-              <h2 class="font-bold text-slate-900 text-sm">Leviers Stratégiques &amp; Distribution</h2>
+              <h2 class="font-bold text-slate-900 text-sm">Strategic Levers &amp; Distribution</h2>
             </div>
-            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">Temps Réel</span>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">Real-time</span>
           </div>
 
-          <!-- Slider: Hausse d'objectifs (Déplacement dynamique de la nouvelle gaussienne) -->
+          <!-- Slider: Target increase (dynamic shift of the new Gaussian) -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
               <label for="slider-target-increase" class="font-semibold text-slate-700 flex items-center gap-1">
-                <span>Hausse des Objectifs</span>
-                <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Déplace la nouvelle gaussienne vers la gauche tout en conservant l'ancienne en repère visuel"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+                <span>Target Increase</span>
+                <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Moves the new Gaussian to the left while keeping the old one as a visual reference"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
               </label>
               <span id="val-target-increase" class="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-2 py-0.5 rounded-md">+0.0%</span>
             </div>
             <input type="range" id="slider-target-increase" min="0" max="60" step="0.5" value="0" class="w-full cursor-pointer accent-indigo-600">
             <div class="flex justify-between text-[10px] text-slate-400 font-medium">
               <span>0 pp</span>
-              <span>+30 pp (Cible mu 80%)</span>
+              <span>+30 pp (mu target 80%)</span>
               <span>+60 pp</span>
             </div>
           </div>
 
-          <!-- Slider: Surperformance Comportementale -->
+          <!-- Slider: Behavioral overperformance -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
               <label for="slider-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
-                <span>Surperformance induite (Schéma)</span>
-                <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Effet incitatif du nouveau schéma sur le C2P (+X% de surperformance)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+                <span>Induced overperformance (scheme)</span>
+                <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the new scheme on C2P (+X% overperformance)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
               </label>
               <span id="val-overperf" class="font-mono font-bold text-emerald-600 text-sm bg-emerald-50 px-2 py-0.5 rounded-md">+0.0%</span>
             </div>
@@ -244,23 +244,23 @@
             <div class="flex justify-between text-[10px] text-slate-400 font-medium">
               <span>-10%</span>
               <span>0%</span>
-              <span>+15% (forte incitation)</span>
+              <span>+15% (strong incentive)</span>
             </div>
           </div>
 
-          <!-- Paramètres Gaussienne Initiale (Moyenne & Ecart-type 30%) -->
+          <!-- Initial Gaussian parameters (Mean & Std Dev 30%) -->
           <div class="pt-3 border-t border-slate-100 space-y-3">
-            <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Distribution Historique</h3>
+            <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Historical Distribution</h3>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Moyenne Initiale (&mu;)</label>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Initial Mean (&mu;)</label>
                 <div class="relative">
                   <input type="number" id="input-mu-init" value="110" step="1" min="30" max="200" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">%</span>
                 </div>
               </div>
               <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Écart-type (&sigma;)</label>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Std Dev (&sigma;)</label>
                 <div class="relative">
                   <input type="number" id="input-sigma-init" value="30" step="1" min="1" max="60" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">%</span>
@@ -269,33 +269,33 @@
             </div>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <div class="p-2 bg-slate-100 rounded-xl text-[11px] text-slate-600 flex flex-col">
-                <span class="text-slate-400 font-medium">Moyenne Ancienne :</span>
+                <span class="text-slate-400 font-medium">Old Mean:</span>
                 <span id="val-init-mu" class="font-mono font-bold text-slate-700">110.0%</span>
               </div>
               <div class="p-2 bg-indigo-50 border border-indigo-100 rounded-xl text-[11px] text-indigo-700 flex flex-col">
-                <span class="text-indigo-400 font-medium">Moyenne Nouvelle :</span>
+                <span class="text-indigo-400 font-medium">New Mean:</span>
                 <span id="val-resulting-mu" class="font-mono font-bold text-indigo-700">110.0%</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 2. PARAMÈTRES SALARIAUX & MASSE VARIABLE (PEX) -->
+        <!-- 2. SALARY PARAMETERS & VARIABLE MASS (PEX) -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="badge-dollar-sign" class="w-4 h-4"></i></div>
-              <h2 class="font-bold text-slate-900 text-sm">Paramètres Salariaux &amp; PEX</h2>
+              <h2 class="font-bold text-slate-900 text-sm">Salary Parameters &amp; PEX</h2>
             </div>
-            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-700">Masse Globale</span>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-700">Total Mass</span>
           </div>
 
           <div class="space-y-3 text-xs">
-            <!-- PEX Actuel de référence -->
+            <!-- Current reference PEX -->
             <div>
               <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                <span>PEX Actuel Versé (Masse Variable)</span>
-                <span class="text-[10px] text-slate-400 font-mono">Valeur actuelle</span>
+                <span>Current PEX Paid (Variable Mass)</span>
+                <span class="text-[10px] text-slate-400 font-mono">Current value</span>
               </label>
               <div class="relative">
                 <input type="number" id="input-current-pex" value="2.5" step="0.1" min="0.1" max="50" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
@@ -303,17 +303,17 @@
               </div>
             </div>
 
-            <!-- Parts variables moyennes (Actuelle vs Nouvelle) -->
+            <!-- Average variable shares (Current vs New) -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">Part Var. Actuelle Moy.</label>
+                <label class="block font-semibold text-slate-700 mb-1">Avg. Current Var. Share</label>
                 <div class="relative">
                   <input type="number" id="input-old-var-share" value="11" step="0.5" min="1" max="50" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
                   <span class="absolute right-3 top-1.5 font-semibold text-slate-400">%</span>
                 </div>
               </div>
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">Nouvelle Part Var. Cible</label>
+                <label class="block font-semibold text-slate-700 mb-1">New Target Var. Share</label>
                 <div class="relative">
                   <input type="number" id="input-new-var-share" value="20" step="0.5" min="1" max="50" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
                   <span class="absolute right-3 top-1.5 font-semibold text-slate-400">%</span>
@@ -321,17 +321,17 @@
               </div>
             </div>
 
-            <!-- Effectif & Base C2P -->
+            <!-- Headcount & C2P Base -->
             <div class="grid grid-cols-2 gap-3 pt-1">
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">Effectif Commerciaux</label>
+                <label class="block font-semibold text-slate-700 mb-1">Sales Headcount</label>
                 <div class="relative">
                   <input type="number" id="input-headcount" value="350" step="10" min="10" max="5000" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
                   <span class="absolute right-3 top-1.5 font-semibold text-slate-400">reps</span>
                 </div>
               </div>
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">C2P de Référence</label>
+                <label class="block font-semibold text-slate-700 mb-1">Reference C2P</label>
                 <div class="relative">
                   <input type="number" id="input-base-ca" value="700" step="10" min="10" max="10000" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
                   <span class="absolute right-3 top-1.5 font-semibold text-slate-400">M€</span>
@@ -348,7 +348,7 @@
                 </div>
               </div>
               <div>
-                <label class="block font-semibold text-slate-700 mb-1">Nouveau Budget Cible (100%)</label>
+                <label class="block font-semibold text-slate-700 mb-1">New Target Budget (100%)</label>
                 <div class="p-1.5 bg-slate-100 rounded-lg text-slate-700 font-mono font-bold text-center">
                   <span id="val-new-target-pex">4.13</span> M€
                 </div>
@@ -358,26 +358,26 @@
           </div>
         </div>
 
-        <!-- 3. CONFIGURATION DE LA COURBE DE PAYOUT (PALIERS ÉDITABLES) -->
+        <!-- 3. PAYOUT CURVE CONFIGURATION (EDITABLE BREAKPOINTS) -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="git-commit" class="w-4 h-4"></i></div>
-              <h2 class="font-bold text-slate-900 text-sm">Paliers de la Nouvelle Courbe</h2>
+              <h2 class="font-bold text-slate-900 text-sm">New Curve Breakpoints</h2>
             </div>
             <button onclick="addBreakpointRow()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-all">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Ajouter
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add
             </button>
           </div>
 
-          <p class="text-xs text-slate-500">Paliers : seuil à 50% (10% payout), 80% (50%), 100% (100%) et <strong>100% &rarr; 200% payout</strong>.</p>
+          <p class="text-xs text-slate-500">Breakpoints: threshold at 50% (10% payout), 80% (50%), 100% (100%) and <strong>100% &rarr; 200% payout</strong>.</p>
 
           <!-- Table of Breakpoints -->
           <div class="overflow-hidden border border-slate-200 rounded-xl">
             <table class="w-full text-xs text-left">
               <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th class="py-2 px-3">Atteinte (%)</th>
+                  <th class="py-2 px-3">Achievement (%)</th>
                   <th class="py-2 px-3">Payout (%)</th>
                   <th class="py-2 px-2 text-right">Action</th>
                 </tr>
@@ -390,7 +390,7 @@
 
           <!-- Cap option -->
           <div class="pt-2 flex items-center justify-between text-xs">
-            <span class="text-slate-600 font-medium">Plafond maximum (Cap) :</span>
+            <span class="text-slate-600 font-medium">Maximum Cap:</span>
             <div class="flex items-center gap-1">
               <input type="number" id="input-payout-cap" value="200" step="5" min="100" max="500" class="w-16 text-center font-mono font-bold px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
               <span class="text-slate-400 font-mono">%</span>
@@ -403,24 +403,24 @@
       <!-- RIGHT COLUMN: VISUALIZATIONS & SIMULATION (8 cols on lg) -->
       <div class="lg:col-span-8 space-y-6">
 
-        <!-- 1. GRAPHIQUE PRINCIPAL : DOUBLE GAUSSIENNE & COURBES DE PAYOUT (Échelle Y Auto-Adaptative) -->
+        <!-- 1. MAIN CHART: DOUBLE GAUSSIAN & PAYOUT CURVES (Auto-Adaptive Y Scale) -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="line-chart" class="w-4 h-4"></i></div>
               <div>
-                <h2 class="font-bold text-slate-900 text-base">Superposition : Distribution, Payout &amp; Courbe Pondérée par le Nominal</h2>
-                <p class="text-xs text-slate-500">L'axe vertical s'adapte automatiquement pour toujours afficher l'intégralité de la courbe pondérée</p>
+                <h2 class="font-bold text-slate-900 text-base">Overlay: Distribution, Payout &amp; Nominal-Weighted Curve</h2>
+                <p class="text-xs text-slate-500">The vertical axis adapts automatically to always show the full weighted curve</p>
               </div>
             </div>
 
             <!-- View toggles & Max Axis Badge -->
             <div class="flex items-center gap-2">
               <span id="badge-y-scale" class="px-2 py-1 text-[11px] font-mono font-bold rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
-                Échelle Y : Max 300%
+                Y scale: max 300%
               </span>
               <button id="btn-toggle-weighted" onclick="toggleDataset(4)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
-                <span class="w-2 h-0.5 bg-purple-600 inline-block border-t border-dashed border-purple-600"></span> Courbe Pondérée
+                <span class="w-2 h-0.5 bg-purple-600 inline-block border-t border-dashed border-purple-600"></span> Weighted Curve
               </button>
             </div>
           </div>
@@ -430,20 +430,20 @@
             <canvas id="mainChart"></canvas>
           </div>
 
-          <!-- DUAL SLIDERS DIRECTEMENT SOUS LA COURBE (SYNCHRONISÉS) -->
+          <!-- DUAL SLIDERS DIRECTLY UNDER THE CURVE (SYNCHRONIZED) -->
           <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-xl space-y-4">
             
-            <!-- Slider 1 : Position Atteinte du Commercial (20% à 200%) -->
+            <!-- Slider 1: Rep's Achievement Position (20% to 200%) -->
             <div class="space-y-1.5">
               <div class="flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2">
                   <div class="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></div>
-                  <span class="font-bold text-slate-800">1. Position d'Atteinte Historique du Commercial :</span>
+                  <span class="font-bold text-slate-800">1. Rep's Historical Achievement Position:</span>
                 </div>
                 <div class="flex items-center gap-2 font-mono">
-                  <span class="bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded shadow-sm font-semibold text-xs" id="chart-slider-val-before">Avant : 110%</span>
+                  <span class="bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded shadow-sm font-semibold text-xs" id="chart-slider-val-before">Before: 110%</span>
                   <span class="text-slate-400 font-bold">&rarr;</span>
-                  <span class="bg-purple-600 text-white px-2 py-0.5 rounded shadow-sm font-bold text-xs" id="chart-slider-val-after">Après : 110.0%</span>
+                  <span class="bg-purple-600 text-white px-2 py-0.5 rounded shadow-sm font-bold text-xs" id="chart-slider-val-after">After: 110.0%</span>
                 </div>
               </div>
               <input type="range" id="slider-chart-rep-sync" min="20" max="200" step="1" value="110" class="w-full cursor-pointer accent-purple-600">
@@ -457,20 +457,20 @@
               </div>
             </div>
 
-            <!-- Slider 2 : Pourcentage de Prime Actuelle par rapport au Fixe (0% à 30%) -->
+            <!-- Slider 2: Current Bonus Percentage relative to Fixed (0% to 30%) -->
             <div class="space-y-1.5 pt-2 border-t border-slate-200/60">
               <div class="flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2">
                   <div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
-                  <span class="font-bold text-slate-800">2. Part de Prime Actuelle (% du Salaire Fixe) :</span>
-                  <span class="text-[10px] text-slate-500 font-normal">(Ajuste l'échelle et la hauteur de la courbe pondérée)</span>
+                  <span class="font-bold text-slate-800">2. Current Bonus Share (% of Fixed Salary):</span>
+                  <span class="text-[10px] text-slate-500 font-normal">(Adjusts the scale and height of the weighted curve)</span>
                 </div>
                 <div class="flex items-center gap-2 font-mono text-xs">
-                  <span class="text-slate-400">Actuel :</span>
+                  <span class="text-slate-400">Current:</span>
                   <span id="chart-bonus-pct-val" class="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">10.0%</span>
-                  <span class="text-slate-400 font-bold">&rarr; Nv. :</span>
+                  <span class="text-slate-400 font-bold">&rarr; New:</span>
                   <span id="chart-bonus-pct-new-val" class="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded shadow-sm">20.0%</span>
-                  <span id="chart-nominal-multiplier-badge" class="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded text-[10px]">&times;2.00 Nom.</span>
+                  <span id="chart-nominal-multiplier-badge" class="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded text-[10px]">&times;2.00 nominal</span>
                 </div>
               </div>
               <input type="range" id="slider-chart-bonus-sync" min="0" max="30" step="0.5" value="10" class="w-full cursor-pointer accent-indigo-600">
@@ -490,61 +490,61 @@
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-3 rounded-full bg-slate-400 mt-0.5 shrink-0 opacity-70 border border-dashed border-slate-600"></span>
               <div>
-                <span class="font-bold text-slate-700">Gauss. Initiale</span>
+                <span class="font-bold text-slate-700">Initial Gaussian</span>
                 <p class="text-[10px] text-slate-400" id="legend-mu">&mu; = 110%</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-3 rounded-full bg-indigo-600 mt-0.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-indigo-700">Gauss. Nouvelle</span>
-                <p class="text-[10px] text-slate-400">Glissée</p>
+                <span class="font-bold text-indigo-700">New Gaussian</span>
+                <p class="text-[10px] text-slate-400">Shifted</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-slate-400 mt-1.5 shrink-0 border-t border-dashed border-slate-400"></span>
               <div>
-                <span class="font-bold text-slate-700">Ancienne Courbe</span>
-                <p class="text-[10px] text-slate-400">1:1 sans seuil</p>
+                <span class="font-bold text-slate-700">Old Curve</span>
+                <p class="text-[10px] text-slate-400">1:1 no threshold</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-indigo-600 mt-1.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-indigo-700">Nouvelle Courbe</span>
-                <p class="text-[10px] text-slate-400">% Nominal Nv.</p>
+                <span class="font-bold text-indigo-700">New Curve</span>
+                <p class="text-[10px] text-slate-400">% New Nominal</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-purple-600 mt-1.5 shrink-0 border-t-2 border-dashed border-purple-600"></span>
               <div>
-                <span class="font-bold text-purple-700">Courbe Pondérée</span>
-                <p class="text-[10px] text-slate-400">Point Violet &bull; Équiv. Ancien Nom.</p>
+                <span class="font-bold text-purple-700">Weighted Curve</span>
+                <p class="text-[10px] text-slate-400">Purple Point &bull; Old Nominal Equiv.</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 2. INSPECTEUR INDIVIDUEL AVEC SLIDER PRIMES (0-30%) & CLAUSE DE NON-BAISSE -->
+        <!-- 2. INDIVIDUAL INSPECTOR WITH BONUS SLIDERS (0-30%) & NO-DECREASE CLAUSE -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="user-check" class="w-4 h-4"></i></div>
               <div>
-                <h2 class="font-bold text-slate-900 text-sm">Simulateur Individuel &amp; Analyse des Primes</h2>
-                <p class="text-xs text-slate-500">Protection des acquis : les commerciaux &ge; 20% conservent leur taux supérieur</p>
+                <h2 class="font-bold text-slate-900 text-sm">Individual Simulator &amp; Bonus Analysis</h2>
+                <p class="text-xs text-slate-500">Grandfathering: reps at &ge; 20% keep their higher rate</p>
               </div>
             </div>
             <span class="font-mono text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200" id="badge-rep-archetype">
-              Commercial Moyen (110%)
+              Average Rep (110%)
             </span>
           </div>
 
-          <!-- Individual rep specific parameters (Salaire Fixe + Slider Primes 0-30% du Fixe) -->
+          <!-- Individual rep specific parameters (Fixed Salary + Bonus Slider 0-30% of Fixed) -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-purple-50/40 rounded-xl border border-purple-100 text-xs">
             <div>
               <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
-                <span>Salaire Fixe Annuel</span>
+                <span>Annual Fixed Salary</span>
                 <span class="text-[10px] font-bold text-purple-600">Base</span>
               </label>
               <div class="relative">
@@ -553,15 +553,15 @@
               </div>
             </div>
 
-            <!-- Slider: Position d'Atteinte du Commercial (20% à 200%) -->
+            <!-- Slider: Rep's Achievement Position (20% to 200%) -->
             <div class="space-y-1 sm:col-span-2">
               <div class="flex justify-between items-center">
                 <label for="slider-rep-achievement" class="font-semibold text-slate-700 flex items-center gap-1">
-                  <span>Position d'Atteinte Historique</span>
-                  <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Taux d'atteinte historique du commercial (20% à 200%)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+                  <span>Historical Achievement Position</span>
+                  <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Rep's historical achievement rate (20% to 200%)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
                 </label>
                 <div class="flex items-center gap-2 font-mono text-xs">
-                  <span class="text-slate-400">Avant :</span>
+                  <span class="text-slate-400">Before:</span>
                   <span id="val-rep-achieve-before" class="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">110%</span>
                   <span class="text-slate-400 font-bold">&rarr;</span>
                   <span id="val-rep-achieve-after" class="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded shadow-sm">110.0%</span>
@@ -578,17 +578,17 @@
               </div>
             </div>
 
-            <!-- Slider: Primes actuelles versées (0 à 30% du fixe) -->
+            <!-- Slider: Current bonuses paid (0 to 30% of fixed) -->
             <div class="space-y-1 sm:col-span-2 pt-2 border-t border-purple-200/50">
               <div class="flex justify-between items-center">
                 <label for="slider-rep-bonus-pct" class="font-semibold text-slate-700 flex items-center gap-1">
-                  <span>Part de prime actuelle (% du Fixe)</span>
-                  <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Pourcentage du salaire fixe actuellement versé en variable nominal (0 à 30%)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+                  <span>Current bonus share (% of fixed)</span>
+                  <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Percentage of fixed salary currently paid as nominal variable (0 to 30%)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
                 </label>
                 <div class="flex items-center gap-2">
-                  <span class="text-slate-400 text-[10px]">Actuel :</span>
+                  <span class="text-slate-400 text-[10px]">Current:</span>
                   <span id="val-rep-bonus-pct" class="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">10.0%</span>
-                  <span class="text-slate-400 text-[10px]">&rarr; Nouveau :</span>
+                  <span class="text-slate-400 text-[10px]">&rarr; New:</span>
                   <span id="val-rep-new-bonus-pct" class="font-mono font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">20.0%</span>
                 </div>
               </div>
@@ -603,77 +603,77 @@
             </div>
           </div>
 
-          <!-- Rep Impact Summary Cards: Focus on Nominal & Variable Versé -->
+          <!-- Rep Impact Summary Cards: Focus on Nominal & Variable Paid -->
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
-            <!-- Card Trajectoire Atteinte -->
+            <!-- Card Achievement Trajectory -->
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-              <span class="text-[11px] font-semibold text-slate-500 block mb-1">Trajectoire d'Atteinte</span>
+              <span class="text-[11px] font-semibold text-slate-500 block mb-1">Achievement Trajectory</span>
               <div class="flex items-baseline gap-1.5">
                 <span class="text-sm font-bold font-mono text-slate-400" id="rep-initial-achieve">110%</span>
                 <span class="text-xs text-slate-400">&rarr;</span>
                 <span class="text-lg font-black font-mono text-indigo-700" id="rep-calibrated-achieve">110.0%</span>
               </div>
-              <span class="text-[10px] text-slate-400 block mt-1" id="rep-achieve-details">(Hausse obj &amp; surperf)</span>
+              <span class="text-[10px] text-slate-400 block mt-1" id="rep-achieve-details">(Target increase &amp; overperf)</span>
             </div>
 
-            <!-- Card Ancien Schéma -->
+            <!-- Card Old Scheme -->
             <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-[11px] font-semibold text-slate-500">Ancien Schéma</span>
-                <span class="text-[10px] font-mono font-bold text-slate-500" id="rep-old-payout">110.0% pay</span>
+                <span class="text-[11px] font-semibold text-slate-500">Old Scheme</span>
+                <span class="text-[10px] font-mono font-bold text-slate-500" id="rep-old-payout">110.0% payout</span>
               </div>
               <div class="text-lg font-black font-mono text-slate-700" id="rep-old-euros">5 500 €</div>
               <div class="mt-1 pt-1 border-t border-slate-200/60 flex justify-between text-[11px] text-slate-500 font-mono">
-                <span>Nominal :</span>
+                <span>Nominal:</span>
                 <span class="font-bold text-slate-700" id="rep-old-nominal">5 000 €</span>
               </div>
             </div>
 
-            <!-- Card Nouveau Schéma -->
+            <!-- Card New Scheme -->
             <div class="p-3 bg-indigo-50/80 rounded-xl border border-indigo-100">
               <div class="flex items-center justify-between mb-1">
-                <span class="text-[11px] font-semibold text-indigo-700">Nouveau Schéma</span>
-                <span class="text-[10px] font-mono font-bold text-indigo-600" id="rep-new-payout">110.0% pay</span>
+                <span class="text-[11px] font-semibold text-indigo-700">New Scheme</span>
+                <span class="text-[10px] font-mono font-bold text-indigo-600" id="rep-new-payout">110.0% payout</span>
               </div>
               <div class="text-lg font-black font-mono text-indigo-700" id="rep-new-euros">11 000 €</div>
               <div class="mt-1 pt-1 border-t border-indigo-200/60 flex justify-between text-[11px] text-indigo-700 font-mono">
-                <span>Nominal :</span>
+                <span>Nominal:</span>
                 <span class="font-bold text-indigo-900" id="rep-new-nominal">10 000 €</span>
               </div>
             </div>
 
-            <!-- Card Évolution Variable & Nominal -->
+            <!-- Card Variable & Nominal Change -->
             <div class="p-3 rounded-xl border" id="rep-delta-card">
-              <span class="text-[11px] font-semibold block mb-1" id="rep-delta-label">&Delta; Variable Versé</span>
+              <span class="text-[11px] font-semibold block mb-1" id="rep-delta-label">&Delta; Variable Paid</span>
               <div class="text-lg font-black font-mono" id="rep-delta-payout">+5 500 €</div>
               <div class="mt-1 pt-1 border-t border-current/20 flex justify-between text-[11px] font-mono opacity-90">
-                <span>&Delta; Nominal :</span>
+                <span>&Delta; Nominal:</span>
                 <span class="font-bold" id="rep-delta-nominal">+5 000 €</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 3. ANALYSE COMPARATIVE PAR DÉCILE / POPULATION -->
+        <!-- 3. COMPARATIVE ANALYSIS BY SEGMENT / POPULATION -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="users" class="w-4 h-4"></i></div>
-              <h2 class="font-bold text-slate-900 text-sm">Répartition de la Population Commerciale par Tranches (<span id="segments-sigma">&sigma; = 30%</span>)</h2>
+              <h2 class="font-bold text-slate-900 text-sm">Sales Population Breakdown by Segment (<span id="segments-sigma">&sigma; = 30%</span>)</h2>
             </div>
-            <span class="text-xs text-slate-500 font-medium">Calcul d'intégration continue</span>
+            <span class="text-xs text-slate-500 font-medium">Continuous integration calculation</span>
           </div>
 
           <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
               <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th class="py-2.5 px-3">Segment / Tranche</th>
+                  <th class="py-2.5 px-3">Segment / Band</th>
                   <th class="py-2.5 px-3">% Population</th>
-                  <th class="py-2.5 px-3">Nb Commerciaux</th>
-                  <th class="py-2.5 px-3">Ancien Payout Moy.</th>
-                  <th class="py-2.5 px-3">Nouveau Payout Moy.</th>
-                  <th class="py-2.5 px-3 font-semibold">Impact Variable Moy. / Rep</th>
+                  <th class="py-2.5 px-3"># Reps</th>
+                  <th class="py-2.5 px-3">Avg. Old Payout</th>
+                  <th class="py-2.5 px-3">Avg. New Payout</th>
+                  <th class="py-2.5 px-3 font-semibold">Avg. Variable Impact / Rep</th>
                 </tr>
               </thead>
               <tbody id="segments-table-body" class="divide-y divide-slate-100 font-mono">
@@ -687,50 +687,50 @@
 
     </div>
 
-    <!-- 4. SECTION D'EXPLICATIONS MATHÉMATIQUES & SYNTHÈSE STRATÉGIQUE (Rendu 100% propre via KaTeX) -->
+    <!-- 4. MATH EXPLANATIONS & STRATEGIC SYNTHESIS SECTION (100% clean rendering via KaTeX) -->
     <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 text-xs text-slate-600">
       <div class="flex items-center gap-2 text-slate-900 font-bold text-sm">
         <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i>
-        <span>Formules &amp; Modèle Économique (Formules KaTeX Natives)</span>
+        <span>Formulas &amp; Economic Model (Native KaTeX Formulas)</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
         <div class="space-y-1.5">
           <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            1. Protection des Acquis (&ge; 20%)
+            1. Grandfathering (&ge; 20%)
           </h4>
           <p class="text-slate-500 leading-relaxed">
-            La nouvelle part de prime est définie par la règle :
+            The new bonus share is defined by the rule:
             <span class="block my-1 font-mono text-indigo-950 bg-indigo-50/80 p-2 rounded border border-indigo-100">
-              \(\text{Part}_{\text{nouvelle}} = \max(20\%, \text{Part}_{\text{actuelle}})\)
+              \(\text{Share}_{\text{new}} = \max(20\%, \text{Share}_{\text{current}})\)
             </span>
-            Un commercial à \(25\%\) reste à \(25\%\), tandis qu'un commercial à \(10\%\) ou \(17\%\) passe automatiquement à \(20\%\).
+            A rep at \(25\%\) stays at \(25\%\), while a rep at \(10\%\) or \(17\%\) automatically moves to \(20\%\).
           </p>
         </div>
         <div class="space-y-1.5">
           <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-            2. Courbe & Point Violet Pondéré
+            2. Weighted Curve & Purple Point
           </h4>
           <p class="text-slate-500 leading-relaxed">
-            Le cadre s'adapte automatiquement à l'échelle pour afficher l'intégralité du payout pondéré :
+            The frame automatically adapts its scale to show the full weighted payout:
             <span class="block my-1 font-mono text-purple-950 bg-purple-50/80 p-2 rounded border border-purple-100">
-              \(\text{Payout}_{\text{pondéré}} = \text{Payout}_{\text{new}}(x) \times \frac{\text{Nominal}_{\text{new}}}{\text{Nominal}_{\text{old}}}\)
+              \(\text{Payout}_{\text{weighted}} = \text{Payout}_{\text{new}}(x) \times \frac{\text{Nominal}_{\text{new}}}{\text{Nominal}_{\text{old}}}\)
             </span>
-            Même pour de faibles primes initiales, la courbe reste entièrement visible.
+            Even for small initial bonuses, the curve remains fully visible.
           </p>
         </div>
         <div class="space-y-1.5">
           <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            3. Synchronisation & Corridor Global
+            3. Synchronization & Global Corridor
           </h4>
           <p class="text-slate-500 leading-relaxed">
-            Le gain de corridor additionnel est calculé par :
+            The additional corridor gain is computed as:
             <span class="block my-1 font-mono text-emerald-950 bg-emerald-50/80 p-2 rounded border border-emerald-100">
               \(\text{Gain C2P} = \text{C2P Total} \times \Delta_{\text{perf}} \times \text{Corridor}\)
             </span>
-            avec \(700\text{ M€} \times 1\% \times 20\% = 1.4\text{ M€}\) de C2P brut additionnel par point de surperformance.
+            with \(700\text{ M€} \times 1\% \times 20\% = 1.4\text{ M€}\) of additional gross C2P per point of overperformance.
           </p>
         </div>
       </div>
@@ -738,23 +738,23 @@
 
   </main>
 
-  <!-- ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% ===== -->
+  <!-- ===== ADVANCED VIEW: 90% HYBRID SCHEME ===== -->
   <main id="view-advanced" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
 
-    <!-- Règle expliquée -->
+    <!-- Rule explained -->
     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
       <div class="flex items-center gap-2 mb-2">
         <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="flask-conical" class="w-4 h-4"></i></div>
-        <h2 class="font-bold text-slate-900 text-sm">Schéma Hybride : transition du nominal entre 90% et 100%</h2>
+        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between 90% and 100%</h2>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed">
-        En dessous de <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> d'atteinte : <strong>0 versé</strong>.
-        De <span id="adv-desc-zero2" class="font-mono">0%</span> à <span id="adv-desc-t1a" class="font-mono">90%</span> : ancien schéma (linéaire sur l'ancien nominal).
-        De <span id="adv-desc-t1b" class="font-mono">90%</span> à <span id="adv-desc-t2a" class="font-mono">100%</span> : passage linéaire de l'ancienne courbe à la nouvelle.
-        Au-delà : nouvelle courbe — linéaire de 0 à 100% jusqu'au nouveau nominal, puis linéaire de 100% à 200%.
-        <strong>Nouveau nominal</strong> = max(cible 20%, nominal minimum €, acquis) &bull; <strong>Valeur à 200%</strong> = max(2&times; nouveau nominal, montant minimum €).
-        La courbe est propre à chaque commercial : plus son ancien nominal est faible, plus le saut entre 90% et 100% est important.
-        Un commercial déjà &ge; 20% a un ratio de 1 : son hybride est identique à l'ancien schéma (acquis préservés).
+        Below <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> achievement: <strong>0 paid</strong>.
+        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">90%</span>: old scheme (linear on the old nominal).
+        From <span id="adv-desc-t1b" class="font-mono">90%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear transition from the old curve to the new one.
+        Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
+        <strong>New nominal</strong> = max(20% target, € minimum nominal, grandfathered) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
+        Each rep has their own curve: the lower their old nominal, the bigger the jump between 90% and 100%.
+        A rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme (grandfathered).
       </p>
     </div>
 
@@ -766,15 +766,15 @@
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="user-check" class="w-4 h-4"></i></div>
-              <h2 class="font-bold text-slate-900 text-sm">Commercial Testé</h2>
+              <h2 class="font-bold text-slate-900 text-sm">Tested Rep</h2>
             </div>
-            <span id="adv-badge-r" class="font-mono text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200">&times;2.00 nom.</span>
+            <span id="adv-badge-r" class="font-mono text-xs font-bold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-200">&times;2.00 nominal</span>
           </div>
 
-          <!-- Slider: Position d'atteinte -->
+          <!-- Slider: Achievement position -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
-              <label for="adv-achievement" class="font-semibold text-slate-700">Position d'Atteinte</label>
+              <label for="adv-achievement" class="font-semibold text-slate-700">Achievement Position</label>
               <div class="flex items-center gap-1.5 font-mono">
                 <span id="adv-val-achieve-before" class="font-bold text-slate-700 text-sm bg-slate-100 px-2 py-0.5 rounded-md">110%</span>
                 <span class="text-slate-400 font-bold">&rarr;</span>
@@ -792,10 +792,10 @@
             </div>
           </div>
 
-          <!-- Slider: Hausse des objectifs (décale l'atteinte calibrée) -->
+          <!-- Slider: Target increase (shifts the calibrated achievement) -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
-              <label for="adv-target-increase" class="font-semibold text-slate-700">Hausse des Objectifs</label>
+              <label for="adv-target-increase" class="font-semibold text-slate-700">Target Increase</label>
               <span id="adv-val-target-increase" class="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-2 py-0.5 rounded-md">+0.0%</span>
             </div>
             <input type="range" id="adv-target-increase" min="0" max="60" step="0.5" value="0" class="w-full cursor-pointer accent-indigo-600">
@@ -806,10 +806,10 @@
             </div>
           </div>
 
-          <!-- Slider: Seuil de déclenchement (en dessous : 0 versé) -->
+          <!-- Slider: Trigger threshold (below: 0 paid) -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
-              <label for="adv-zero-threshold" class="font-semibold text-slate-700">Seuil de Déclenchement (0 en dessous)</label>
+              <label for="adv-zero-threshold" class="font-semibold text-slate-700">Trigger Threshold (0 below)</label>
               <span id="adv-val-zero" class="font-mono font-bold text-rose-600 text-sm bg-rose-50 px-2 py-0.5 rounded-md">0%</span>
             </div>
             <input type="range" id="adv-zero-threshold" min="0" max="200" step="1" value="0" class="w-full cursor-pointer accent-rose-600">
@@ -822,10 +822,10 @@
             </div>
           </div>
 
-          <!-- Dual slider: début → fin du passage au nouveau nominal -->
+          <!-- Dual slider: transition to new nominal start → end -->
           <div class="space-y-1">
             <div class="flex justify-between items-center text-xs">
-              <label class="font-semibold text-slate-700">Passage au Nouveau Nominal (d&eacute;but &rarr; fin)</label>
+              <label class="font-semibold text-slate-700">Transition to New Nominal (start &rarr; end)</label>
               <div class="flex items-center gap-1.5 font-mono text-xs">
                 <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">90%</span>
                 <span class="text-slate-400 font-bold">&rarr;</span>
@@ -847,35 +847,35 @@
             </div>
           </div>
 
-          <!-- Ancien nominal en € -->
+          <!-- Old nominal in € -->
           <div>
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Ancien Nominal (versé à 100%)</label>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Old Nominal (paid at 100%)</label>
             <div class="relative">
               <input type="number" id="adv-nominal-old-input" value="5000" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-500">
               <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
             </div>
           </div>
 
-          <!-- Salaire fixe -->
+          <!-- Fixed salary -->
           <div>
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Salaire Fixe Annuel</label>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Annual Fixed Salary</label>
             <div class="relative">
               <input type="number" id="adv-fixed-salary" value="50000" step="1000" min="10000" max="250000" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500">
               <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
             </div>
           </div>
 
-          <!-- Nominaux minimums garantis (€) -->
+          <!-- Guaranteed minimum nominals (€) -->
           <div class="grid grid-cols-2 gap-3 pt-1">
             <div>
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Nominal min. (&agrave; 100%)</label>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Min. Nominal (at 100%)</label>
               <div class="relative">
                 <input type="number" id="adv-min-100" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
                 <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
               </div>
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Montant min. &agrave; 200%</label>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Min. Amount at 200%</label>
               <div class="relative">
                 <input type="number" id="adv-min-200" value="0" step="500" min="0" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500">
                 <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
@@ -883,10 +883,10 @@
             </div>
           </div>
 
-          <!-- Nominal nouveau -->
+          <!-- New nominal -->
           <div class="pt-1">
             <div class="p-2 bg-orange-50 border border-orange-100 rounded-xl text-[11px] text-orange-700 flex justify-between items-center">
-              <span class="text-orange-400 font-medium">Nominal Nouveau (à 100%) :</span>
+              <span class="text-orange-400 font-medium">New Nominal (at 100%):</span>
               <span id="adv-nominal-new" class="font-mono font-bold">10 000 €</span>
             </div>
           </div>
@@ -902,11 +902,11 @@
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="line-chart" class="w-4 h-4"></i></div>
               <div>
-                <h2 class="font-bold text-slate-900 text-base">Courbe Hybride vs Ancienne vs Tout-Nouveau</h2>
-                <p class="text-xs text-slate-500">En % de l'ancien nominal du commercial testé</p>
+                <h2 class="font-bold text-slate-900 text-base">Hybrid vs Old vs All-New Curve</h2>
+                <p class="text-xs text-slate-500">As % of the tested rep's old nominal</p>
               </div>
               <button id="btn-adv-standard" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">
-                Scénario Standard (paliers)
+                Standard Scenario (breakpoints)
               </button>
             </div>
           </div>
@@ -917,87 +917,87 @@
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-slate-400 mt-1.5 shrink-0 border-t border-dashed border-slate-400"></span>
               <div>
-                <span class="font-bold text-slate-700">Ancienne</span>
-                <p class="text-[10px] text-slate-400">Linéaire 1:1</p>
+                <span class="font-bold text-slate-700">Old</span>
+                <p class="text-[10px] text-slate-400">Linear 1:1</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-orange-600 mt-1.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-orange-700">Hybride 90%</span>
-                <p class="text-[10px] text-slate-400">Ce commercial</p>
+                <span class="font-bold text-orange-700">Hybrid 90%</span>
+                <p class="text-[10px] text-slate-400">This rep</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-indigo-600 mt-1.5 shrink-0 border-t border-dashed border-indigo-600"></span>
               <div>
-                <span class="font-bold text-indigo-700">Nouvelle Courbe</span>
-                <p class="text-[10px] text-slate-400">Base lin&eacute;aire 0&rarr;200%</p>
+                <span class="font-bold text-indigo-700">New Curve</span>
+                <p class="text-[10px] text-slate-400">Linear base 0&rarr;200%</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-slate-500 mt-0.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-slate-700">Point Avant</span>
-                <p class="text-[10px] text-slate-400">Ancien schéma</p>
+                <span class="font-bold text-slate-700">Before Point</span>
+                <p class="text-[10px] text-slate-400">Old scheme</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-2.5 h-2.5 rounded-full bg-orange-600 mt-0.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-orange-700">Point Apr&egrave;s</span>
-                <p class="text-[10px] text-slate-400">Sur l'hybride (calibr&eacute;)</p>
+                <span class="font-bold text-orange-700">After Point</span>
+                <p class="text-[10px] text-slate-400">On the hybrid (calibrated)</p>
               </div>
             </div>
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-purple-600 mt-1.5 shrink-0 border-t border-dashed border-purple-600"></span>
               <div>
-                <span class="font-bold text-purple-700">Scénario Standard</span>
-                <p class="text-[10px] text-slate-400">Paliers (masqu&eacute; par d&eacute;faut)</p>
+                <span class="font-bold text-purple-700">Standard Scenario</span>
+                <p class="text-[10px] text-slate-400">Breakpoints (hidden by default)</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- KPIs individuels -->
+        <!-- Individual KPIs -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Ancien Versé</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Old Paid</span>
             <div id="adv-kpi-old" class="text-2xl font-black text-slate-700 mt-1">5 500 €</div>
           </div>
           <div class="bg-white p-5 rounded-2xl border-2 border-orange-300 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-orange-500">Hybride Versé</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-orange-500">Hybrid Paid</span>
             <div id="adv-kpi-hyb" class="text-2xl font-black text-orange-600 mt-1">5 500 €</div>
           </div>
           <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Tout-Nouveau Versé</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">All-New Paid</span>
             <div id="adv-kpi-new" class="text-2xl font-black text-indigo-600 mt-1">11 000 €</div>
           </div>
           <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">&Delta; Hybride vs Ancien</span>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">&Delta; Hybrid vs Old</span>
             <div id="adv-kpi-delta" class="text-2xl font-black text-emerald-600 mt-1">+0 €</div>
-            <p class="text-[10px] text-slate-400 mt-1">Vs tout-nouveau : <span id="adv-kpi-delta-new" class="font-bold text-slate-600">-5 500 €</span></p>
+            <p class="text-[10px] text-slate-400 mt-1">Vs all-new: <span id="adv-kpi-delta-new" class="font-bold text-slate-600">-5 500 €</span></p>
           </div>
         </div>
 
-        <!-- POPULATION RÉELLE (CSV) -->
+        <!-- REAL POPULATION (CSV) -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
           <div class="flex items-center justify-between border-b border-slate-100 pb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="upload" class="w-4 h-4"></i></div>
               <div>
-                <h2 class="font-bold text-slate-900 text-sm">Population réelle (CSV)</h2>
-                <p class="text-xs text-slate-500">PEX hybride calculé commercial par commercial avec les vrais nominaux</p>
+                <h2 class="font-bold text-slate-900 text-sm">Real Population (CSV)</h2>
+                <p class="text-xs text-slate-500">Hybrid PEX computed rep by rep with actual nominals</p>
               </div>
             </div>
-            <button id="pop-clear-btn" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-all">Réinitialiser</button>
+            <button id="pop-clear-btn" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-all">Reset</button>
           </div>
 
           <div id="pop-input-zone" class="space-y-2">
             <button id="pop-sheet-btn" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2">
-              <i data-lucide="refresh-cw" class="w-4 h-4"></i> Charger depuis le Google Sheet
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i> Load from Google Sheet
             </button>
-            <p class="text-[10px] text-slate-400">Lit le Sheet connecté (déploiement Apps Script) : en-tête ligne 4, colonnes ID, Base Salary, Amount. Les données restent dans votre navigateur.</p>
+            <p class="text-[10px] text-slate-400">Reads the connected Sheet (Apps Script deployment): header row 4, columns ID, Base Salary, Amount. Data stays in your browser.</p>
           </div>
 
           <p id="pop-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
@@ -1006,45 +1006,45 @@
             <div class="grid grid-cols-3 gap-3">
               <div>
                 <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Orga</label>
-                <select id="pop-filter-orga" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">Tous</option></select>
+                <select id="pop-filter-orga" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">All</option></select>
               </div>
               <div>
-                <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Pays</label>
-                <select id="pop-filter-country" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">Tous</option></select>
+                <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Country</label>
+                <select id="pop-filter-country" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">All</option></select>
               </div>
               <div>
                 <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Position</label>
-                <select id="pop-filter-position" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">Tous</option></select>
+                <select id="pop-filter-position" onchange="onPopFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200"><option value="">All</option></select>
               </div>
             </div>
 
             <div class="grid grid-cols-3 gap-3 text-center text-xs">
               <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-                <span class="text-slate-500 font-semibold block">PEX Actuel (réel)</span>
+                <span class="text-slate-500 font-semibold block">Current PEX (actual)</span>
                 <span id="pop-pex-old" class="text-lg font-black font-mono text-slate-700">0.00 M€</span>
               </div>
               <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <span class="text-emerald-600 font-semibold block">PEX Hybride (réel)</span>
+                <span class="text-emerald-600 font-semibold block">Hybrid PEX (actual)</span>
                 <span id="pop-pex-hyb" class="text-lg font-black font-mono text-emerald-700">0.00 M€</span>
                 <span id="pop-pex-delta" class="text-[10px] font-bold block text-slate-500">(-0.00 M€)</span>
               </div>
               <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-                <span class="text-indigo-500 font-semibold block">PEX Tout-Nouveau (réel)</span>
+                <span class="text-indigo-500 font-semibold block">All-New PEX (actual)</span>
                 <span id="pop-pex-new" class="text-lg font-black font-mono text-indigo-700">0.00 M€</span>
               </div>
             </div>
 
             <div class="grid grid-cols-3 gap-3 text-center text-xs">
               <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100">
-                <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Perdants</span>
+                <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Losers</span>
                 <span id="pop-risk-count" class="text-base font-black font-mono text-rose-700">0</span>
               </div>
               <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100">
-                <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Perte max</span>
+                <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Max Loss</span>
                 <span id="pop-risk-max" class="text-base font-black font-mono text-rose-700">—</span>
               </div>
               <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100">
-                <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Perte moy.</span>
+                <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Avg. Loss</span>
                 <span id="pop-risk-avg" class="text-base font-black font-mono text-rose-700">—</span>
               </div>
             </div>
@@ -1054,13 +1054,13 @@
                 <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
                   <tr id="pop-table-head">
                     <th class="py-2 px-3">ID</th>
-                    <th class="py-2 px-3">Fixe</th>
+                    <th class="py-2 px-3">Fixed</th>
                     <th class="py-2 px-3">Nominal</th>
-                    <th class="py-2 px-3">Espérance actuelle</th>
-                    <th class="py-2 px-3">Espérance hybride</th>
+                    <th class="py-2 px-3">Current expected value</th>
+                    <th class="py-2 px-3">Hybrid expected value</th>
                     <th class="py-2 px-3">&Delta; &euro;</th>
-                    <th class="py-2 px-3">Espérance nouveau</th>
-                    <th class="py-2 px-3">&Delta; &euro; nouveau</th>
+                    <th class="py-2 px-3">New expected value</th>
+                    <th class="py-2 px-3">&Delta; &euro; new</th>
                   </tr>
                 </thead>
                 <tbody id="pop-table-body" class="divide-y divide-slate-100 font-mono">
@@ -1070,21 +1070,21 @@
 
             <div id="matrix-card" class="border border-slate-200 rounded-xl p-4 space-y-3">
               <div class="flex items-center justify-between">
-                <h3 class="font-bold text-slate-900 text-sm">Matrice Salaire &times; Performance</h3>
+                <h3 class="font-bold text-slate-900 text-sm">Salary &times; Performance Matrix</h3>
                 <div class="flex gap-1">
-                  <button id="matrix-mode-levels" onclick="setMatrixMode('levels')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-orange-50 text-orange-700 border border-orange-200 transition-all">Espérances</button>
-                  <button id="matrix-mode-deltas" onclick="setMatrixMode('deltas')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">&Delta; vs actuel</button>
+                  <button id="matrix-mode-levels" onclick="setMatrixMode('levels')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-orange-50 text-orange-700 border border-orange-200 transition-all">Expectations</button>
+                  <button id="matrix-mode-deltas" onclick="setMatrixMode('deltas')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">&Delta; vs current</button>
                 </div>
               </div>
-              <div id="matrix-empty" class="hidden text-xs text-slate-400 text-center py-4">Chargez une population pour afficher la matrice.</div>
+              <div id="matrix-empty" class="hidden text-xs text-slate-400 text-center py-4">Load a population to display the matrix.</div>
               <div id="matrix-grid" class="hidden grid grid-cols-[auto_1fr_1fr] gap-2 text-xs">
                 <div></div>
-                <div class="text-center font-semibold text-slate-500">Low performer<br><span class="text-[10px] font-normal text-slate-400">moitié basse distribution</span></div>
-                <div class="text-center font-semibold text-slate-500">Top performer<br><span class="text-[10px] font-normal text-slate-400">moitié haute distribution</span></div>
-                <div class="self-center font-semibold text-slate-500">Salaire bas<br><span id="matrix-count-low" class="text-[10px] font-normal text-slate-400"></span></div>
+                <div class="text-center font-semibold text-slate-500">Low performer<br><span class="text-[10px] font-normal text-slate-400">lower half of distribution</span></div>
+                <div class="text-center font-semibold text-slate-500">Top performer<br><span class="text-[10px] font-normal text-slate-400">upper half of distribution</span></div>
+                <div class="self-center font-semibold text-slate-500">Low Salary<br><span id="matrix-count-low" class="text-[10px] font-normal text-slate-400"></span></div>
                 <div id="matrix-low-low" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
                 <div id="matrix-low-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
-                <div class="self-center font-semibold text-slate-500">Salaire haut<br><span id="matrix-count-high" class="text-[10px] font-normal text-slate-400"></span></div>
+                <div class="self-center font-semibold text-slate-500">High Salary<br><span id="matrix-count-high" class="text-[10px] font-normal text-slate-400"></span></div>
                 <div id="matrix-high-low" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
                 <div id="matrix-high-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
               </div>
@@ -1099,8 +1099,8 @@
   <!-- Footer -->
   <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-center text-xs text-slate-400">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <span>Simulateur d'Optimisation de Rémunération Variable Commerciale &amp; Modélisation PEX</span>
-      <span class="font-mono text-slate-400">Moteur KaTeX &bull; &sigma; = <span id="footer-sigma">30%</span> &bull; PEX Initial <span id="footer-pex">2.5 M€</span> &bull; Modèle Corridor</span>
+      <span>Sales Variable Pay Optimization Simulator &amp; PEX Modeling</span>
+      <span class="font-mono text-slate-400">KaTeX engine &bull; &sigma; = <span id="footer-sigma">30%</span> &bull; Initial PEX <span id="footer-pex">2.5 M€</span> &bull; Corridor Model</span>
     </div>
   </footer>
 
@@ -1150,10 +1150,10 @@
     }
 
     // ============================================================
-    // ===== MOTEUR DE CALCUL (pur — aucune référence DOM ici) ====
+    // ===== CALCULATION ENGINE (pure — no DOM references here) ====
     // ============================================================
     const Engine = {
-      // Densité normalisée : [{x, w}] avec Σw = 1 sur la fenêtre ±4.5σ
+      // Normalized density: [{x, w}] with Σw = 1 over the ±4.5σ window
       densityPoints(mu, sigma, step = 0.5) {
         const minX = Math.max(0, mu - 4.5 * sigma), maxX = mu + 4.5 * sigma;
         const pts = []; let total = 0;
@@ -1161,14 +1161,14 @@
         return pts.map(p => ({ x: p.x, w: p.d / total }));
       },
 
-      // E[fn(X)] avec X ~ N(mu, sigma) tronquée à ±4.5σ
+      // E[fn(X)] with X ~ N(mu, sigma) truncated at ±4.5σ
       integrate(fn, mu, sigma, step = 0.5) {
         let acc = 0;
         for (const { x, w } of this.densityPoints(mu, sigma, step)) acc += fn(x) * w;
         return acc;
       },
 
-      // Contexte de courbe d'un commercial (tout en €)
+      // A rep's curve context (all in €)
       hybridContext(oldNomE, fixedE, targetSharePct, min100E, min200E, zero, t1, t2, cap) {
         const newNomE = Math.max(fixedE * targetSharePct / 100, min100E, oldNomE);
         const val200E = Math.max(2 * newNomE, min200E);
@@ -1195,8 +1195,8 @@
         return Engine.newBaseE(x, ctx);
       },
 
-      // Courbe à paliers (vue standard) — pilotée par la table, sans hypothèse cachée :
-      // le palier d'atteinte 0 ancre le payout "sous le seuil" (le seuil = 2e palier)
+      // Breakpoint curve (standard view) — driven by the table, with no hidden assumption:
+      // the achievement breakpoint 0 anchors the "below threshold" payout (the threshold = 2nd breakpoint)
       paliers(x, breakpoints, cap) {
         const bps = [...breakpoints].sort((a, b) => a.achievement - b.achievement);
         const belowPayout = bps[0].achievement === 0 ? bps[0].payout : 0;
@@ -1227,7 +1227,7 @@
       return Math.min(achievement, state.payoutCap);
     }
 
-    // Evaluate new piecewise linear payout curve (délégué au moteur)
+    // Evaluate new piecewise linear payout curve (delegated to the engine)
     function evalNewPayout(achievement) {
       return Engine.paliers(achievement, state.breakpoints, state.payoutCap);
     }
@@ -1245,7 +1245,7 @@
       return Math.max(state.newVarShare, currentBonusPct);
     }
 
-    // Numerical integration of Expected Payout % (délégué au moteur)
+    // Numerical integration of Expected Payout % (delegated to the engine)
     function calculateExpectedPayout(isNewCurve = true) {
       const mu = isNewCurve ? getCalibratedAchievement(state.muInit) : state.muInit;
       const sigma = state.sigmaInit;
@@ -1261,7 +1261,7 @@
       document.getElementById('val-resulting-mu').innerText = muCalibrated.toFixed(1) + '%';
       document.getElementById('val-init-mu').innerText = state.muInit.toFixed(1) + '%';
 
-      // Population réelle chargée → PEX réels par commercial (sinon modèle moyen)
+      // Real population loaded → actual PEX per rep (otherwise average model)
       if (advPopulation.length) refreshPopulation();
 
       let oldPexM, newPexM, newTargetPEX_M, newExpectedPayoutPct, oldTargetPEX_M;
@@ -1289,12 +1289,12 @@
       const c2pGainM = state.baseC2P * (state.overperf / 100);
       const marginGainM = c2pGainM * (state.marginRate / 100);
 
-      // Net company P&L gain = Corridor additionnel + PEX savings
+      // Net company P&L gain = additional corridor + PEX savings
       const netGainM = marginGainM + pexDiffM;
 
       // 2. Update KPI cards
       document.getElementById('kpi-pex-new').innerText = newPexM.toFixed(2) + ' M€';
-      document.getElementById('kpi-pex-payout-rate').innerText = newExpectedPayoutPct.toFixed(1) + '% moy.';
+      document.getElementById('kpi-pex-payout-rate').innerText = newExpectedPayoutPct.toFixed(1) + '% avg.';
       document.getElementById('kpi-pex-old').innerText = oldPexM.toFixed(2) + ' M€';
       
       const pexDiffEl = document.getElementById('kpi-pex-diff');
@@ -1306,11 +1306,11 @@
       if (pexDiffM >= 0) {
         pexSavingsEl.innerText = '+' + pexDiffM.toFixed(2) + ' M€';
         pexSavingsEl.className = 'text-2xl font-black text-emerald-600';
-        pexSavingsLabel.innerText = 'Économie budgétaire nette sur le PEX';
+        pexSavingsLabel.innerText = 'Net budget savings on PEX';
       } else {
         pexSavingsEl.innerText = pexDiffM.toFixed(2) + ' M€';
         pexSavingsEl.className = 'text-2xl font-black text-rose-600';
-        pexSavingsLabel.innerText = 'Surcoût budgétaire sur le PEX';
+        pexSavingsLabel.innerText = 'Budget overrun on PEX';
       }
 
       const marginGainEl = document.getElementById('kpi-margin-gain');
@@ -1334,7 +1334,7 @@
       // 5. Update Chart with auto-adapting Y scale
       updateChartData();
 
-      // 6. Textes dynamiques
+      // 6. Dynamic texts
       document.getElementById('legend-mu').innerHTML = '&mu; = ' + state.muInit.toFixed(0) + '%';
       document.getElementById('segments-sigma').innerHTML = '&sigma; = ' + state.sigmaInit.toFixed(0) + '%';
       document.getElementById('footer-sigma').innerHTML = state.sigmaInit.toFixed(0) + '%';
@@ -1352,8 +1352,8 @@
       // Synchronize slider under chart & slider in inspector
       document.getElementById('slider-chart-rep-sync').value = repInit;
       document.getElementById('slider-rep-achievement').value = repInit;
-      document.getElementById('chart-slider-val-before').innerText = `Avant : ${repInit}%`;
-      document.getElementById('chart-slider-val-after').innerText = `Après : ${calibratedAchieve.toFixed(1)}%`;
+      document.getElementById('chart-slider-val-before').innerText = `Before: ${repInit}%`;
+      document.getElementById('chart-slider-val-after').innerText = `After: ${calibratedAchieve.toFixed(1)}%`;
       document.getElementById('val-rep-achieve-before').innerText = `${repInit}%`;
       document.getElementById('val-rep-achieve-after').innerText = `${calibratedAchieve.toFixed(1)}%`;
 
@@ -1362,10 +1362,10 @@
 
       // Archetype badge
       const badge = document.getElementById('badge-rep-archetype');
-      if (repInit < 60) badge.innerText = 'Décrochage (<60%)';
-      else if (repInit < 85) badge.innerText = 'En difficulté (60-85%)';
-      else if (repInit < 105) badge.innerText = 'Objectif atteint (85-105%)';
-      else if (repInit < 125) badge.innerText = 'Bon performer (105-125%)';
+      if (repInit < 60) badge.innerText = 'Drop-out (<60%)';
+      else if (repInit < 85) badge.innerText = 'Struggling (60-85%)';
+      else if (repInit < 105) badge.innerText = 'On target (85-105%)';
+      else if (repInit < 125) badge.innerText = 'Strong performer (105-125%)';
       else badge.innerText = 'Top Performer (>125%)';
       
       const oldPayout = evalOldPayout(repInit);
@@ -1388,7 +1388,7 @@
 
       document.getElementById('chart-bonus-pct-val').innerText = `${oldBonusPct.toFixed(1)}%`;
       document.getElementById('chart-bonus-pct-new-val').innerText = `${newBonusPct.toFixed(1)}%`;
-      document.getElementById('chart-nominal-multiplier-badge').innerText = oldBonusPct > 0 ? `\u00D7${nominalMultiplier.toFixed(2)} Nom.` : `Fixe pur`;
+      document.getElementById('chart-nominal-multiplier-badge').innerText = oldBonusPct > 0 ? `\u00D7${nominalMultiplier.toFixed(2)} nominal` : `Pure fixed`;
 
       const oldNominal = fixed * (oldBonusPct / 100);
       const oldVarPaid = (oldPayout / 100) * oldNominal;
@@ -1399,30 +1399,30 @@
       const deltaVarEuros = newVarPaid - oldVarPaid;
       const deltaNominalEuros = newNominal - oldNominal;
 
-      document.getElementById('rep-old-payout').innerText = oldPayout.toFixed(1) + '% pay';
-      document.getElementById('rep-old-euros').innerText = Math.round(oldVarPaid).toLocaleString('fr-FR') + ' €';
-      document.getElementById('rep-old-nominal').innerText = Math.round(oldNominal).toLocaleString('fr-FR') + ' €';
+      document.getElementById('rep-old-payout').innerText = oldPayout.toFixed(1) + '% payout';
+      document.getElementById('rep-old-euros').innerText = Math.round(oldVarPaid).toLocaleString('en-US') + ' €';
+      document.getElementById('rep-old-nominal').innerText = Math.round(oldNominal).toLocaleString('en-US') + ' €';
 
-      document.getElementById('rep-new-payout').innerText = newPayout.toFixed(1) + '% pay';
-      document.getElementById('rep-new-euros').innerText = Math.round(newVarPaid).toLocaleString('fr-FR') + ' €';
-      document.getElementById('rep-new-nominal').innerText = Math.round(newNominal).toLocaleString('fr-FR') + ' €';
+      document.getElementById('rep-new-payout').innerText = newPayout.toFixed(1) + '% payout';
+      document.getElementById('rep-new-euros').innerText = Math.round(newVarPaid).toLocaleString('en-US') + ' €';
+      document.getElementById('rep-new-nominal').innerText = Math.round(newNominal).toLocaleString('en-US') + ' €';
 
       const deltaCard = document.getElementById('rep-delta-card');
       const deltaPayoutEl = document.getElementById('rep-delta-payout');
       const deltaNominalEl = document.getElementById('rep-delta-nominal');
       const deltaLabelEl = document.getElementById('rep-delta-label');
 
-      deltaPayoutEl.innerText = (deltaVarEuros >= 0 ? '+' : '') + Math.round(deltaVarEuros).toLocaleString('fr-FR') + ' €';
-      deltaNominalEl.innerText = (deltaNominalEuros >= 0 ? '+' : '') + Math.round(deltaNominalEuros).toLocaleString('fr-FR') + ' €';
+      deltaPayoutEl.innerText = (deltaVarEuros >= 0 ? '+' : '') + Math.round(deltaVarEuros).toLocaleString('en-US') + ' €';
+      deltaNominalEl.innerText = (deltaNominalEuros >= 0 ? '+' : '') + Math.round(deltaNominalEuros).toLocaleString('en-US') + ' €';
 
       if (deltaVarEuros >= 0) {
         deltaCard.className = 'p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 text-emerald-800';
         deltaPayoutEl.className = 'text-lg font-black font-mono text-emerald-700';
-        deltaLabelEl.innerText = 'Gain Variable Versé';
+        deltaLabelEl.innerText = 'Variable Paid Gain';
       } else {
         deltaCard.className = 'p-3 bg-rose-50/80 rounded-xl border border-rose-200 text-rose-800';
         deltaPayoutEl.className = 'text-lg font-black font-mono text-rose-700';
-        deltaLabelEl.innerText = 'Perte Variable Versé';
+        deltaLabelEl.innerText = 'Variable Paid Loss';
       }
     }
 
@@ -1434,17 +1434,17 @@
 
       // Define segments
       const segments = [
-        { label: 'Sous le seuil (< 50%)', min: 0, max: 50 },
-        { label: 'Zone d’effort (50% - 80%)', min: 50, max: 80 },
-        { label: 'Cible standard (80% - 100%)', min: 80, max: 100 },
-        { label: 'Surperformance (100% - 200%)', min: 100, max: 200 },
-        { label: 'Accélérateur Max (> 200%)', min: 200, max: 300 }
+        { label: 'Below threshold (< 50%)', min: 0, max: 50 },
+        { label: 'Effort zone (50% - 80%)', min: 50, max: 80 },
+        { label: 'Standard target (80% - 100%)', min: 80, max: 100 },
+        { label: 'Overperformance (100% - 200%)', min: 100, max: 200 },
+        { label: 'Max accelerator (> 200%)', min: 200, max: 300 }
       ];
 
       const tbody = document.getElementById('segments-table-body');
       tbody.innerHTML = '';
 
-      // Une seule passe de densité, accumulée par bande
+      // Single density pass, accumulated per band
       const acc = segments.map(() => ({ d: 0, o: 0, n: 0 }));
       for (const { x, w } of Engine.densityPoints(muCalibrated, sigmaCalibrated)) {
         for (let i = 0; i < segments.length; i++) {
@@ -1480,7 +1480,7 @@
           <td class="py-2 px-3 text-slate-500">${avgOldPayout.toFixed(1)}%</td>
           <td class="py-2 px-3 font-bold text-indigo-700">${avgNewPayout.toFixed(1)}%</td>
           <td class="py-2 px-3 font-bold ${deltaVarEuros >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
-            ${deltaVarEuros >= 0 ? '+' : ''}${Math.round(deltaVarEuros).toLocaleString('fr-FR')} €
+            ${deltaVarEuros >= 0 ? '+' : ''}${Math.round(deltaVarEuros).toLocaleString('en-US')} €
           </td>
         `;
         tbody.appendChild(row);
@@ -1505,7 +1505,7 @@
           </td>
           <td class="py-1.5 px-2 text-right">
             ${state.breakpoints.length > 2 ? `
-              <button onclick="removeBreakpointRow(${index})" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-all" title="Supprimer ce palier">
+              <button onclick="removeBreakpointRow(${index})" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-all" title="Delete this breakpoint">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             ` : '<span class="text-slate-300">-</span>'}
@@ -1545,7 +1545,7 @@
           labels: [],
           datasets: [
             {
-              label: 'Gaussienne Initiale (Historique)',
+              label: 'Initial Gaussian (Historical)',
               data: [],
               yAxisID: 'yDensity',
               borderColor: 'rgba(148, 163, 184, 0.9)',
@@ -1558,7 +1558,7 @@
               order: 6
             },
             {
-              label: 'Gaussienne Nouvelle (Calibrée)',
+              label: 'New Gaussian (Calibrated)',
               data: [],
               yAxisID: 'yDensity',
               borderColor: 'rgba(99, 102, 241, 0.95)',
@@ -1570,7 +1570,7 @@
               order: 5
             },
             {
-              label: 'Ancienne Courbe (Linéaire)',
+              label: 'Old Curve (Linear)',
               data: [],
               yAxisID: 'yPayout',
               borderColor: '#94a3b8',
@@ -1581,7 +1581,7 @@
               order: 4
             },
             {
-              label: 'Nouvelle Courbe (Paliers)',
+              label: 'New Curve (Breakpoints)',
               data: [],
               yAxisID: 'yPayout',
               borderColor: '#4f46e5',
@@ -1592,7 +1592,7 @@
               order: 3
             },
             {
-              label: 'Nouvelle Courbe Pondérée (Équiv. Ancien Nominal)',
+              label: 'Weighted New Curve (Old Nominal Equiv.)',
               data: [],
               yAxisID: 'yPayout',
               borderColor: '#9333ea',
@@ -1603,7 +1603,7 @@
               order: 2
             },
             {
-              label: 'Commercial Avant (Historique)',
+              label: 'Rep Before (Historical)',
               data: [],
               yAxisID: 'yPayout',
               borderColor: '#64748b',
@@ -1616,7 +1616,7 @@
               order: 1
             },
             {
-              label: 'Commercial Après (Sur Courbe Pondérée)',
+              label: 'Rep After (On Weighted Curve)',
               data: [],
               yAxisID: 'yPayout',
               borderColor: '#9333ea',
@@ -1649,23 +1649,23 @@
               cornerRadius: 8,
               callbacks: {
                 title: function(items) {
-                  return `Atteinte Objectif : ${items[0].label}%`;
+                  return `Achievement: ${items[0].label}%`;
                 },
                 label: function(context) {
                   if (context.datasetIndex === 0) {
-                    return `Densité Initiale : ${(context.raw * 100).toFixed(2)}%`;
+                    return `Initial density: ${(context.raw * 100).toFixed(2)}%`;
                   } else if (context.datasetIndex === 1) {
-                    return `Densité Nouvelle : ${(context.raw * 100).toFixed(2)}%`;
+                    return `New density: ${(context.raw * 100).toFixed(2)}%`;
                   } else if (context.datasetIndex === 2) {
-                    return `Ancien Payout : ${context.raw.toFixed(1)}%`;
+                    return `Old payout: ${context.raw.toFixed(1)}%`;
                   } else if (context.datasetIndex === 3) {
-                    return `Nouveau Payout (% Nom. Nv) : ${context.raw.toFixed(1)}%`;
+                    return `New payout (% new nominal): ${context.raw.toFixed(1)}%`;
                   } else if (context.datasetIndex === 4) {
-                    return `Payout Pondéré (Équiv. Ancien Nom.) : ${context.raw.toFixed(1)}%`;
+                    return `Weighted payout (old nominal equiv.): ${context.raw.toFixed(1)}%`;
                   } else if (context.datasetIndex === 5 && context.raw !== null) {
-                    return `Commercial Avant : ${context.raw.toFixed(1)}%`;
+                    return `Rep before: ${context.raw.toFixed(1)}%`;
                   } else if (context.datasetIndex === 6 && context.raw !== null) {
-                    return `Commercial Après (Pondéré) : ${context.raw.toFixed(1)}%`;
+                    return `Rep after (weighted): ${context.raw.toFixed(1)}%`;
                   }
                   return null;
                 }
@@ -1676,7 +1676,7 @@
             x: {
               title: {
                 display: true,
-                text: 'Taux d’Atteinte de l’Objectif (%)',
+                text: 'Achievement Rate (%)',
                 font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
                 color: '#64748b'
               },
@@ -1690,7 +1690,7 @@
               suggestedMax: 300, // Dynamically adjusted in updateChartData
               title: {
                 display: true,
-                text: 'Rémunération Variable / Payout (% Base Ancien Nominal)',
+                text: 'Variable Compensation / Payout (% of Old Nominal)',
                 font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
                 color: '#4f46e5'
               },
@@ -1760,7 +1760,7 @@
 
       const scaleBadge = document.getElementById('badge-y-scale');
       if (scaleBadge) {
-        scaleBadge.innerText = `Échelle Y : Max ${computedYMax}%`;
+        scaleBadge.innerText = `Y scale: max ${computedYMax}%`;
       }
 
       mainChartInstance.data.labels = xValues;
@@ -1804,7 +1804,7 @@
       updateDashboard();
     }
 
-    // ===== VUE AVANCÉE : SCHÉMA HYBRIDE 90% =====
+    // ===== ADVANCED VIEW: 90% HYBRID SCHEME =====
     let advChartInstance = null;
     const advState = { x: 110, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
 
@@ -1861,7 +1861,7 @@
           labels: [],
           datasets: [
             {
-              label: 'Ancienne (linéaire 1:1)',
+              label: 'Old (linear 1:1)',
               data: [],
               borderColor: '#94a3b8',
               borderWidth: 2,
@@ -1871,7 +1871,7 @@
               order: 3
             },
             {
-              label: 'Hybride 90% (ce commercial)',
+              label: 'Hybrid 90% (this rep)',
               data: [],
               borderColor: '#ea580c',
               backgroundColor: 'rgba(234, 88, 12, 0.06)',
@@ -1882,7 +1882,7 @@
               order: 2
             },
             {
-              label: 'Tout-Nouveau (× ratio nominal)',
+              label: 'All-New (× nominal ratio)',
               data: [],
               borderColor: '#4f46e5',
               borderWidth: 2,
@@ -1892,7 +1892,7 @@
               order: 3
             },
             {
-              label: 'Point Avant (Ancien schéma)',
+              label: 'Before Point (Old Scheme)',
               data: [],
               borderColor: '#64748b',
               backgroundColor: '#64748b',
@@ -1904,7 +1904,7 @@
               order: 1
             },
             {
-              label: 'Point Après (Hybride calibré)',
+              label: 'After Point (Calibrated Hybrid)',
               data: [],
               borderColor: '#ea580c',
               backgroundColor: '#ea580c',
@@ -1916,7 +1916,7 @@
               order: 0
             },
             {
-              label: 'Scénario Standard (paliers)',
+              label: 'Standard Scenario (Breakpoints)',
               data: [],
               borderColor: '#7c3aed',
               borderWidth: 2,
@@ -1946,7 +1946,7 @@
             x: {
               title: {
                 display: true,
-                text: 'Taux d’Atteinte de l’Objectif (%)',
+                text: 'Achievement Rate (%)',
                 font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
                 color: '#64748b'
               },
@@ -1957,7 +1957,7 @@
               min: 0,
               title: {
                 display: true,
-                text: 'Variable versée (% Ancien Nominal)',
+                text: 'Variable paid (% of Old Nominal)',
                 font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
                 color: '#ea580c'
               },
@@ -2007,20 +2007,20 @@
       const track = document.getElementById('adv-dual-track');
       track.style.left = (t1 / 2) + '%';
       track.style.width = (Math.max(0, t2 - t1) / 2) + '%';
-      document.getElementById('adv-badge-r').innerText = oldNomE > 0 ? `\u00D7${r.toFixed(2)} nom.` : '—';
-      document.getElementById('adv-nominal-new').innerText = Math.round(newNominal).toLocaleString('fr-FR') + ' €';
+      document.getElementById('adv-badge-r').innerText = oldNomE > 0 ? `\u00D7${r.toFixed(2)} nominal` : '—';
+      document.getElementById('adv-nominal-new').innerText = Math.round(newNominal).toLocaleString('en-US') + ' €';
 
       // KPI cards
-      document.getElementById('adv-kpi-old').innerText = Math.round(paidOld).toLocaleString('fr-FR') + ' €';
-      document.getElementById('adv-kpi-hyb').innerText = Math.round(paidHyb).toLocaleString('fr-FR') + ' €';
-      document.getElementById('adv-kpi-new').innerText = Math.round(paidNew).toLocaleString('fr-FR') + ' €';
+      document.getElementById('adv-kpi-old').innerText = Math.round(paidOld).toLocaleString('en-US') + ' €';
+      document.getElementById('adv-kpi-hyb').innerText = Math.round(paidHyb).toLocaleString('en-US') + ' €';
+      document.getElementById('adv-kpi-new').innerText = Math.round(paidNew).toLocaleString('en-US') + ' €';
 
       const deltaOld = paidHyb - paidOld;
       const deltaNewEl = document.getElementById('adv-kpi-delta-new');
       const deltaEl = document.getElementById('adv-kpi-delta');
-      deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('fr-FR') + ' €';
+      deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('en-US') + ' €';
       deltaEl.className = 'text-2xl font-black mt-1 ' + (deltaOld >= 0 ? 'text-emerald-600' : 'text-rose-600');
-      deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('fr-FR') + ' €';
+      deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('en-US') + ' €';
 
       // Chart data (% of old nominal)
       const labels = [];
@@ -2052,7 +2052,7 @@
       refreshPopulation();
     }
 
-    // ===== POPULATION RÉELLE (Google Sheet via Apps Script) =====
+    // ===== REAL POPULATION (Google Sheet via Apps Script) =====
     let advPopulation = []; // { id, orga, position, country, fixed, nominal }
     let popAutoLoaded = false;
 
@@ -2060,38 +2060,38 @@
       const st = document.getElementById('pop-status');
       st.classList.remove('hidden');
       if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        st.innerText = 'Chargement Sheet disponible uniquement via le déploiement Apps Script (hors ligne : non disponible).';
+        st.innerText = 'Sheet loading is only available through the Apps Script deployment (not available offline).';
         return;
       }
-      st.innerText = 'Chargement depuis le Sheet…';
+      st.innerText = 'Loading from the Sheet…';
       google.script.run
         .withSuccessHandler(reps => {
           advPopulation = Array.isArray(reps) ? reps : [];
           st.innerText = advPopulation.length
-            ? advPopulation.length + ' commercial(aux) chargé(s) depuis le Sheet'
-            : 'Aucune ligne valide trouvée dans le Sheet (vérifie la ligne d\'en-tête 4 et les colonnes ID / Base Salary / Amount)';
+            ? advPopulation.length + ' rep(s) loaded from the Sheet'
+            : 'No valid rows found in the Sheet (check header row 4 and columns ID / Base Salary / Amount)';
           refreshPopulation();
         })
         .withFailureHandler(err => {
-          st.innerText = 'Erreur de chargement : ' + (err && err.message ? err.message : err);
+          st.innerText = 'Loading error: ' + (err && err.message ? err.message : err);
         })
         .getPopulation();
     }
 
-    let realAgg = null; // agrégats réels (€) quand une population est chargée
+    let realAgg = null; // actual aggregates (€) when a population is loaded
 
     let popFilters = { orga: '', country: '', position: '' };
 
     const escapeHtmlStr = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
 
-    // Repeuple les options des filtres depuis la population chargée,
-    // en conservant la sélection si elle existe encore (sinon « Tous »).
+    // Repopulates filter options from the loaded population,
+    // keeping the current selection if it still exists (otherwise "All").
     function populatePopFilters() {
       [['orga', 'pop-filter-orga'], ['country', 'pop-filter-country'], ['position', 'pop-filter-position']].forEach(([key, id]) => {
         const sel = document.getElementById(id);
         const vals = [...new Set(advPopulation.map(r => String(r[key] || '').trim()).filter(Boolean))].sort();
         if (vals.indexOf(popFilters[key]) === -1) popFilters[key] = '';
-        sel.innerHTML = '<option value="">Tous</option>' + vals.map(v => '<option value="' + escapeHtmlStr(v) + '">' + escapeHtmlStr(v) + '</option>').join('');
+        sel.innerHTML = '<option value="">All</option>' + vals.map(v => '<option value="' + escapeHtmlStr(v) + '">' + escapeHtmlStr(v) + '</option>').join('');
         sel.value = popFilters[key];
       });
     }
@@ -2120,14 +2120,14 @@
       populatePopFilters();
       const population = filteredPopulation();
       if (popFilters.orga || popFilters.country || popFilters.position) {
-        document.getElementById('pop-status').innerText = advPopulation.length + ' chargé(s), ' + population.length + ' affiché(s)';
+        document.getElementById('pop-status').innerText = advPopulation.length + ' loaded, ' + population.length + ' displayed';
       }
 
-      // Deux distributions : historique (schéma actuel) et calibrée (hausse des objectifs)
+      // Two distributions: historical (current scheme) and calibrated (target increase)
       const mu0 = state.muInit;
       const muC = getCalibratedAchievement(state.muInit);
       const sigma = state.sigmaInit;
-      // Densités pré-calculées une fois pour toutes les reps
+      // Densities pre-computed once for all reps
       const pts0 = Engine.densityPoints(mu0, sigma);
       const ptsC = Engine.densityPoints(muC, sigma);
       const int0 = fn => { let a = 0; for (const { x, w } of pts0) a += fn(x) * w; return a; };
@@ -2137,7 +2137,7 @@
       let losers = 0, worstLoss = 0, lossSum = 0;
       const rows = [];
       population.forEach(rep => {
-        // Vue standard : plancher 20% du fixe du rep, courbe à paliers
+        // Standard view: 20% floor of rep's fixed salary, breakpoint curve
         const newNomStd = Math.max(rep.fixed * state.newVarShare / 100, rep.nominal);
         const nomAdv = advNominals(rep.nominal, rep.fixed);
         const eStdOld = int0(x => Engine.oldE(x, { oldNomE: rep.nominal, cap: state.payoutCap }));
@@ -2156,12 +2156,12 @@
       popMatrix = computeMatrix(population, pts0, ptsC, mu0, muC);
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
-      const fmtE = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+      const fmtE = v => Math.round(v).toLocaleString('en-US') + ' €';
       document.getElementById('pop-pex-old').innerText = fmtM(pexOld);
       document.getElementById('pop-pex-hyb').innerText = fmtM(pexHyb);
       document.getElementById('pop-pex-new').innerText = fmtM(pexNew);
       const pd = document.getElementById('pop-pex-delta');
-      pd.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + ((pexHyb - pexOld) / 1e6).toFixed(2) + ' M€ vs actuel';
+      pd.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + ((pexHyb - pexOld) / 1e6).toFixed(2) + ' M€ vs current';
       pd.className = 'text-[10px] font-bold block ' + (pexHyb <= pexOld ? 'text-emerald-600' : 'text-rose-600');
 
       document.getElementById('pop-risk-count').innerText = losers + ' / ' + population.length;
@@ -2191,7 +2191,7 @@
     let matrixMode = 'levels';
     let popMatrix = null;
 
-    // E[fn(X) | moitié de distribution] : densité renormalisée sur x < mu (low) ou x > mu (high)
+    // E[fn(X) | distribution half]: density renormalized over x < mu (low) or x > mu (high)
     function halfInt(pts, mu, side) {
       const f = pts.filter(p => side === 'low' ? p.x < mu : p.x > mu);
       const tot = f.reduce((a, p) => a + p.w, 0);
@@ -2239,9 +2239,9 @@
       }
       empty.classList.add('hidden');
       grid.classList.remove('hidden');
-      document.getElementById('matrix-count-low').innerText = popMatrix.count.low + ' comm.';
-      document.getElementById('matrix-count-high').innerText = popMatrix.count.high + ' comm.';
-      const fmtMx = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+      document.getElementById('matrix-count-low').innerText = popMatrix.count.low + ' reps';
+      document.getElementById('matrix-count-high').innerText = popMatrix.count.high + ' reps';
+      const fmtMx = v => Math.round(v).toLocaleString('en-US') + ' €';
       const deltaCls = v => v < 0 ? 'text-rose-600' : 'text-emerald-600';
       ['low', 'high'].forEach(q => {
         const el = document.getElementById('matrix-' + q + '-low');
@@ -2330,7 +2330,7 @@
         document.getElementById('preset-targetGroup').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'highIncentive') {
         state.targetIncrease = 30;
-        state.overperf = 2; // +2 pp surperformance induite
+        state.overperf = 2; // +2 pp induced overperformance
         state.muInit = 110;
         state.sigmaInit = 30;
         document.getElementById('preset-highIncentive').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
@@ -2430,11 +2430,11 @@
         updateDashboard();
       });
 
-      // Numerical inputs : 0 valide, champ vide = valeur conservée, clamp aux bornes
+      // Numerical inputs: 0 is valid, empty field = keep current value, clamp to bounds
       function bindNumberInput(id, key, min, max, isInt) {
         document.getElementById(id).addEventListener('input', (e) => {
           const raw = parseFloat(e.target.value);
-          if (!isFinite(raw)) { updateDashboard(); return; } // champ vide : on garde la valeur courante
+          if (!isFinite(raw)) { updateDashboard(); return; } // empty field: keep current value
           let v = Math.min(max, Math.max(min, raw));
           if (isInt) v = Math.round(v);
           state[key] = v;
@@ -2507,7 +2507,7 @@
         updateAdvancedView();
       });
 
-      // Population depuis le Sheet
+      // Population from the Sheet
       document.getElementById('pop-sheet-btn').addEventListener('click', loadPopulationFromSheet);
 
       document.getElementById('btn-adv-standard').addEventListener('click', () => toggleDatasetAdv(5));

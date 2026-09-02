@@ -1,78 +1,80 @@
-# Simulateur Rémunération Variable & PEX Commerciaux
+# Variable Compensation & Sales PEX Simulator
 
-Outil interactif de simulation de scénarios de rémunération variable commerciale et de leur impact
-sur la masse salariale (PEX). **100% local** : un seul fichier HTML, aucune donnée ne quitte le
-navigateur, aucune installation.
+Interactive tool for simulating sales variable compensation scenarios and their impact
+on payroll (PEX). **100% local**: a single HTML file, no data ever leaves the
+browser, no installation required.
 
-## Lancement
+## Getting Started
 
-Ouvrir `index.html` dans un navigateur (double-clic suffit). Les librairies (Tailwind, Chart.js,
-KaTeX, Lucide) sont chargées via CDN — une connexion internet est nécessaire au premier chargement.
+Open `index.html` in a browser (double-click is enough). The libraries (Tailwind, Chart.js,
+KaTeX, Lucide) are loaded via CDN — an internet connection is needed on first load.
 
-## Vue Standard
+## Standard View
 
-Modèle de population : distribution gaussienne des taux d'atteinte (µ et σ paramétrables).
+Population model: Gaussian distribution of achievement rates (configurable µ and σ).
 
-- **Sliders stratégiques** : hausse des objectifs (décalage de la distribution), surperformance induite
-- **Courbes** : ancienne (linéaire 1:1) vs nouvelle (paliers éditables : 50%→10%, 80%→50%, 100%→100%,
-  100%→200% progressif, cap paramétrable)
-- **KPIs de masse** : PEX nouveau vs actuel, Δ masse salariale, gain corridor additionnel, bilan net P&L
-- **Simulateur individuel** : salaire fixe, part de prime actuelle, protection des acquis (le nouveau
-  nominal = max(20%, acquis)) — les commerciaux à ≥ 20% conservent leur taux
-- **Répartition de la population** par tranches d'atteinte avec impact moyen par commercial
+- **Strategic sliders**: target increase (distribution shift), induced overperformance
+- **Curves**: old one (linear 1:1) vs new one (editable breakpoints: 50%→10%, 80%→50%, 100%→100%,
+  100%→200% progressive, configurable cap)
+- **Mass KPIs**: new vs current PEX, Δ payroll, additional corridor gain, net P&L balance
+- **Individual simulator**: fixed salary, current bonus share, grandfathering (the new
+  nominal = max(20%, grandfathered)) — sales reps at ≥ 20% keep their rate
+- **Population breakdown** by achievement brackets with average impact per rep
 
-## Vue Avancée — Schéma hybride
+## Advanced View — Hybrid scheme
 
-Simulateur de scénarios de transition plus fins. Commutateur **Vue Standard / Vue Avancée** dans le header.
+A finer transition scenario simulator. **Standard View / Advanced View** toggle in the header.
 
-### Règles du schéma
+### Scheme rules
 
-- **Nouveau nominal** = max(cible 20% du fixe, nominal minimum € saisi, ancien nominal €)
-- **Valeur à 200%** = max(2 × nouveau nominal, montant minimum € saisi)
-- **Courbe de base** : linéaire de 0 à 100% jusqu'au nouveau nominal, puis linéaire de 100% à 200%
-- **Passage à la nouvelle courbe** entre T1 et T2 (slider double 0–200%) : segment droit reliant
-  l'ancienne courbe (en T1) à la nouvelle (en T2)
-- **Seuil de déclenchement** : en dessous de ce taux d'atteinte, 0 versé (0 = désactivé)
-- **Hausse des objectifs** : décale l'atteinte calibrée du commercial testé (points avant/après)
+- **New nominal** = max(20% target of the fixed salary, minimum nominal € entered, old nominal €)
+- **Value at 200%** = max(2 × new nominal, minimum € amount entered)
+- **Base curve**: linear from 0 to 100% up to the new nominal, then linear from 100% to 200%
+- **Transition to the new curve** between T1 and T2 (double slider 0–200%): straight segment connecting
+  the old curve (at T1) to the new one (at T2)
+- **Trigger threshold**: below this achievement rate, 0 paid out (0 = disabled)
+- **Target increase**: shifts the calibrated achievement of the tested rep (before/after points)
 
-L'ancien nominal est saisi **en €** ; la courbe affichée est exprimée en % de l'ancien nominal du
-commercial testé (chaque commercial a donc sa propre courbe selon son ratio nominal).
+The old nominal is entered **in €**; the displayed curve is expressed as a % of the tested rep's
+old nominal (each rep therefore has their own curve depending on their nominal ratio).
 
-### Impact masse agrégé
+### Aggregate mass impact
 
-Intégration de la courbe hybride (nominal moyen 11% → 20%) sur la gaussienne globale.
+Integration of the weighted curve (average nominal 11% → 20%) over the overall Gaussian.
 
-## Population réelle (Google Sheet)
+## Real population (Google Sheet)
 
-Dans la vue avancée, le bouton **"Charger depuis le Google Sheet"** remplace la moyenne unique par
-les vrais nominaux :
+In the advanced view, the **"Load from the Google Sheet"** button replaces the single average with
+the real nominals:
 
-- **Onglet lu** : `Data dynamic distributions` — en-tête en **ligne 4**, colonnes
-  `A=Orga, B=Position, C=Country, D=ID, E–F=(ignorées), G=Base Salary, H=Amount`
-- Pour chaque commercial : E[versé] = ∫ sa courbe hybride personnelle × densité gaussienne (µ, σ globaux)
-- **Sorties** : PEX actuel / hybride / tout-nouveau réels, nb de perdants, perte max, perte moyenne,
-  table triée par delta € avec statut (Acquis préservé / Gagnant / Perdant)
+- **Tab read**: `Data dynamic distributions` — header on **row 4**, columns
+  `A=Orga, B=Position, C=Country, D=ID, E–F=(ignored), G=Base Salary, H=Amount`
+- For each rep: E[paid] = ∫ their personal weighted curve × Gaussian density (global µ, σ)
+- **Filters** Orga / Country / Position (dropdown menus "All" + distinct values, cumulative):
+  recompute PEX cards, risk indicators and the table on the filtered subset
+- **Outputs**: real current / hybrid / all-new PEX, number of losers, max loss, average loss,
+  table sorted by colored € delta: green above +20 €, red below −20 €, gray otherwise
 
-La carte se recalcule en temps réel quand les paramètres de la courbe changent. Les données restent
-dans le navigateur.
+The card recomputes in real time when the curve parameters change. The data stays
+in the browser.
 
-## Déploiement Google Apps Script
+## Google Apps Script Deployment
 
-Deux modes possibles (`Code.gs` gère les deux) :
+Two possible modes (`Code.gs` handles both):
 
-**Lié au Sheet** (plus simple) :
-1. Ouvrir le Google Sheet → Extensions → Apps Script
-2. Coller `Code.gs` dans `Code.gs`, et le contenu de `index.html` dans un fichier HTML nommé `index`
-3. Déployer → Nouveau déploiement → Application Web
+**Sheet-bound** (simplest):
+1. Open the Google Sheet → Extensions → Apps Script
+2. Paste `Code.gs` into `Code.gs`, and the content of `index.html` into an HTML file named `index`
+3. Deploy → New deployment → Web app
 
-**Standalone** (un seul web app, indépendant du classeur) :
-1. Créer un projet sur script.google.com
-2. Coller les deux fichiers (HTML nommé `index`)
-3. Renseigner `SHEET_ID` en haut de `Code.gs` avec l'ID du classeur (la chaîne dans l'URL entre `/d/` et `/edit`)
-4. Déployer → Application Web — Google demandera l'autorisation d'accès au classeur au premier lancement
+**Standalone** (a single web app, independent of the spreadsheet):
+1. Create a project on script.google.com
+2. Paste both files (HTML named `index`)
+3. Fill in `SHEET_ID` at the top of `Code.gs` with the spreadsheet ID (the string in the URL between `/d/` and `/edit`)
+4. Deploy → Web app — Google will ask for permission to access the spreadsheet on first launch
 
-Ouvert hors Apps Script (fichier local), le bouton de chargement affiche un message d'information —
-le reste de l'outil fonctionne normalement.
+When opened outside Apps Script (local file), the loading button displays an informational message —
+the rest of the tool works normally.
 
 ## Tests
 
@@ -80,20 +82,20 @@ le reste de l'outil fonctionne normalement.
 node tests/run.js
 ```
 
-78 vérifications en 4 suites (DOM simulé, aucune dépendance) :
+78 checks in 4 suites (simulated DOM, no dependencies):
 
-- `01-model` : courbes (paliers, base linéaire, hybride), blend linéaire, planchers €, seuil 0,
-  continuité aux frontières, égalité avec modèle de référence (8 configs × 201 points)
-- `02-advanced-ui` : scénario standard superposable, sliders synchronisés, calibrage unifié
-- `03-population` : chargement Sheet mocké, plancher 20% par rep, hausse d'objectifs,
-  planchers €, échappement HTML, retour au modèle moyen
-- `04-standard-ui` : textes dynamiques, badges archétype, modèle moyen, reset
+- `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
+  continuity at boundaries, equality with the reference model (8 configs × 201 points)
+- `02-advanced-ui`: superimposable standard scenario, synchronized sliders, unified calibration
+- `03-population`: mocked Sheet loading, 20% floor per rep, target increase,
+  € floors, HTML escaping, return to the average model
+- `04-standard-ui`: dynamic texts, archetype badges, average model, reset
 
 ## Architecture
 
-- **Moteur de calcul** (`Engine`, section dédiée en haut du script) : pur et sans DOM —
-  `integrate` (unique primitive d'intégration gaussienne), courbes en € (`oldE`, `newBaseE`,
-  `hybridE`), courbe à paliers pilotée par la table éditable. L'UI n'est qu'une couche
-  d'affichage au-dessus.
-- `index.html` (client) + `Code.gs` (backend Apps Script) — Chart.js, Tailwind CSS, KaTeX, Lucide (CDN)
-- Historique git complet ; tags : `v1-sans-transition`, `v2-avec-transition`
+- **Calculation engine** (`Engine`, dedicated section at the top of the script): pure and DOM-free —
+  `integrate` (single Gaussian integration primitive), curves in € (`oldE`, `newBaseE`,
+  `hybridE`), breakpoint curve driven by the editable table. The UI is just a
+  display layer on top.
+- `index.html` (client) + `Code.gs` (Apps Script backend) — Chart.js, Tailwind CSS, KaTeX, Lucide (CDN)
+- Full git history; tags: `v1-sans-transition`, `v2-avec-transition`
