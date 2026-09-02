@@ -2262,20 +2262,23 @@
     function computeMatrix(population, pts0, ptsC, mu0, muC) {
       if (!population.length) return null;
       const meanFixed = population.reduce((a, r) => a + r.fixed, 0) / population.length;
-      const out = { meanFixed, count: { low: 0, high: 0 }, quadrants: { low: { old: 0, hyb: 0, new: 0 }, high: { old: 0, hyb: 0, new: 0 } } };
-      ['low', 'high'].forEach(q => {
-        const reps = population.filter(r => q === 'low' ? r.fixed < meanFixed : r.fixed >= meanFixed);
-        out.count[q] = reps.length;
-        if (!reps.length) return;
-        const i0 = halfInt(pts0, mu0, q), iC = halfInt(ptsC, muC, q);
-        let sOld = 0, sHyb = 0, sNew = 0;
-        reps.forEach(rep => {
-          const nomAdv = advNominals(rep.nominal, rep.fixed);
-          sOld += i0(x => Engine.oldE(x, { oldNomE: rep.nominal, cap: state.payoutCap }));
-          sHyb += iC(x => Engine.hybridE(x, nomAdv));
-          sNew += iC(x => Engine.newBaseE(x, nomAdv));
+      const out = { meanFixed, count: { low: 0, high: 0 }, quadrants: { low: {}, high: {} } };
+      ['low', 'high'].forEach(salary => {
+        const reps = population.filter(r => salary === 'low' ? r.fixed < meanFixed : r.fixed >= meanFixed);
+        out.count[salary] = reps.length;
+        ['low', 'top'].forEach(perf => {
+          if (!reps.length) { out.quadrants[salary][perf] = null; return; }
+          const side = perf === 'top' ? 'high' : 'low';
+          const i0 = halfInt(pts0, mu0, side), iC = halfInt(ptsC, muC, side);
+          let sOld = 0, sHyb = 0, sNew = 0;
+          reps.forEach(rep => {
+            const nomAdv = advNominals(rep.nominal, rep.fixed);
+            sOld += i0(x => Engine.oldE(x, { oldNomE: rep.nominal, cap: state.payoutCap }));
+            sHyb += iC(x => Engine.hybridE(x, nomAdv));
+            sNew += iC(x => Engine.newBaseE(x, nomAdv));
+          });
+          out.quadrants[salary][perf] = { old: sOld / reps.length, hyb: sHyb / reps.length, new: sNew / reps.length };
         });
-        out.quadrants[q] = { old: sOld / reps.length, hyb: sHyb / reps.length, new: sNew / reps.length };
       });
       return out;
     }
@@ -2306,20 +2309,21 @@
       ['low', 'high'].forEach(q => {
         const el = document.getElementById('matrix-' + q + '-low');
         const elT = document.getElementById('matrix-' + q + '-top');
-        const d = popMatrix.quadrants[q];
+        const dL = popMatrix.quadrants[q].low, dT = popMatrix.quadrants[q].top;
+        const cell = d => {
+          if (matrixMode === 'levels') {
+            return '<span class="block font-bold text-orange-700">' + fmtMx(d.hyb) + '</span><span class="block font-bold text-indigo-600">' + fmtMx(d.new) + '</span>';
+          }
+          const dh = d.hyb - d.old, dn = d.new - d.old;
+          return '<span class="block font-bold ' + deltaCls(dh) + '">' + (dh > 0 ? '+' : '') + fmtMx(dh) + '</span><span class="block font-bold ' + deltaCls(dn) + '">' + (dn > 0 ? '+' : '') + fmtMx(dn) + '</span>';
+        };
         if (!popMatrix.count[q]) {
           el.innerHTML = '<span class="text-slate-300">—</span>';
           elT.innerHTML = '<span class="text-slate-300">—</span>';
           return;
         }
-        if (matrixMode === 'levels') {
-          el.innerHTML = '<span class="block font-bold text-orange-700">' + fmtMx(d.hyb) + '</span><span class="block font-bold text-indigo-600">' + fmtMx(d.new) + '</span>';
-          elT.innerHTML = el.innerHTML;
-        } else {
-          const dh = d.hyb - d.old, dn = d.new - d.old;
-          el.innerHTML = '<span class="block font-bold ' + deltaCls(dh) + '">' + (dh > 0 ? '+' : '') + fmtMx(dh) + '</span><span class="block font-bold ' + deltaCls(dn) + '">' + (dn > 0 ? '+' : '') + fmtMx(dn) + '</span>';
-          elT.innerHTML = el.innerHTML;
-        }
+        el.innerHTML = cell(dL);
+        elT.innerHTML = cell(dT);
       });
     }
 

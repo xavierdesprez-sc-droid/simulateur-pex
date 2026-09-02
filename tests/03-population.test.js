@@ -151,10 +151,18 @@ module.exports = function suite(__h) {
   check('quadrant headcount = population', popMatrix.count.low + popMatrix.count.high === 4);
   check('low salary = fixed < mean', popMatrix.count.low === 2 && popMatrix.meanFixed > 45000 && popMatrix.meanFixed < 80000);
   ['low', 'high'].forEach(q => {
-    check('quadrant ' + q + ': hyb and new positive', popMatrix.quadrants[q].hyb > 0 && popMatrix.quadrants[q].new > 0);
-    check('quadrant ' + q + ': new ≥ hyb', popMatrix.quadrants[q].new >= popMatrix.quadrants[q].hyb);
+    ['low', 'top'].forEach(p => {
+      check('quadrant ' + q + '/' + p + ': hyb and new positive', popMatrix.quadrants[q][p].hyb > 0 && popMatrix.quadrants[q][p].new > 0);
+      check('quadrant ' + q + '/' + p + ': new ≥ hyb', popMatrix.quadrants[q][p].new >= popMatrix.quadrants[q][p].hyb);
+    });
   });
-  check('conditional low ≤ unconditional (current, low salary)', popMatrix.quadrants.low.old <= realAgg.pexOld / 4 + 1);
+  check('conditional low ≤ unconditional (current, low salary)', popMatrix.quadrants.low.low.old <= realAgg.pexOld / 4 + 1);
+  // ===== Matrix: performance columns must differ (bug repro: identical low/top cells) =====
+  ['low', 'high'].forEach(q => {
+    check('perf halves differ (old, ' + q + ' salary): top > low', popMatrix.quadrants[q].top.old > popMatrix.quadrants[q].low.old);
+    check('perf halves differ (hyb, ' + q + ' salary): top > low', popMatrix.quadrants[q].top.hyb > popMatrix.quadrants[q].low.hyb);
+    check('perf halves differ (new, ' + q + ' salary): top > low', popMatrix.quadrants[q].top.new > popMatrix.quadrants[q].low.new);
+  });
   const savedPop = advPopulation;
   advPopulation = [];
   refreshPopulation();
