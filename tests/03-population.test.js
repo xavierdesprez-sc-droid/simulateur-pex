@@ -184,6 +184,26 @@ module.exports = function suite(__h) {
   check('switch back to levels', els['matrix-mode-levels'].className.indexOf('text-orange-700') > -1);
   setMatrixMode('deltas');
 
+  // ===== Matrix: 2x2 / 3x3 switch =====
+  check('matrix default size 2x2', matrixSize === '2x2' && els['matrix-size-2'].className.indexOf('text-orange-700') > -1 && els['matrix-size-3'].className.indexOf('text-slate-500') > -1);
+  setMatrixSize('3x3');
+  check('3x3: size state + active button', matrixSize === '3x3' && els['matrix-size-3'].className.indexOf('text-orange-700') > -1);
+  check('3x3: counts sum to population', popMatrix.count.low + popMatrix.count.mid + popMatrix.count.high === 4);
+  check('3x3: salary terciles 1/1/2', popMatrix.count.low === 1 && popMatrix.count.mid === 1 && popMatrix.count.high === 2);
+  ['low', 'mid', 'high'].forEach(q => {
+    ['low', 'mid', 'top'].forEach(p => {
+      check('3x3 cell ' + q + '/' + p + ': positive hyb & new', popMatrix.quadrants[q][p].hyb > 0 && popMatrix.quadrants[q][p].new > 0);
+    });
+    check('3x3 perf monotony (old, ' + q + '): top >= mid >= low', popMatrix.quadrants[q].top.old >= popMatrix.quadrants[q].mid.old && popMatrix.quadrants[q].mid.old >= popMatrix.quadrants[q].low.old);
+    check('3x3 perf monotony (hyb, ' + q + '): top >= mid >= low', popMatrix.quadrants[q].top.hyb >= popMatrix.quadrants[q].mid.hyb && popMatrix.quadrants[q].mid.hyb >= popMatrix.quadrants[q].low.hyb);
+  });
+  check('3x3: mid DOM cells rendered with chips', ['matrix-low-mid', 'matrix-mid-low', 'matrix-mid-mid', 'matrix-mid-top', 'matrix-high-mid'].every(id => els[id].innerHTML.indexOf('Hyb') > -1 && els[id].innerHTML.indexOf('New') > -1));
+  check('3x3: mid count shown', els['matrix-count-mid'].innerText.indexOf('1') > -1);
+  check('3x3: mid row visible, 4-column grid', els['matrix-row-mid'].className.indexOf('hidden') === -1 && els['matrix-grid'].className.indexOf('grid-cols-[auto_1fr_1fr_1fr]') > -1);
+  setMatrixSize('2x2');
+  check('back to 2x2: state + quadrants shape', matrixSize === '2x2' && popMatrix.quadrants.low.mid === undefined && popMatrix.count.mid === undefined);
+  check('back to 2x2: mid row hidden, 3-column grid', els['matrix-row-mid'].className.indexOf('hidden') > -1 && els['matrix-grid'].className.indexOf('grid-cols-[auto_1fr_1fr]') > -1);
+
   // ===== Third tab: Matrix =====
   setView('matrix');
   check('tab-matrix active on setView(matrix)', els['tab-matrix'].className.indexOf('shadow-sm') > -1);

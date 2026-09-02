@@ -14,8 +14,8 @@ KaTeX, Lucide) are loaded via CDN — an internet connection is needed on first 
 Population model: Gaussian distribution of achievement rates (configurable µ and σ).
 
 - **Strategic sliders**: target increase (distribution shift), induced overperformance
-- **Curves**: old one (linear 1:1) vs new one (editable breakpoints: 50%→10%, 80%→50%, 100%→100%,
-  100%→200% progressive, configurable cap)
+- **Curves**: old one (linear 1:1) vs new one (editable breakpoints: flat 0 up to 40%,
+  linear 0→100% payout between 40% and 100%, 100%→200% progressive, configurable cap)
 - **Mass KPIs**: new vs current PEX, Δ payroll, additional corridor gain, net P&L balance
 - **Individual simulator**: fixed salary, current bonus share, grandfathering (the new
   nominal = max(20%, grandfathered)) — sales reps at ≥ 20% keep their rate
@@ -59,6 +59,10 @@ A=Orga, B=Position, C=Country, D=ID, G=Base Salary, H=Amount). If the browser bl
   recompute PEX cards, risk indicators and the table on the filtered subset
 - **Outputs**: real current / hybrid / all-new PEX, number of losers, max loss, average loss,
   table sorted by colored € delta: green above +20 €, red below −20 €, gray otherwise
+- **Matrix tab**: Salary × Performance matrix with a 2×2 / 3×3 switch (default 2×2).
+  2×2 splits salary at the mean and performance at µ; 3×3 splits both in terciles
+  (salary terciles of the population, performance terciles of the Gaussian mass).
+  Each mode shows Expectations or Δ vs current per cell.
 
 The card recomputes in real time when the curve parameters change. The data stays
 in the browser.
@@ -87,7 +91,7 @@ When opened outside Apps Script (local file), the loading button falls back to t
 node tests/run.js
 ```
 
-123 checks in 4 suites (simulated DOM, no dependencies):
+180 checks in 4 suites (simulated DOM, no dependencies):
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)

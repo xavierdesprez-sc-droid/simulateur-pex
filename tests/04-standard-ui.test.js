@@ -35,5 +35,5 @@ module.exports = function suite(__h) {
   resetDefaults();
   check('reset → mu 110', state.muInit === 110);
   check('reset → PEX 2.5', state.currentPEX === 2.5);
-  check('reset → default breakpoints', state.breakpoints.length === 5 && state.breakpoints[1].payout === 10);
+  check('reset → default breakpoints', state.breakpoints.length === 4 && state.breakpoints[1].achievement === 40 && state.breakpoints[1].payout === 0);
 };

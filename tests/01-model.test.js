@@ -9,12 +9,13 @@ module.exports = function suite(__h) {
   const H = evalHybridPayoutOldNominal;
 
   // ===== Breakpoint curve (standard view) =====
-  assertClose('breakpoint 50% → 10%', evalNewPayout(50), 10);
-  assertClose('breakpoint 80% → 50%', evalNewPayout(80), 50);
+  check('default breakpoints: 4 rows, threshold 40% → 0', state.breakpoints.length === 4 && state.breakpoints[1].achievement === 40 && state.breakpoints[1].payout === 0);
+  assertClose('below threshold 40% → 0', evalNewPayout(30), 0);
+  assertClose('breakpoint 40% → 0', evalNewPayout(40), 0);
+  assertClose('linear 40→100: 70% → 50%', evalNewPayout(70), 50);
   assertClose('breakpoint 100% → 100%', evalNewPayout(100), 100);
-  assertClose('breakpoint 150% (linear 100-200)', evalNewPayout(150), 150);
+  assertClose('linear 100→200: 150% → 150%', evalNewPayout(150), 150);
   assertClose('cap 200%', evalNewPayout(220), 200);
-  assertClose('below threshold → 0', evalNewPayout(40), 0);
 
   // ===== Calibration =====
   state.targetIncrease = 25; state.overperf = 3;
