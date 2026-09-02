@@ -171,6 +171,24 @@ module.exports = function suite(__h) {
   setMatrixMode('levels');
   check('switch back to levels', els['matrix-mode-levels'].className.indexOf('text-orange-700') > -1);
 
+  // ===== Local CSV: parsePopulationCsv (pure) =====
+  const csv1 = parsePopulationCsv(
+    'Orga,Position,Country,ID,,,Base Salary,Amount\n' +
+    'FR,AE,France,C1,,,50000,5000\n' +
+    ',,,,,,60000,14000\n' +
+    'DE,KAM,Germany,"C 3",,,40000,3000\n' +
+    'FR,AE,Spain,C4,,,0,5000\n' +
+    'FR,AE,Italy,C5\n'
+  );
+  check('parse: 3 valid reps', csv1.reps.length === 3);
+  check('parse: 2 ignored rows', csv1.ignored === 2);
+  check('parse: full mapping row 1', csv1.reps[0].id === 'C1' && csv1.reps[0].orga === 'FR' && csv1.reps[0].position === 'AE' && csv1.reps[0].country === 'France' && csv1.reps[0].fixed === 50000 && csv1.reps[0].nominal === 5000);
+  check('parse: id fallback rep2', csv1.reps[1].id === 'rep2');
+  check('parse: quoted field stripped', csv1.reps[2].id === 'C 3');
+  check('parse: \r\n tolerated', parsePopulationCsv('H,H,H,H,,,H,H\r\nFR,AE,France,C9,,,50000,5000\r\n').reps.length === 1);
+  check('parse: empty nominal kept as 0', parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,France,C6,,,40000,\n').reps[0].nominal === 0);
+  check('parse: blank lines tolerated', parsePopulationCsv('\nH,H,H,H,,,H,H\n\nFR,AE,France,C7,,,45000,7000\n\n').reps.length === 1);
+
   // ===== Reset → average model =====
   advPopulation = [];
   refreshPopulation();
