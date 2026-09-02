@@ -186,6 +186,23 @@ module.exports = function suite(__h) {
   check('tab-standard inactive on setView(matrix)', els['tab-standard'].className.indexOf('shadow-sm') === -1);
   check('tab-advanced inactive on setView(matrix)', els['tab-advanced'].className.indexOf('shadow-sm') === -1);
   check('view-matrix main exists', !!els['view-matrix']);
+  refreshPopulation();
+  check('matrix card moved: matrix-card inside view-matrix', htmlSrc.indexOf('id="view-matrix"') < htmlSrc.indexOf('id="matrix-card"'));
+  check('matrix card removed from advanced population card', htmlSrc.indexOf('id="pop-table-body"') < htmlSrc.indexOf('id="matrix-card"') && htmlSrc.indexOf('id="pop-results"') < htmlSrc.indexOf('id="view-matrix"'));
+  advPopulation = [
+    { id: 'M1', orga: 'EMEA Direct', country: 'France', position: 'AE', fixed: 50000, nominal: 5000 },
+    { id: 'M2', orga: 'EMEA Direct', country: 'Spain', position: 'KAM', fixed: 60000, nominal: 14000 }
+  ];
+  refreshPopulation();
+  els['matrix-filter-orga'].value = 'EMEA Direct';
+  onMatrixFilterChange();
+  check('matrix filter syncs to pop filter', els['pop-filter-orga'].value === 'EMEA Direct' && popFilters.orga === 'EMEA Direct');
+  els['pop-filter-country'].value = 'France';
+  onPopFilterChange();
+  check('pop filter syncs to matrix filter', els['matrix-filter-country'].value === 'France' && popFilters.country === 'France');
+  els['matrix-filter-orga'].value = ''; els['matrix-filter-country'].value = '';
+  onMatrixFilterChange();
+  check('matrix filters reset', popFilters.orga === '' && popFilters.country === '' && els['pop-filter-orga'].value === '');
   setView('standard');
   check('tab-standard active on setView(standard)', els['tab-standard'].className.indexOf('shadow-sm') > -1);
   check('tab-matrix inactive on setView(standard)', els['tab-matrix'].className.indexOf('shadow-sm') === -1);
