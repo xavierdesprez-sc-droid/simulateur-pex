@@ -35,6 +35,7 @@ module.exports = function suite(__h) {
   state.targetIncrease = 0;
   applyPreset('targetGroup');
   check('preset targetGroup → sliders at 30', parseFloat(els['adv-target-increase'].value) === 30 && parseFloat(els['slider-target-increase'].value) === 30);
+  check('preset targetGroup → matrix slider synced', els['matrix-target-increase'].value == state.targetIncrease && els['matrix-val-target-increase'].innerText.indexOf('+30.0%') > -1);
   state.targetIncrease = 0;
 
   // ===== Before/after points on the chart =====

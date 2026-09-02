@@ -2527,11 +2527,8 @@
     }
 
     function syncInputsFromState() {
-      document.getElementById('slider-target-increase').value = state.targetIncrease;
-      document.getElementById('val-target-increase').innerText = (state.targetIncrease >= 0 ? '+' : '') + state.targetIncrease.toFixed(1) + '%';
-      document.getElementById('adv-target-increase').value = state.targetIncrease;
-      document.getElementById('adv-val-target-increase').innerText = (state.targetIncrease >= 0 ? '+' : '') + state.targetIncrease.toFixed(1) + '%';
-      
+      syncTargetSliders();
+
       document.getElementById('slider-overperf').value = state.overperf;
       document.getElementById('val-overperf').innerText = (state.overperf >= 0 ? '+' : '') + state.overperf.toFixed(1) + '%';
 
@@ -2680,6 +2677,7 @@
         state.targetIncrease = parseFloat(e.target.value);
         syncTargetSliders();
         updateDashboard();
+        refreshPopulation();
         updateAdvancedView();
       });
 
