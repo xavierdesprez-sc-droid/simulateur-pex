@@ -47,6 +47,11 @@ Integration of the weighted curve (average nominal 11% → 20%) over the overall
 In the advanced view, the **"Load from the Google Sheet"** button replaces the single average with
 the real nominals:
 
+**Local mode:** when `index.html` is opened outside Apps Script, the button tries to fetch
+`population_test.csv` from the same folder (place your CSV there, header on line 1, columns
+A=Orga, B=Position, C=Country, D=ID, G=Base Salary, H=Amount). If the browser blocks the fetch
+(`file://` in Chrome/Edge), a file picker opens instead — pick any CSV with the same columns.
+
 - **Tab read**: `Data dynamic distributions` — header on **row 4**, columns
   `A=Orga, B=Position, C=Country, D=ID, E–F=(ignored), G=Base Salary, H=Amount`
 - For each rep: E[paid] = ∫ their personal weighted curve × Gaussian density (global µ, σ)
@@ -73,8 +78,8 @@ Two possible modes (`Code.gs` handles both):
 3. Fill in `SHEET_ID` at the top of `Code.gs` with the spreadsheet ID (the string in the URL between `/d/` and `/edit`)
 4. Deploy → Web app — Google will ask for permission to access the spreadsheet on first launch
 
-When opened outside Apps Script (local file), the loading button displays an informational message —
-the rest of the tool works normally.
+When opened outside Apps Script (local file), the loading button falls back to the local CSV
+(`population_test.csv` or a picked file) — the rest of the tool works normally.
 
 ## Tests
 
