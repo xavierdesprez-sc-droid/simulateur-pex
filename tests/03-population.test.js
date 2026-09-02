@@ -200,6 +200,9 @@ module.exports = function suite(__h) {
   check('local apply: status names the csv', els['pop-status'].innerText.indexOf('2 rep(s) loaded from population_test.csv') > -1);
   check('local apply: table refreshed', els['pop-table-body'].innerHTML.indexOf('L1') > -1);
   check('local apply: empty csv → message', (applyPopulationCsv(parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,X,C,,,0,0\n'), 'f.csv'), els['pop-status'].innerText.indexOf('No valid rows found in f.csv') > -1));
+  advPopulation = [{ id: 'KEEP', fixed: 50000, nominal: 5000 }];
+  applyPopulationCsv(parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,X,C,,,0,0\n'), 'bad.csv');
+  check('empty csv: existing population untouched', advPopulation.length === 1 && advPopulation[0].id === 'KEEP');
 
   // ===== Local CSV: fetch blocked → file picker fallback =====
   const savedGoogle = globalThis.google;
@@ -208,7 +211,7 @@ module.exports = function suite(__h) {
   document.getElementById('pop-csv-input'); // ensure the element exists in the harness registry
   els['pop-csv-input'].clicked = false;
   els['pop-csv-input'].click = function () { els['pop-csv-input'].clicked = true; };
-  globalThis.fetch = () => ({ then() { return this; }, catch(fn) { fn(new Error('blocked by CORS')); return this; } });
+  globalThis.fetch = () => ({ then() { return this; }, catch(fn) { fn(new TypeError('Failed to fetch')); return this; } });
   loadPopulationFromSheet();
   check('fetch blocked: info status shown', els['pop-status'].innerText.indexOf('blocked by the browser') > -1);
   check('fetch blocked: picker opened', els['pop-csv-input'].clicked === true);
@@ -219,6 +222,7 @@ module.exports = function suite(__h) {
   check('google restored: Sheet path still works', advPopulation.length === 1 && advPopulation[0].id === 'A1');
 
   // ===== Local CSV: FileReader path (chosen file) =====
+  const SavedFR = globalThis.FileReader;
   globalThis.FileReader = function () {};
   globalThis.FileReader.prototype.readAsText = function (file) { globalThis.__lastFR = this; };
   loadPopulationCsvFile({ name: 'my_pop.csv' });
@@ -226,6 +230,8 @@ module.exports = function suite(__h) {
   globalThis.__lastFR.onload();
   check('FileReader: rep loaded from chosen file', advPopulation.length === 1 && advPopulation[0].id === 'F1' && advPopulation[0].fixed === 45000);
   check('FileReader: status names the chosen file', els['pop-status'].innerText.indexOf('1 rep(s) loaded from my_pop.csv') > -1);
+  delete globalThis.__lastFR;
+  globalThis.FileReader = SavedFR;
 
   // ===== Reset → average model =====
   advPopulation = [];

@@ -87,7 +87,7 @@ When opened outside Apps Script (local file), the loading button falls back to t
 node tests/run.js
 ```
 
-78 checks in 4 suites (simulated DOM, no dependencies):
+123 checks in 4 suites (simulated DOM, no dependencies):
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)

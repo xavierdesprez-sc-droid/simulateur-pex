@@ -2079,11 +2079,13 @@
     let popAutoLoaded = false;
 
     function applyPopulationCsv(res, sourceName) {
-      advPopulation = res.reps;
       const st = document.getElementById('pop-status');
-      st.innerText = advPopulation.length
-        ? advPopulation.length + ' rep(s) loaded from ' + sourceName
-        : 'No valid rows found in ' + sourceName;
+      if (!res.reps.length) {
+        st.innerText = 'No valid rows found in ' + sourceName;
+        return;
+      }
+      advPopulation = res.reps;
+      st.innerText = res.reps.length + ' rep(s) loaded from ' + sourceName;
       refreshPopulation();
     }
 
@@ -2130,7 +2132,10 @@
           if (!r.ok) throw new Error('HTTP ' + r.status);
           applyPopulationCsv(parsePopulationCsv(await r.text()), 'population_test.csv');
         })
-        .catch(showCsvPicker);
+        .catch(err => {
+          if ((err instanceof TypeError) || /^HTTP/.test(String(err && err.message))) showCsvPicker();
+          else st.innerText = 'Loading error: ' + (err && err.message ? err.message : err);
+        });
     }
 
     let realAgg = null; // actual aggregates (€) when a population is loaded
