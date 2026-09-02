@@ -189,6 +189,44 @@ module.exports = function suite(__h) {
   check('parse: empty nominal kept as 0', parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,France,C6,,,40000,\n').reps[0].nominal === 0);
   check('parse: blank lines tolerated', parsePopulationCsv('\nH,H,H,H,,,H,H\n\nFR,AE,France,C7,,,45000,7000\n\n').reps.length === 1);
 
+  // ===== Local CSV: applyPopulationCsv (success path logic) =====
+  popAutoLoaded = true;
+  applyPopulationCsv(parsePopulationCsv(
+    'Orga,Position,Country,ID,,,Base Salary,Amount\n' +
+    'FR,AE,France,L1,,,50000,5000\n' +
+    'DE,KAM,Germany,L2,,,60000,14000\n'
+  ), 'population_test.csv');
+  check('local apply: 2 reps in advPopulation', advPopulation.length === 2 && advPopulation[0].id === 'L1');
+  check('local apply: status names the csv', els['pop-status'].innerText.indexOf('2 rep(s) loaded from population_test.csv') > -1);
+  check('local apply: table refreshed', els['pop-table-body'].innerHTML.indexOf('L1') > -1);
+  check('local apply: empty csv → message', (applyPopulationCsv(parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,X,C,,,0,0\n'), 'f.csv'), els['pop-status'].innerText.indexOf('No valid rows found in f.csv') > -1));
+
+  // ===== Local CSV: fetch blocked → file picker fallback =====
+  const savedGoogle = globalThis.google;
+  globalThis.google = undefined; // force the local branch
+  const savedFetch = globalThis.fetch;
+  document.getElementById('pop-csv-input'); // ensure the element exists in the harness registry
+  els['pop-csv-input'].clicked = false;
+  els['pop-csv-input'].click = function () { els['pop-csv-input'].clicked = true; };
+  globalThis.fetch = () => ({ then() { return this; }, catch(fn) { fn(new Error('blocked by CORS')); return this; } });
+  loadPopulationFromSheet();
+  check('fetch blocked: info status shown', els['pop-status'].innerText.indexOf('blocked by the browser') > -1);
+  check('fetch blocked: picker opened', els['pop-csv-input'].clicked === true);
+  globalThis.fetch = savedFetch;
+  globalThis.google = savedGoogle;
+  mock.sheetReps = [{ id: 'A1', fixed: 50000, nominal: 5000 }]; mock.sheetError = null;
+  loadPopulationFromSheet(); // back on the mocked Sheet path (google restored)
+  check('google restored: Sheet path still works', advPopulation.length === 1 && advPopulation[0].id === 'A1');
+
+  // ===== Local CSV: FileReader path (chosen file) =====
+  globalThis.FileReader = function () {};
+  globalThis.FileReader.prototype.readAsText = function (file) { globalThis.__lastFR = this; };
+  loadPopulationCsvFile({ name: 'my_pop.csv' });
+  globalThis.__lastFR.result = 'Orga,Position,Country,ID,,,Base Salary,Amount\nFR,AE,France,F1,,,45000,7000\n';
+  globalThis.__lastFR.onload();
+  check('FileReader: rep loaded from chosen file', advPopulation.length === 1 && advPopulation[0].id === 'F1' && advPopulation[0].fixed === 45000);
+  check('FileReader: status names the chosen file', els['pop-status'].innerText.indexOf('1 rep(s) loaded from my_pop.csv') > -1);
+
   // ===== Reset → average model =====
   advPopulation = [];
   refreshPopulation();
