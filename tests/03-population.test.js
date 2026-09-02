@@ -172,13 +172,17 @@ module.exports = function suite(__h) {
   refreshPopulation();
 
   // ===== Matrix: DOM rendering and switch =====
-  check('matrix card: 4 cells rendered', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('text-orange-700') > -1 && els[id].innerHTML.indexOf('text-indigo') > -1));
-  check('headcounts shown', els['matrix-count-low'].innerText.indexOf('2') > -1 && els['matrix-count-high'].innerText.indexOf('2') > -1);
+  check('default mode is deltas', els['matrix-mode-deltas'].className.indexOf('text-orange-700') > -1 && els['matrix-mode-levels'].className.indexOf('text-slate-500') > -1);
+  check('cells identified: Δ Hyb and Δ New chips', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('&Delta; Hyb') > -1 && els[id].innerHTML.indexOf('&Delta; New') > -1));
+  check('cells colored: amber and indigo present in levels', setMatrixMode('levels') === undefined && ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('text-amber-600') > -1 && els[id].innerHTML.indexOf('text-indigo-600') > -1));
+  check('levels cells identified: Hyb and New chips', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('Hyb</span>') > -1 && els[id].innerHTML.indexOf('New</span>') > -1));
   setMatrixMode('deltas');
+  check('headcounts shown', els['matrix-count-low'].innerText.indexOf('2') > -1 && els['matrix-count-high'].innerText.indexOf('2') > -1);
   check('deltas switch: cells colored as Δ', els['matrix-low-low'].innerHTML.indexOf('text-rose-600') > -1 || els['matrix-low-low'].innerHTML.indexOf('text-emerald-600') > -1);
   check('deltas switch: active button', els['matrix-mode-deltas'].className.indexOf('text-orange-700') > -1 && els['matrix-mode-levels'].className.indexOf('text-slate-500') > -1);
   setMatrixMode('levels');
   check('switch back to levels', els['matrix-mode-levels'].className.indexOf('text-orange-700') > -1);
+  setMatrixMode('deltas');
 
   // ===== Third tab: Matrix =====
   setView('matrix');
