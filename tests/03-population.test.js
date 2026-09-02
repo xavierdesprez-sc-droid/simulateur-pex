@@ -180,6 +180,18 @@ module.exports = function suite(__h) {
   setMatrixMode('levels');
   check('switch back to levels', els['matrix-mode-levels'].className.indexOf('text-orange-700') > -1);
 
+  // ===== Third tab: Matrix =====
+  setView('matrix');
+  check('tab-matrix active on setView(matrix)', els['tab-matrix'].className.indexOf('shadow-sm') > -1);
+  check('tab-standard inactive on setView(matrix)', els['tab-standard'].className.indexOf('shadow-sm') === -1);
+  check('tab-advanced inactive on setView(matrix)', els['tab-advanced'].className.indexOf('shadow-sm') === -1);
+  check('view-matrix main exists', !!els['view-matrix']);
+  setView('standard');
+  check('tab-standard active on setView(standard)', els['tab-standard'].className.indexOf('shadow-sm') > -1);
+  check('tab-matrix inactive on setView(standard)', els['tab-matrix'].className.indexOf('shadow-sm') === -1);
+  setView('advanced');
+  check('tab-advanced active on setView(advanced)', els['tab-advanced'].className.indexOf('shadow-sm') > -1);
+
   // ===== Local CSV: parsePopulationCsv (pure) =====
   const csv1 = parsePopulationCsv(
     'Orga,Position,Country,ID,,,Base Salary,Amount\n' +

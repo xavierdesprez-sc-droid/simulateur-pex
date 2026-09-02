@@ -111,6 +111,9 @@
           <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
             Advanced View
           </button>
+          <button id="tab-matrix" onclick="setView('matrix')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
+            Matrix
+          </button>
         </div>
         <div class="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
           <button onclick="applyPreset('initial')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
@@ -1095,6 +1098,10 @@
 
       </div>
     </div>
+  </main>
+
+  <!-- ===== MATRIX VIEW: SALARY × PERFORMANCE ===== -->
+  <main id="view-matrix" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
   </main>
 
   <!-- Footer -->
@@ -2352,14 +2359,15 @@
 
     function setView(view) {
       const isAdv = view === 'advanced';
-      document.getElementById('view-standard').classList.toggle('hidden', isAdv);
+      const isMatrix = view === 'matrix';
+      document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix);
       document.getElementById('view-advanced').classList.toggle('hidden', !isAdv);
-      document.getElementById('tab-standard').className = isAdv
-        ? 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all'
-        : 'px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm';
-      document.getElementById('tab-advanced').className = isAdv
-        ? 'px-3 py-1.5 rounded-lg bg-white text-orange-600 shadow-sm'
-        : 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
+      document.getElementById('view-matrix').classList.toggle('hidden', !isMatrix);
+      const active = 'px-3 py-1.5 rounded-lg bg-white shadow-sm ';
+      const inactive = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
+      document.getElementById('tab-standard').className = (view === 'standard') ? active + 'text-indigo-600' : inactive;
+      document.getElementById('tab-advanced').className = isAdv ? active + 'text-orange-600' : inactive;
+      document.getElementById('tab-matrix').className = isMatrix ? active + 'text-emerald-600' : inactive;
       if (isAdv) {
         // Lazy init: Chart.js needs a visible container to size correctly
         if (!advChartInstance) initAdvChart();
@@ -2370,6 +2378,7 @@
           loadPopulationFromSheet();
         }
       }
+      if (isMatrix) renderMatrix();
     }
 
     // Presets
