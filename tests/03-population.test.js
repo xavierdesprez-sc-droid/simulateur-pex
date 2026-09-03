@@ -18,6 +18,14 @@ module.exports = function suite(__h) {
   check('auto-load: 2 reps loaded', advPopulation.length === 2);
   check('status shown', els['pop-status'].innerText.indexOf('2 rep') > -1);
 
+  mock.sheetReps = { reps: [{ id: 'OBJ', fixed: 50000, nominal: 5000 }], ignored: 0 };
+  loadPopulationFromSheet();
+  check('Sheet object response is unwrapped', advPopulation.length === 1 && advPopulation[0].id === 'OBJ');
+  mock.sheetReps = [
+    { id: 'A1', orga: 'FR', position: 'AE', country: 'France', fixed: 52000, nominal: 6500 },
+    { id: 'A2', orga: 'FR', position: 'AE', country: 'France', fixed: 48000, nominal: 9600 }
+  ];
+
   // Error propagated
   mock.sheetError = 'Permission denied';
   loadPopulationFromSheet();
@@ -294,6 +302,71 @@ module.exports = function suite(__h) {
   advPopulation = [{ id: 'KEEP', fixed: 50000, nominal: 5000 }];
   applyPopulationCsv(parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,X,C,,,0,0\n'), 'bad.csv');
   check('empty csv: existing population untouched', advPopulation.length === 1 && advPopulation[0].id === 'KEEP');
+
+  // ===== 4:1 nominal-to-objective scenario =====
+  const hasFourToOne = typeof fourToOneState !== 'undefined' && typeof fourToOneNominals === 'function';
+  if (hasFourToOne) fourToOneState.corridorC2P = 600000;
+  const fourToOneCtx = hasFourToOne ? fourToOneNominals(15000, 150000) : null;
+  check('4:1 nominal increase uses standard target nominal', !!fourToOneCtx && fourToOneCtx.nominalIncreaseE === 15000);
+  check('4:1 adds four euros of objective per euro nominal', !!fourToOneCtx && fourToOneCtx.objectiveIncreaseE === 60000);
+  check('4:1 corridor converts 60000€ into 10 performance points', !!fourToOneCtx && fourToOneCtx.achievementShift === 10);
+  check('4:1 corridor normalizes zero to a positive value', typeof normalizeFourToOneCorridor === 'function' && normalizeFourToOneCorridor(0) === 1);
+  const savedNewVarShare = state.newVarShare;
+  state.newVarShare = 30;
+  const fourToOneFixedFloorCtx = hasFourToOne ? fourToOneNominals(10000, 100000) : null;
+  check('4:1 keeps the standard 20% fixed-salary floor', !!fourToOneFixedFloorCtx && fourToOneFixedFloorCtx.targetNomE === 20000);
+  state.newVarShare = savedNewVarShare;
+  advPopulation = [{ id: 'FOUR', fixed: 150000, nominal: 15000 }];
+  state.targetIncrease = 0;
+  refreshPopulation();
+  const fourToOnePex0 = typeof realAgg.pexFourToOne === 'number' ? realAgg.pexFourToOne : null;
+  state.targetIncrease = 30;
+  refreshPopulation();
+  check('4:1 ignores global target increase slider', fourToOnePex0 !== null && realAgg.pexFourToOne === fourToOnePex0);
+  state.targetIncrease = 0;
+
+  // ===== Fourth tab and matrix scenario =====
+  const fourTab = document.getElementById('tab-four-to-one');
+  const fourView = document.getElementById('view-four-to-one');
+  const fourCorridor = document.getElementById('four-to-one-corridor');
+  const fourTable = document.getElementById('four-to-one-table-body');
+  setView('four-to-one');
+  check('4:1 tab active', typeof fourTab.className === 'string' && fourTab.className.indexOf('shadow-sm') > -1);
+  check('4:1 view exists', htmlSrc.indexOf('id="view-four-to-one"') > -1 && !!fourView);
+  check('4:1 corridor input exists', htmlSrc.indexOf('id="four-to-one-corridor"') > -1 && !!fourCorridor);
+  refreshPopulation();
+  check('4:1 table renders', fourTable.innerHTML.indexOf('FOUR') > -1);
+  check('matrix includes 4:1 scenario', els['matrix-low-low'].innerHTML.indexOf('4:1') > -1 || els['matrix-high-low'].innerHTML.indexOf('4:1') > -1);
+
+  // ===== 4:1 overperformance slider and impact cards =====
+  const fourOverperf = document.getElementById('four-to-one-overperf');
+  const fourOverperfValue = document.getElementById('four-to-one-overperf-value');
+  const fourC2pGain = document.getElementById('four-to-one-c2p-gain');
+  const fourC2pGainGross = document.getElementById('four-to-one-c2p-gain-gross');
+  const fourPnl = document.getElementById('four-to-one-pnl');
+  check('4:1 overperformance slider exists', htmlSrc.indexOf('id="four-to-one-overperf"') > -1 && !!fourOverperf);
+  check('4:1 impact cards exist', htmlSrc.indexOf('id="four-to-one-c2p-gain"') > -1
+    && htmlSrc.indexOf('id="four-to-one-pnl"') > -1 && !!fourC2pGain && !!fourPnl);
+  check('4:1 overperformance slider is synchronized', typeof syncOverperfSliders === 'function');
+  state.overperf = 2;
+  syncOverperfSliders();
+  check('4:1 slider mirrors overperformance', fourOverperf.value === 2
+    && fourOverperfValue.innerText === '+2.0%');
+  refreshPopulation();
+  check('4:1 Additional C2P Gain uses corridor contribution', fourC2pGain.innerText === '+2.80 M€'
+    && fourC2pGainGross.innerText === '+14.0 M€ C2P');
+  const fourPnlExpected = (2.8 + (realAgg.stdOld - realAgg.pexFourToOne) / 1e6).toFixed(2);
+  check('4:1 P&L combines corridor contribution and PEX delta', fourPnl.innerText === (Number(fourPnlExpected) >= 0 ? '+' : '') + fourPnlExpected + ' M€');
+  advPopulation = [
+    { id: 'F1', orga: 'FR', fixed: 50000, nominal: 5000 },
+    { id: 'D1', orga: 'DE', fixed: 50000, nominal: 5000 }
+  ];
+  popFilters.orga = 'FR'; popFilters.country = ''; popFilters.position = '';
+  refreshPopulation();
+  check('4:1 impact cards follow active population filter', fourC2pGainGross.innerText === '+7.0 M€ C2P');
+  popFilters.orga = ''; popFilters.country = ''; popFilters.position = '';
+  state.overperf = 0;
+  syncOverperfSliders();
 
   // ===== Local CSV: fetch blocked → file picker fallback =====
   const savedGoogle = globalThis.google;

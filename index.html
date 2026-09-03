@@ -98,7 +98,6 @@
         </div>
         <div>
           <h1 class="text-lg font-bold text-slate-900 leading-tight">Variable Compensation & PEX Simulator</h1>
-          <p class="text-xs text-slate-500 font-medium">Double Gaussian &bull; Weighted Payout &bull; Grandfathering (&ge; 20%) &bull; Corridor Model</p>
         </div>
       </div>
 
@@ -106,10 +105,13 @@
       <div class="flex items-center gap-2 sm:gap-3">
         <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
           <button id="tab-standard" onclick="setView('standard')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm">
-            Standard View
+            Standard Scenario
           </button>
           <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
-            Advanced View
+            Hybrid Scenario
+          </button>
+          <button id="tab-four-to-one" onclick="setView('four-to-one')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
+            4:1 Scenario
           </button>
           <button id="tab-matrix" onclick="setView('matrix')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
             Matrix
@@ -1169,6 +1171,121 @@
     </div>
   </main>
 
+  <!-- ===== 4:1 VIEW: NOMINAL TO OBJECTIVE ===== -->
+  <main id="view-four-to-one" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+        <div class="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg"><i data-lucide="repeat-2" class="w-4 h-4"></i></div>
+        <div>
+          <h2 class="font-bold text-slate-900 text-sm">Scenario 4:1 — Nominal to Objective</h2>
+          <p class="text-xs text-slate-500">The standard curve with a 4 € objective increase for each 1 € nominal increase</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Corridor C2P moyen</label>
+          <div class="relative">
+            <input type="number" id="four-to-one-corridor" value="600000" step="10000" min="1" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500">
+            <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 md:col-span-2">Each rep's added objective is <span class="font-mono font-bold text-slate-700">4 × added nominal</span>. With a 600 000 € corridor, +60 000 € objective means +10 points of target.</p>
+      </div>
+      <div class="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <label for="four-to-one-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
+            <span>Induced overperformance (scheme)</span>
+            <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the 4:1 scheme on C2P"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+          </label>
+          <span id="four-to-one-overperf-value" class="font-mono font-bold text-emerald-700 text-sm bg-emerald-100 px-2 py-0.5 rounded-md">+0.0%</span>
+        </div>
+        <input type="range" id="four-to-one-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
+        <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+          <span>-10%</span>
+          <span>0%</span>
+          <span>+15%</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Orga</label>
+          <select id="four-to-one-filter-orga" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Country</label>
+          <select id="four-to-one-filter-country" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Position</label>
+          <select id="four-to-one-filter-position" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        </div>
+      </div>
+      <div id="four-to-one-input-zone" class="space-y-2">
+        <button onclick="loadPopulationFromSheet()" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm transition-all">Load population</button>
+        <p class="text-[10px] text-slate-400">The population is shared with the Advanced and Matrix views.</p>
+      </div>
+      <p id="four-to-one-status" class="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">Load a population to display the 4:1 scenario.</p>
+    </div>
+
+    <div id="four-to-one-results" class="hidden bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+      <div class="grid grid-cols-3 gap-3 text-center text-xs">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+          <span class="text-slate-500 font-semibold block">Current PEX</span>
+          <span id="four-to-one-pex-old" class="text-lg font-black font-mono text-slate-700">0.00 M€</span>
+        </div>
+        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+          <span class="text-indigo-500 font-semibold block">Standard PEX</span>
+          <span id="four-to-one-pex-standard" class="text-lg font-black font-mono text-indigo-700">0.00 M€</span>
+        </div>
+        <div class="p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+          <span class="text-cyan-600 font-semibold block">4:1 PEX</span>
+          <span id="four-to-one-pex" class="text-lg font-black font-mono text-cyan-700">0.00 M€</span>
+          <span id="four-to-one-pex-delta" class="text-[10px] font-bold block text-slate-500">0.00 M€ vs current</span>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Additional C2P Gain</span>
+            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="badge-percent" class="w-4 h-4"></i></div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span id="four-to-one-c2p-gain" class="text-2xl font-black text-emerald-600">+0.00 M€</span>
+            <span id="four-to-one-c2p-gain-gross" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">+0 M€ C2P</span>
+          </div>
+          <p class="mt-2 text-xs text-slate-500">After corridor margin contribution</p>
+        </div>
+        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-4 rounded-xl shadow-md">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">P&amp;L</span>
+            <div class="p-1.5 bg-white/10 text-indigo-200 rounded-lg"><i data-lucide="circle-dollar-sign" class="w-4 h-4"></i></div>
+          </div>
+          <span id="four-to-one-pnl" class="text-2xl font-black text-white">+0.00 M€</span>
+          <p class="mt-2 text-xs text-indigo-200">C2P contribution + 4:1 PEX savings</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto custom-scrollbar max-h-96 overflow-y-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
+            <tr>
+              <th class="py-2 px-3">ID</th>
+              <th class="py-2 px-3">Fixed</th>
+              <th class="py-2 px-3">Nominal</th>
+              <th class="py-2 px-3">Added nominal</th>
+              <th class="py-2 px-3">Added objective</th>
+              <th class="py-2 px-3">Target shift</th>
+              <th class="py-2 px-3">Current expected</th>
+              <th class="py-2 px-3">Standard expected</th>
+              <th class="py-2 px-3">4:1 expected</th>
+              <th class="py-2 px-3">Δ €</th>
+            </tr>
+          </thead>
+          <tbody id="four-to-one-table-body" class="divide-y divide-slate-100 font-mono"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
   <!-- Footer -->
   <footer class="bg-white border-t border-slate-200 mt-auto py-4 text-center text-xs text-slate-400">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
@@ -1351,6 +1468,7 @@
     // Update entire dashboard
     function updateDashboard() {
       // 1. Calculations
+      syncOverperfSliders();
       const muCalibrated = getCalibratedAchievement(state.muInit);
       document.getElementById('val-resulting-mu').innerText = muCalibrated.toFixed(1) + '%';
       document.getElementById('val-init-mu').innerText = state.muInit.toFixed(1) + '%';
@@ -1901,6 +2019,12 @@
     // ===== ADVANCED VIEW: 90% HYBRID SCHEME =====
     let advChartInstance = null;
     const advState = { x: 110, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
+    const fourToOneState = { corridorC2P: 600000 };
+    const STANDARD_TARGET_SHARE_PCT = 20;
+
+    function normalizeFourToOneCorridor(value) {
+      return isFinite(value) && value > 0 ? value : 1;
+    }
 
     // Hybrid scheme core. All amounts in €, expressed back in % of the rep's OLD nominal.
     // New nominal = max(target share (20%), € minimum entered, old nominal)
@@ -1945,6 +2069,25 @@
     function evalNewBasePayoutOldNominal(x, oldNomE, fixedE) {
       const n = advNominals(oldNomE, fixedE);
       return n.oldNomE > 0 ? evalNewBaseE(x, n) / n.oldNomE * 100 : 0;
+    }
+
+    function fourToOneNominals(oldNomE, fixedE) {
+      const targetNomE = Math.max(fixedE * STANDARD_TARGET_SHARE_PCT / 100, oldNomE);
+      const nominalIncreaseE = Math.max(0, targetNomE - oldNomE);
+      const objectiveIncreaseE = nominalIncreaseE * 4;
+      const corridor = normalizeFourToOneCorridor(fourToOneState.corridorC2P);
+      return {
+        targetNomE,
+        nominalIncreaseE,
+        objectiveIncreaseE,
+        achievementShift: objectiveIncreaseE / corridor * 100
+      };
+    }
+
+    function evalFourToOnePayout(x, rep) {
+      const nom = fourToOneNominals(rep.nominal, rep.fixed);
+      const calibrated = x - nom.achievementShift + state.overperf;
+      return Engine.paliers(calibrated, state.breakpoints, state.payoutCap) / 100 * nom.targetNomE;
     }
 
     function initAdvChart() {
@@ -2150,64 +2293,66 @@
     let advPopulation = []; // { id, orga, position, country, fixed, nominal }
     let popAutoLoaded = false;
 
+    function setPopulationStatus(text, visible = true) {
+      ['pop-status', 'four-to-one-status'].forEach(id => {
+          const el = document.getElementById(id);
+          el.innerText = text;
+          if (visible) el.classList.remove('hidden');
+      });
+    }
+
     function applyPopulationCsv(res, sourceName) {
-      const st = document.getElementById('pop-status');
       if (!res.reps.length) {
-        st.innerText = 'No valid rows found in ' + sourceName;
-        return;
+          setPopulationStatus('No valid rows found in ' + sourceName);
+          return;
       }
       advPopulation = res.reps;
-      st.innerText = res.reps.length + ' rep(s) loaded from ' + sourceName;
+      setPopulationStatus(res.reps.length + ' rep(s) loaded from ' + sourceName);
       refreshPopulation();
     }
 
     function showCsvPicker() {
-      const st = document.getElementById('pop-status');
-      st.innerText = 'Automatic CSV loading blocked by the browser — choose the CSV file…';
+      setPopulationStatus('Automatic CSV loading blocked by the browser — choose the CSV file…');
       const input = document.getElementById('pop-csv-input');
       if (input.click) input.click();
     }
 
     function loadPopulationCsvFile(file) {
-      const st = document.getElementById('pop-status');
-      st.classList.remove('hidden');
-      st.innerText = 'Loading ' + file.name + '…';
+      setPopulationStatus('Loading ' + file.name + '…');
       const reader = new FileReader();
       reader.onload = () => applyPopulationCsv(parsePopulationCsv(reader.result), file.name);
-      reader.onerror = () => { st.innerText = 'Reading error: ' + file.name; };
+      reader.onerror = () => setPopulationStatus('Reading error: ' + file.name);
       reader.readAsText(file);
     }
 
     function loadPopulationFromSheet() {
-      const st = document.getElementById('pop-status');
-      st.classList.remove('hidden');
       if (typeof google !== 'undefined' && google.script && google.script.run) {
-        st.innerText = 'Loading from the Sheet…';
-        google.script.run
-          .withSuccessHandler(reps => {
-            advPopulation = Array.isArray(reps) ? reps : [];
-            st.innerText = advPopulation.length
-              ? advPopulation.length + ' rep(s) loaded from the Sheet'
-              : 'No valid rows found in the Sheet (check header row 4 and columns ID / Base Salary / Amount)';
-            refreshPopulation();
-          })
-          .withFailureHandler(err => {
-            st.innerText = 'Loading error: ' + (err && err.message ? err.message : err);
-          })
-          .getPopulation();
-        return;
+          setPopulationStatus('Loading from the Sheet…');
+          google.script.run
+            .withSuccessHandler(reps => {
+              advPopulation = Array.isArray(reps) ? reps : (reps && Array.isArray(reps.reps) ? reps.reps : []);
+              setPopulationStatus(advPopulation.length
+                ? advPopulation.length + ' rep(s) loaded from the Sheet'
+                : 'No valid rows found in the Sheet (check header row 4 and columns ID / Base Salary / Amount)');
+              refreshPopulation();
+            })
+            .withFailureHandler(err => {
+              setPopulationStatus('Loading error: ' + (err && err.message ? err.message : err));
+            })
+            .getPopulation();
+          return;
       }
       // Local mode: fetch the CSV sitting next to index.html, fall back to a picker
-      st.innerText = 'Loading population_test.csv…';
+      setPopulationStatus('Loading population_test.csv…');
       fetch('population_test.csv')
-        .then(async r => {
-          if (!r.ok) throw new Error('HTTP ' + r.status);
+          .then(async r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
           applyPopulationCsv(parsePopulationCsv(await r.text()), 'population_test.csv');
-        })
-        .catch(err => {
-          if ((err instanceof TypeError) || /^HTTP/.test(String(err && err.message))) showCsvPicker();
-          else st.innerText = 'Loading error: ' + (err && err.message ? err.message : err);
-        });
+          })
+          .catch(err => {
+            if ((err instanceof TypeError) || /^HTTP/.test(String(err && err.message))) showCsvPicker();
+            else setPopulationStatus('Loading error: ' + (err && err.message ? err.message : err));
+          });
     }
 
     let realAgg = null; // actual aggregates (€) when a population is loaded
@@ -2220,7 +2365,7 @@
     // keeping the current selection if it still exists (otherwise "All").
     // Both filter sets (Advanced view + Matrix tab) stay in sync.
     const FILTER_KEYS = ['orga', 'country', 'position'];
-    const FILTER_SETS = ['pop', 'matrix'];
+    const FILTER_SETS = ['pop', 'matrix', 'four-to-one'];
 
     function populatePopFilters() {
       FILTER_KEYS.forEach(key => {
@@ -2263,12 +2408,19 @@
       refreshPopulation();
     }
 
+    function onFourToOneFilterChange() {
+      readPopFilters('four-to-one');
+      refreshPopulation();
+    }
+
     function refreshPopulation() {
       const has = advPopulation.length > 0;
       document.getElementById('pop-results').classList.toggle('hidden', !has);
       document.getElementById('pop-clear-btn').classList.toggle('hidden', !has);
       document.getElementById('pop-input-zone').classList.toggle('hidden', has);
       document.getElementById('matrix-filter-zone').classList.toggle('hidden', !has);
+      document.getElementById('four-to-one-results').classList.toggle('hidden', !has);
+      document.getElementById('four-to-one-input-zone').classList.toggle('hidden', has);
       if (!has) { realAgg = null; popMatrix = null; return; }
 
       populatePopFilters();
@@ -2287,7 +2439,8 @@
       const int0 = fn => { let a = 0; for (const { x, w } of pts0) a += fn(x) * w; return a; };
       const intC = fn => { let a = 0; for (const { x, w } of ptsC) a += fn(x) * w; return a; };
 
-      let pexOld = 0, pexHyb = 0, pexNew = 0, stdOld = 0, stdNew = 0, targetOld = 0, targetNew = 0;
+      let pexOld = 0, pexHyb = 0, pexNew = 0, pexFourToOne = 0;
+      let stdOld = 0, stdNew = 0, targetOld = 0, targetNew = 0;
       let losers = 0, worstLoss = 0, lossSum = 0;
       const rows = [];
       population.forEach(rep => {
@@ -2298,15 +2451,19 @@
         const eStdNew = intC(x => Engine.paliers(x, state.breakpoints, state.payoutCap) / 100 * newNomStd);
         const eHyb = intC(x => Engine.hybridE(x, nomAdv));
         const eNewFull = intC(x => Engine.newBaseE(x, nomAdv));
+        const eFourToOne = int0(x => evalFourToOnePayout(x, rep));
         pexOld += eStdOld; stdOld += eStdOld;
         stdNew += eStdNew; targetOld += rep.nominal; targetNew += newNomStd;
-        pexHyb += eHyb; pexNew += eNewFull;
+        pexHyb += eHyb; pexNew += eNewFull; pexFourToOne += eFourToOne;
         const delta = eHyb - eStdOld;
         if (delta < -0.5) { losers++; worstLoss = Math.min(worstLoss, delta); lossSum += delta; }
-        rows.push({ rep, eOld: eStdOld, eHyb, delta, eNew: eNewFull, deltaNew: eNewFull - eStdOld });
+        rows.push({
+          rep, eOld: eStdOld, eHyb, delta, eNew: eNewFull, deltaNew: eNewFull - eStdOld,
+          eStandard: eStdNew, eFourToOne, fourToOne: fourToOneNominals(rep.nominal, rep.fixed)
+        });
       });
 
-      realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew, count: population.length };
+      realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew, pexFourToOne, count: population.length };
       popMatrix = computeMatrix(population, pts0, ptsC, mu0, muC, matrixSize);
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
@@ -2321,6 +2478,29 @@
       document.getElementById('pop-risk-count').innerText = losers + ' / ' + population.length;
       document.getElementById('pop-risk-max').innerText = losers ? fmtE(worstLoss) : '—';
       document.getElementById('pop-risk-avg').innerText = losers ? fmtE(lossSum / losers) : '—';
+
+      document.getElementById('four-to-one-pex-old').innerText = fmtM(pexOld);
+      document.getElementById('four-to-one-pex-standard').innerText = fmtM(stdNew);
+      document.getElementById('four-to-one-pex').innerText = fmtM(pexFourToOne);
+      const fourDelta = pexFourToOne - pexOld;
+      const fourDeltaEl = document.getElementById('four-to-one-pex-delta');
+      fourDeltaEl.innerText = (fourDelta >= 0 ? '+' : '') + (fourDelta / 1e6).toFixed(2) + ' M€ vs current';
+      fourDeltaEl.className = 'text-[10px] font-bold block ' + (fourDelta <= 0 ? 'text-emerald-600' : 'text-rose-600');
+
+      // Keep the C2P and PEX impacts in the same scope when filters are active.
+      const populationShare = advPopulation.length ? population.length / advPopulation.length : 1;
+      const fourC2pGainGrossM = state.baseC2P * (state.overperf / 100) * populationShare;
+      const fourC2pGainM = fourC2pGainGrossM * (state.marginRate / 100);
+      const fourC2pGainEl = document.getElementById('four-to-one-c2p-gain');
+      fourC2pGainEl.innerText = (fourC2pGainM >= 0 ? '+' : '') + fourC2pGainM.toFixed(2) + ' M€';
+      fourC2pGainEl.className = 'text-2xl font-black ' + (fourC2pGainM >= 0 ? 'text-emerald-600' : 'text-rose-600');
+      document.getElementById('four-to-one-c2p-gain-gross').innerText =
+        (fourC2pGainGrossM >= 0 ? '+' : '') + fourC2pGainGrossM.toFixed(1) + ' M€ C2P';
+
+      const fourPnlM = fourC2pGainM + (pexOld - pexFourToOne) / 1e6;
+      const fourPnlEl = document.getElementById('four-to-one-pnl');
+      fourPnlEl.innerText = (fourPnlM >= 0 ? '+' : '') + fourPnlM.toFixed(2) + ' M€';
+      fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-white' : 'text-rose-300');
 
       const escapeHtml = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
       rows.sort((a, b) => a.delta - b.delta);
@@ -2337,6 +2517,24 @@
           '<td class="py-1.5 px-3 font-bold ' + deltaCls + '">' + (r.delta > 0 ? '+' : '') + fmtE(r.delta) + '</td>' +
           '<td class="py-1.5 px-3 font-bold text-indigo-700">' + fmtE(r.eNew) + '</td>' +
           '<td class="py-1.5 px-3 font-bold ' + deltaNewCls + '">' + (r.deltaNew > 0 ? '+' : '') + fmtE(r.deltaNew) + '</td></tr>';
+      }).join('');
+
+      const fourTbody = document.getElementById('four-to-one-table-body');
+      const fourRows = [...rows].sort((a, b) => a.eFourToOne - a.eOld - (b.eFourToOne - b.eOld));
+      fourTbody.innerHTML = fourRows.map(r => {
+        const deltaFour = r.eFourToOne - r.eOld;
+        const deltaFourCls = deltaFour > 20 ? 'text-emerald-600' : deltaFour < -20 ? 'text-rose-600' : 'text-slate-400';
+        return '<tr class="hover:bg-slate-50/80">' +
+          '<td class="py-1.5 px-3 text-slate-500">' + escapeHtml(r.rep.id) + '</td>' +
+          '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.fixed) + '</td>' +
+          '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.nominal) + '</td>' +
+          '<td class="py-1.5 px-3 text-cyan-700">' + fmtE(r.fourToOne.nominalIncreaseE) + '</td>' +
+          '<td class="py-1.5 px-3 text-cyan-700">' + fmtE(r.fourToOne.objectiveIncreaseE) + '</td>' +
+          '<td class="py-1.5 px-3 text-cyan-700">' + r.fourToOne.achievementShift.toFixed(1) + ' pp</td>' +
+          '<td class="py-1.5 px-3 text-slate-500">' + fmtE(r.eOld) + '</td>' +
+          '<td class="py-1.5 px-3 text-indigo-700">' + fmtE(r.eStandard) + '</td>' +
+          '<td class="py-1.5 px-3 font-bold text-cyan-700">' + fmtE(r.eFourToOne) + '</td>' +
+          '<td class="py-1.5 px-3 font-bold ' + deltaFourCls + '">' + (deltaFour > 0 ? '+' : '') + fmtE(deltaFour) + '</td></tr>';
       }).join('');
 
       renderMatrix();
@@ -2399,14 +2597,20 @@
           const side = three ? perf : (perf === 'top' ? 'high' : 'low');
           const i0 = three ? bandInt(pts0, cuts0, side) : halfInt(pts0, mu0, side);
           const iC = three ? bandInt(ptsC, cutsC, side) : halfInt(ptsC, muC, side);
-          let sOld = 0, sHyb = 0, sNew = 0;
+          let sOld = 0, sHyb = 0, sNew = 0, sFourToOne = 0;
           reps.forEach(rep => {
             const nomAdv = advNominals(rep.nominal, rep.fixed);
             sOld += i0(x => Engine.oldE(x, { oldNomE: rep.nominal, cap: state.payoutCap }));
             sHyb += iC(x => Engine.hybridE(x, nomAdv));
             sNew += iC(x => Engine.newBaseE(x, nomAdv));
+            sFourToOne += i0(x => evalFourToOnePayout(x, rep));
           });
-          out.quadrants[salary][perf] = { old: sOld / reps.length, hyb: sHyb / reps.length, new: sNew / reps.length };
+          out.quadrants[salary][perf] = {
+            old: sOld / reps.length,
+            hyb: sHyb / reps.length,
+            new: sNew / reps.length,
+            fourToOne: sFourToOne / reps.length
+          };
         });
       });
       return out;
@@ -2485,11 +2689,13 @@
       const cell = d => {
         if (matrixMode === 'levels') {
           return '<span class="block font-bold text-amber-600">' + chip('Hyb') + fmtMx(d.hyb) + '</span>'
-               + '<span class="block font-bold text-indigo-600">' + chip('New') + fmtMx(d.new) + '</span>';
+               + '<span class="block font-bold text-indigo-600">' + chip('New') + fmtMx(d.new) + '</span>'
+               + '<span class="block font-bold text-cyan-600">' + chip('4:1') + fmtMx(d.fourToOne) + '</span>';
         }
-        const dh = d.hyb - d.old, dn = d.new - d.old;
+        const dh = d.hyb - d.old, dn = d.new - d.old, df = d.fourToOne - d.old;
         return '<span class="block font-bold ' + deltaCls(dh) + '">' + chip('&Delta; Hyb') + (dh > 0 ? '+' : '') + fmtMx(dh) + '</span>'
-             + '<span class="block font-bold ' + deltaCls(dn) + '">' + chip('&Delta; New') + (dn > 0 ? '+' : '') + fmtMx(dn) + '</span>';
+             + '<span class="block font-bold ' + deltaCls(dn) + '">' + chip('&Delta; New') + (dn > 0 ? '+' : '') + fmtMx(dn) + '</span>'
+             + '<span class="block font-bold ' + deltaCls(df) + '">' + chip('4:1') + (df > 0 ? '+' : '') + fmtMx(df) + '</span>';
       };
       salaryKeys.forEach(q => {
         perfKeys.forEach(p => {
@@ -2545,14 +2751,17 @@
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
-      document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix);
+      const isFourToOne = view === 'four-to-one';
+      document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix || isFourToOne);
       document.getElementById('view-advanced').classList.toggle('hidden', !isAdv);
       document.getElementById('view-matrix').classList.toggle('hidden', !isMatrix);
+      document.getElementById('view-four-to-one').classList.toggle('hidden', !isFourToOne);
       const active = 'px-3 py-1.5 rounded-lg bg-white shadow-sm ';
       const inactive = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
       document.getElementById('tab-standard').className = (view === 'standard') ? active + 'text-indigo-600' : inactive;
       document.getElementById('tab-advanced').className = isAdv ? active + 'text-orange-600' : inactive;
       document.getElementById('tab-matrix').className = isMatrix ? active + 'text-emerald-600' : inactive;
+      document.getElementById('tab-four-to-one').className = isFourToOne ? active + 'text-cyan-600' : inactive;
       if (isAdv) {
         // Lazy init: Chart.js needs a visible container to size correctly
         if (!advChartInstance) initAdvChart();
@@ -2561,6 +2770,14 @@
         if (!popAutoLoaded) {
           popAutoLoaded = true;
           loadPopulationFromSheet();
+        }
+      }
+      if (isFourToOne) {
+        if (!popAutoLoaded) {
+          popAutoLoaded = true;
+          loadPopulationFromSheet();
+        } else {
+          refreshPopulation();
         }
       }
       if (isMatrix) renderMatrix();
@@ -2608,6 +2825,7 @@
       state.repFixedSalary = 50000;
       state.repCurrentBonusPct = 10;
       state.repInitPerf = 110;
+      fourToOneState.corridorC2P = 600000;
       state.breakpoints = [
         { achievement: 0, payout: 0 },
         { achievement: 40, payout: 0 },
@@ -2618,11 +2836,22 @@
       applyPreset('initial');
     }
 
+    function syncOverperfSliders() {
+      const value = state.overperf;
+      const label = (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+      const globalSlider = document.getElementById('slider-overperf');
+      const globalLabel = document.getElementById('val-overperf');
+      const fourSlider = document.getElementById('four-to-one-overperf');
+      const fourLabel = document.getElementById('four-to-one-overperf-value');
+      if (globalSlider) globalSlider.value = value;
+      if (globalLabel) globalLabel.innerText = label;
+      if (fourSlider) fourSlider.value = value;
+      if (fourLabel) fourLabel.innerText = label;
+    }
+
     function syncInputsFromState() {
       syncTargetSliders();
-
-      document.getElementById('slider-overperf').value = state.overperf;
-      document.getElementById('val-overperf').innerText = (state.overperf >= 0 ? '+' : '') + state.overperf.toFixed(1) + '%';
+      syncOverperfSliders();
 
       document.getElementById('input-mu-init').value = state.muInit;
       document.getElementById('input-sigma-init').value = state.sigmaInit;
@@ -2637,6 +2866,7 @@
       document.getElementById('slider-chart-bonus-sync').value = state.repCurrentBonusPct;
       document.getElementById('slider-chart-rep-sync').value = state.repInitPerf;
       document.getElementById('slider-rep-achievement').value = state.repInitPerf;
+      document.getElementById('four-to-one-corridor').value = fourToOneState.corridorC2P;
     }
 
     // Attach Event Listeners
@@ -2651,8 +2881,14 @@
       // Slider Overperf
       document.getElementById('slider-overperf').addEventListener('input', (e) => {
         state.overperf = parseFloat(e.target.value);
-        const val = state.overperf;
-        document.getElementById('val-overperf').innerText = (val >= 0 ? '+' : '') + val.toFixed(1) + '%';
+        syncOverperfSliders();
+        updateDashboard();
+      });
+
+      // Slider 4:1 overperformance (synchronized with the global control)
+      document.getElementById('four-to-one-overperf').addEventListener('input', (e) => {
+        state.overperf = parseFloat(e.target.value);
+        syncOverperfSliders();
         updateDashboard();
       });
 
@@ -2705,6 +2941,13 @@
       bindNumberInput('input-headcount', 'headcount', 10, 5000, true);
       bindNumberInput('input-payout-cap', 'payoutCap', 100, 500, false);
       bindNumberInput('input-rep-fixed-salary', 'repFixedSalary', 10000, 250000, false);
+
+      document.getElementById('four-to-one-corridor').addEventListener('input', (e) => {
+        const raw = parseFloat(e.target.value);
+        fourToOneState.corridorC2P = normalizeFourToOneCorridor(raw);
+        e.target.value = fourToOneState.corridorC2P;
+        refreshPopulation();
+      });
 
       // Advanced view controls
       document.getElementById('adv-achievement').addEventListener('input', (e) => {
@@ -2802,6 +3045,7 @@
       document.getElementById('pop-clear-btn').addEventListener('click', () => {
         advPopulation = [];
         document.getElementById('pop-status').classList.add('hidden');
+        document.getElementById('four-to-one-status').classList.remove('hidden');
         refreshPopulation();
       });
     }

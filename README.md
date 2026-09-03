@@ -63,6 +63,12 @@ A=Orga, B=Position, C=Country, D=ID, G=Base Salary, H=Amount). If the browser bl
   2×2 splits salary at the mean and performance at µ; 3×3 splits both in terciles
   (salary terciles of the population, performance terciles of the Gaussian mass).
   Each mode shows Expectations or Δ vs current per cell.
+- **4:1 Nominal tab**: population scenario using the standard breakpoint curve. When a rep's
+  nominal rises, the C2P objective rises by 4 € per additional nominal euro. The added objective
+  is converted to achievement points using the configurable **Corridor C2P moyen** (600,000 € by
+  default); this scenario does not use the global target-increase slider. Its synchronized
+  superformance slider updates the Additional C2P Gain and P&L cards in real time. The matrix
+  includes the corresponding 4:1 expectation or delta in every cell.
 
 The card recomputes in real time when the curve parameters change. The data stays
 in the browser.
@@ -93,7 +99,7 @@ The application itself has no local installation requirement. Node.js is only ne
 node tests/run.js
 ```
 
-180 checks in 4 suites (simulated DOM, no dependencies):
+206 checks in 4 suites (simulated DOM, no dependencies):
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)
