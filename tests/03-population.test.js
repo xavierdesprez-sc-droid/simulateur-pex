@@ -200,9 +200,21 @@ module.exports = function suite(__h) {
   check('3x3: mid DOM cells rendered with chips', ['matrix-low-mid', 'matrix-mid-low', 'matrix-mid-mid', 'matrix-mid-top', 'matrix-high-mid'].every(id => els[id].innerHTML.indexOf('Hyb') > -1 && els[id].innerHTML.indexOf('New') > -1));
   check('3x3: mid count shown', els['matrix-count-mid'].innerText.indexOf('1') > -1);
   check('3x3: mid row visible, 4-column grid', els['matrix-row-mid'].className.indexOf('hidden') === -1 && els['matrix-grid'].className.indexOf('grid-cols-[auto_1fr_1fr_1fr]') > -1);
+  ['low', 'mid', 'high'].forEach(q => {
+    ['low', 'mid', 'top'].forEach(p => {
+      const className = els['matrix-' + q + '-' + p].className;
+      check('3x3: stable grid position ' + q + '/' + p,
+        typeof className === 'string' && className.indexOf('row-start-') > -1 && className.indexOf('col-start-') > -1);
+    });
+  });
   setMatrixSize('2x2');
   check('back to 2x2: state + quadrants shape', matrixSize === '2x2' && popMatrix.quadrants.low.mid === undefined && popMatrix.count.mid === undefined);
   check('back to 2x2: mid row hidden, 3-column grid', els['matrix-row-mid'].className.indexOf('hidden') > -1 && els['matrix-grid'].className.indexOf('grid-cols-[auto_1fr_1fr]') > -1);
+  check('back to 2x2: all five mid cells hidden', ['matrix-low-mid', 'matrix-mid-low', 'matrix-mid-mid', 'matrix-mid-top', 'matrix-high-mid'].every(id => els[id].className.indexOf('hidden') > -1));
+  check('back to 2x2: high salary label on row 3, column 1 (' + els['matrix-row-high'].style.gridRow + '/' + els['matrix-row-high'].style.gridColumn + ')', els['matrix-row-high'].style.gridRow === '3' && els['matrix-row-high'].style.gridColumn === '1');
+  check('back to 2x2: high salary low cell on row 3 (' + els['matrix-high-low'].style.gridRow + ')', els['matrix-high-low'].style.gridRow === '3');
+  check('back to 2x2: high salary top cell on row 3 (' + els['matrix-high-top'].style.gridRow + ')', els['matrix-high-top'].style.gridRow === '3');
+  check('back to 2x2: performer headers aligned', els['matrix-head-low'].style.gridColumn === '2' && els['matrix-head-top'].style.gridColumn === '3');
 
   // ===== Third tab: Matrix =====
   setView('matrix');

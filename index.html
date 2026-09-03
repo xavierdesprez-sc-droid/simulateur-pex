@@ -1149,10 +1149,10 @@
         <div id="matrix-empty" class="hidden text-xs text-slate-400 text-center py-4">Load a population to display the matrix.</div>
         <div id="matrix-grid" class="hidden grid grid-cols-[auto_1fr_1fr_1fr] gap-2 text-xs">
           <div></div>
-          <div class="text-center font-semibold text-slate-500">Low performer<br><span id="matrix-sub-low" class="text-[10px] font-normal text-slate-400">lower half of distribution</span></div>
+          <div id="matrix-head-low" class="text-center font-semibold text-slate-500">Low performer<br><span id="matrix-sub-low" class="text-[10px] font-normal text-slate-400">lower half of distribution</span></div>
           <div id="matrix-head-mid" class="hidden text-center font-semibold text-slate-500">Mid performer<br><span id="matrix-sub-mid" class="text-[10px] font-normal text-slate-400">middle third of distribution</span></div>
-          <div class="text-center font-semibold text-slate-500">Top performer<br><span id="matrix-sub-top" class="text-[10px] font-normal text-slate-400">upper half of distribution</span></div>
-          <div class="self-center font-semibold text-slate-500">Low Salary<br><span id="matrix-count-low" class="text-[10px] font-normal text-slate-400"></span></div>
+          <div id="matrix-head-top" class="text-center font-semibold text-slate-500">Top performer<br><span id="matrix-sub-top" class="text-[10px] font-normal text-slate-400">upper half of distribution</span></div>
+          <div id="matrix-row-low" class="self-center font-semibold text-slate-500">Low Salary<br><span id="matrix-count-low" class="text-[10px] font-normal text-slate-400"></span></div>
           <div id="matrix-low-low" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-low-mid" class="hidden p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-low-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
@@ -1160,7 +1160,7 @@
           <div id="matrix-mid-low" class="hidden p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-mid-mid" class="hidden p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-mid-top" class="hidden p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
-          <div class="self-center font-semibold text-slate-500">High Salary<br><span id="matrix-count-high" class="text-[10px] font-normal text-slate-400"></span></div>
+          <div id="matrix-row-high" class="self-center font-semibold text-slate-500">High Salary<br><span id="matrix-count-high" class="text-[10px] font-normal text-slate-400"></span></div>
           <div id="matrix-high-low" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-high-mid" class="hidden p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-high-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
@@ -2444,10 +2444,34 @@
       const perfKeys = three ? ['low', 'mid', 'top'] : ['low', 'top'];
       const cellCls = 'p-2 rounded-lg bg-slate-50 border border-slate-200 text-center';
       grid.className = 'grid ' + (three ? 'grid-cols-[auto_1fr_1fr_1fr]' : 'grid-cols-[auto_1fr_1fr]') + ' gap-2 text-xs';
-      document.getElementById('matrix-head-mid').className = three ? 'text-center font-semibold text-slate-500' : 'hidden text-center font-semibold text-slate-500';
+      const headPosition = p => 'text-center font-semibold text-slate-500 row-start-1 col-start-' + (p === 'low' ? 2 : p === 'mid' ? 3 : three ? 4 : 3);
+      const headLow = document.getElementById('matrix-head-low');
+      const headMid = document.getElementById('matrix-head-mid');
+      const headTop = document.getElementById('matrix-head-top');
+      headLow.className = headPosition('low');
+      headMid.className = three ? headPosition('mid') : 'hidden text-center font-semibold text-slate-500';
+      headTop.className = headPosition('top');
+      headLow.style.gridRow = '1'; headLow.style.gridColumn = '2';
+      headMid.style.gridRow = '1'; headMid.style.gridColumn = '3';
+      headTop.style.gridRow = '1'; headTop.style.gridColumn = three ? '4' : '3';
       document.getElementById('matrix-row-mid').className = (three ? '' : 'hidden ') + 'self-center font-semibold text-slate-500';
       ['low', 'mid', 'high'].forEach(q => {
-        document.getElementById('matrix-' + q + '-mid').className = (three ? '' : 'hidden ') + cellCls;
+        const row = salaryKeys.indexOf(q) + 2;
+        const rowEl = document.getElementById('matrix-row-' + q);
+        if (rowEl) {
+          rowEl.className = (q === 'mid' && !three ? 'hidden ' : '') + 'self-center font-semibold text-slate-500 row-start-' + row + ' col-start-1';
+          rowEl.style.gridRow = row + '';
+          rowEl.style.gridColumn = '1';
+        }
+      });
+      ['low', 'mid', 'high'].forEach(q => {
+        ['low', 'mid', 'top'].forEach(p => {
+          const active = salaryKeys.indexOf(q) > -1 && perfKeys.indexOf(p) > -1;
+          const el = document.getElementById('matrix-' + q + '-' + p);
+          el.className = (active ? '' : 'hidden ') + cellCls;
+          el.style.gridRow = (salaryKeys.indexOf(q) + 2) + '';
+          el.style.gridColumn = (perfKeys.indexOf(p) + 2) + '';
+        });
       });
       document.getElementById('matrix-sub-low').innerText = three ? 'lower third of distribution' : 'lower half of distribution';
       document.getElementById('matrix-sub-mid').innerText = 'middle third of distribution';
@@ -2470,7 +2494,11 @@
       salaryKeys.forEach(q => {
         perfKeys.forEach(p => {
           const d = popMatrix.quadrants[q][p];
-          document.getElementById('matrix-' + q + '-' + p).innerHTML = (!d || !popMatrix.count[q]) ? '<span class="text-slate-300">—</span>' : cell(d);
+          const row = salaryKeys.indexOf(q) + 2;
+          const col = perfKeys.indexOf(p) + 2;
+          const el = document.getElementById('matrix-' + q + '-' + p);
+          el.className = cellCls + ' row-start-' + row + ' col-start-' + col;
+          el.innerHTML = (!d || !popMatrix.count[q]) ? '<span class="text-slate-300">—</span>' : cell(d);
         });
       });
     }
