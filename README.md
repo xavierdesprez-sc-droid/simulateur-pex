@@ -87,6 +87,8 @@ When opened outside Apps Script (local file), the loading button falls back to t
 
 ## Tests
 
+The application itself has no local installation requirement. Node.js is only needed to run the test suite.
+
 ```
 node tests/run.js
 ```
