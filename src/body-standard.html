@@ -1,0 +1,606 @@
+  <main id="view-standard" class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+
+    <!-- KPI Metric Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Card 1: New PEX vs Old -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">New Variable PEX</span>
+          <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><i data-lucide="wallet" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpi-pex-new" class="text-2xl font-black text-slate-900">0.00 M€</span>
+          <span id="kpi-pex-payout-rate" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0% avg.</span>
+        </div>
+        <div class="mt-2 text-xs flex items-center gap-1.5" id="kpi-pex-diff-badge">
+          <span class="text-slate-500">Current PEX:</span>
+          <span id="kpi-pex-old" class="font-bold text-slate-700">2.50 M€</span>
+          <span id="kpi-pex-diff" class="font-bold">(-0.0%)</span>
+        </div>
+      </div>
+
+      <!-- Card 2: PEX Savings / Overrun -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Payroll Impact (&Delta;PEX)</span>
+          <div class="p-2 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="scale" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpi-pex-savings" class="text-2xl font-black text-emerald-600">+0.00 M€</span>
+        </div>
+        <p class="mt-2 text-xs text-slate-500 flex items-center gap-1">
+          <i data-lucide="info" class="w-3.5 h-3.5"></i>
+          <span id="kpi-pex-savings-label">Net budget savings</span>
+        </p>
+      </div>
+
+      <!-- Card 3: Gain C2P sur Surperformance -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm relative overflow-hidden group hover:border-indigo-300 transition-all">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Additional C2P Gain</span>
+          <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><i data-lucide="badge-percent" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpi-margin-gain" class="text-2xl font-black text-emerald-600">+0.00 M€</span>
+          <span id="kpi-c2p-gain" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">+0 M€ C2P</span>
+        </div>
+        <p class="mt-2 text-xs text-slate-500">
+          Formula: <span class="font-mono font-medium text-slate-700">C2P Total &times; Overperf &times; Corridor</span>
+        </p>
+      </div>
+
+      <!-- Card 4: ROI / Net Company Result -->
+      <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-5 rounded-2xl shadow-md relative overflow-hidden group">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Net Company Result (P&amp;L)</span>
+          <div class="p-2 bg-white/10 text-indigo-200 rounded-xl"><i data-lucide="circle-dollar-sign" class="w-4 h-4"></i></div>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="kpi-net-gain" class="text-2xl font-black text-white">+0.00 M€</span>
+        </div>
+        <p class="mt-2 text-xs text-indigo-200 flex items-center gap-1">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span>C2P Gain + PEX Savings</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Main Workspace Layout: Controls (Left) & Charts/Analysis (Right) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: CONTROLS & CONFIGURATION (4 cols on lg) -->
+      <div class="lg:col-span-4 space-y-6">
+
+        <!-- 1. STRATEGIC LEVERS & GAUSSIAN -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="sliders" class="w-4 h-4"></i></div>
+              <h2 class="font-bold text-slate-900 text-sm">Strategic Levers &amp; Distribution</h2>
+            </div>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">Real-time</span>
+          </div>
+
+          <!-- Slider: Target increase (dynamic shift of the new Gaussian) -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <label for="slider-target-increase" class="font-semibold text-slate-700 flex items-center gap-1">
+                <span>Target Increase</span>
+                <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Moves the new Gaussian to the left while keeping the old one as a visual reference"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+              </label>
+              <span id="val-target-increase" class="font-mono font-bold text-indigo-600 text-sm bg-indigo-50 px-2 py-0.5 rounded-md">+0.0%</span>
+            </div>
+            <input type="range" id="slider-target-increase" min="0" max="60" step="0.5" value="0" class="w-full cursor-pointer accent-indigo-600">
+            <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+              <span>0 pp</span>
+              <span>+30 pp (mu target 80%)</span>
+              <span>+60 pp</span>
+            </div>
+          </div>
+
+          <!-- Slider: Behavioral overperformance -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <label for="slider-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
+                <span>Induced overperformance (scheme)</span>
+                <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the new scheme on C2P (+X% overperformance)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+              </label>
+              <span id="val-overperf" class="font-mono font-bold text-emerald-600 text-sm bg-emerald-50 px-2 py-0.5 rounded-md">+0.0%</span>
+            </div>
+            <input type="range" id="slider-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
+            <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+              <span>-10%</span>
+              <span>0%</span>
+              <span>+15% (strong incentive)</span>
+            </div>
+          </div>
+
+          <!-- Initial Gaussian parameters (Mean & Std Dev 30%) -->
+          <div class="pt-3 border-t border-slate-100 space-y-3">
+            <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Historical Distribution</h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Initial Mean (&mu;)</label>
+                <div class="relative">
+                  <input type="number" id="input-mu-init" value="110" step="1" min="30" max="200" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1">Std Dev (&sigma;)</label>
+                <div class="relative">
+                  <input type="number" id="input-sigma-init" value="30" step="1" min="1" max="60" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">%</span>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <div class="p-2 bg-slate-100 rounded-xl text-[11px] text-slate-600 flex flex-col">
+                <span class="text-slate-400 font-medium">Old Mean:</span>
+                <span id="val-init-mu" class="font-mono font-bold text-slate-700">110.0%</span>
+              </div>
+              <div class="p-2 bg-indigo-50 border border-indigo-100 rounded-xl text-[11px] text-indigo-700 flex flex-col">
+                <span class="text-indigo-400 font-medium">New Mean:</span>
+                <span id="val-resulting-mu" class="font-mono font-bold text-indigo-700">110.0%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. SALARY PARAMETERS & VARIABLE MASS (PEX) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="badge-dollar-sign" class="w-4 h-4"></i></div>
+              <h2 class="font-bold text-slate-900 text-sm">Salary Parameters &amp; PEX</h2>
+            </div>
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-100 text-blue-700">Total Mass</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <!-- Current reference PEX -->
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <span>Current PEX Paid (Variable Mass)</span>
+                <span class="text-[10px] text-slate-400 font-mono">Current value</span>
+              </label>
+              <div class="relative">
+                <input type="number" id="input-current-pex" value="2.5" step="0.1" min="0.1" max="50" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                <span class="absolute right-3 top-1.5 font-semibold text-slate-400">M€</span>
+              </div>
+            </div>
+
+            <!-- Average variable shares (Current vs New) -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Avg. Current Var. Share</label>
+                <div class="relative">
+                  <input type="number" id="input-old-var-share" value="11" step="0.5" min="1" max="50" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-3 top-1.5 font-semibold text-slate-400">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">New Target Var. Share</label>
+                <div class="relative">
+                  <input type="number" id="input-new-var-share" value="20" step="0.5" min="1" max="50" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-3 top-1.5 font-semibold text-slate-400">%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Headcount & C2P Base -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Sales Headcount</label>
+                <div class="relative">
+                  <input type="number" id="input-headcount" value="350" step="10" min="10" max="5000" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-3 top-1.5 font-semibold text-slate-400">reps</span>
+                </div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Reference C2P</label>
+                <div class="relative">
+                  <input type="number" id="input-base-ca" value="700" step="10" min="10" max="10000" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-3 top-1.5 font-semibold text-slate-400">M€</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Corridor (%)</label>
+                <div class="relative">
+                  <input type="number" id="input-margin-rate" value="20" step="1" min="1" max="100" class="w-full font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                  <span class="absolute right-3 top-1.5 font-semibold text-slate-400">%</span>
+                </div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">New Target Budget (100%)</label>
+                <div class="p-1.5 bg-slate-100 rounded-lg text-slate-700 font-mono font-bold text-center">
+                  <span id="val-new-target-pex">4.13</span> M€
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3. PAYOUT CURVE CONFIGURATION (EDITABLE BREAKPOINTS) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="git-commit" class="w-4 h-4"></i></div>
+              <h2 class="font-bold text-slate-900 text-sm">New Curve Breakpoints</h2>
+            </div>
+            <button onclick="addBreakpointRow()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1 hover:bg-indigo-50 px-2 py-1 rounded-lg transition-all">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add
+            </button>
+          </div>
+
+          <p class="text-xs text-slate-500">Breakpoints: flat 0 up to <strong>40%</strong> achievement, linear 0 &rarr; 100% payout between 40% and 100%, then <strong>100% &rarr; 200% payout</strong> between 100% and 200%.</p>
+
+          <!-- Table of Breakpoints -->
+          <div class="overflow-hidden border border-slate-200 rounded-xl">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="py-2 px-3">Achievement (%)</th>
+                  <th class="py-2 px-3">Payout (%)</th>
+                  <th class="py-2 px-2 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="breakpoints-table-body" class="divide-y divide-slate-100 font-mono">
+                <!-- Injected by JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Cap option -->
+          <div class="pt-2 flex items-center justify-between text-xs">
+            <span class="text-slate-600 font-medium">Maximum Cap:</span>
+            <div class="flex items-center gap-1">
+              <input type="number" id="input-payout-cap" value="200" step="5" min="100" max="500" class="w-16 text-center font-mono font-bold px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500">
+              <span class="text-slate-400 font-mono">%</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: VISUALIZATIONS & SIMULATION (8 cols on lg) -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- 1. MAIN CHART: DOUBLE GAUSSIAN & PAYOUT CURVES (Auto-Adaptive Y Scale) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><i data-lucide="line-chart" class="w-4 h-4"></i></div>
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Overlay: Distribution, Payout &amp; Nominal-Weighted Curve</h2>
+                <p class="text-xs text-slate-500">The vertical axis adapts automatically to always show the full weighted curve</p>
+              </div>
+            </div>
+
+            <!-- View toggles & Max Axis Badge -->
+            <div class="flex items-center gap-2">
+              <span id="badge-y-scale" class="px-2 py-1 text-[11px] font-mono font-bold rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
+                Y scale: max 300%
+              </span>
+              <button id="btn-toggle-weighted" onclick="toggleDataset(4)" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                <span class="w-2 h-0.5 bg-purple-600 inline-block border-t border-dashed border-purple-600"></span> Weighted Curve
+              </button>
+            </div>
+          </div>
+
+          <!-- Chart Container -->
+          <div class="relative h-[380px] w-full">
+            <canvas id="mainChart"></canvas>
+          </div>
+
+          <!-- DUAL SLIDERS DIRECTLY UNDER THE CURVE (SYNCHRONIZED) -->
+          <div class="p-4 bg-slate-50 border border-slate-200/80 rounded-xl space-y-4">
+            
+            <!-- Slider 1: Rep's Achievement Position (20% to 200%) -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-purple-600 animate-pulse"></div>
+                  <span class="font-bold text-slate-800">1. Rep's Historical Achievement Position:</span>
+                </div>
+                <div class="flex items-center gap-2 font-mono">
+                  <span class="bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded shadow-sm font-semibold text-xs" id="chart-slider-val-before">Before: 110%</span>
+                  <span class="text-slate-400 font-bold">&rarr;</span>
+                  <span class="bg-purple-600 text-white px-2 py-0.5 rounded shadow-sm font-bold text-xs" id="chart-slider-val-after">After: 110.0%</span>
+                </div>
+              </div>
+              <input type="range" id="slider-chart-rep-sync" min="20" max="200" step="1" value="110" class="w-full cursor-pointer accent-purple-600">
+              <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+                <span class="absolute left-[0%] -translate-x-1/2">20%</span>
+                <span class="absolute left-[16.67%] -translate-x-1/2">50%</span>
+                <span class="absolute left-[33.33%] -translate-x-1/2">80%</span>
+                <span class="absolute left-[44.44%] -translate-x-1/2">100%</span>
+                <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
+                <span class="absolute left-[100%] -translate-x-1/2">200%</span>
+              </div>
+            </div>
+
+            <!-- Slider 2: Current Bonus Percentage relative to Fixed (0% to 30%) -->
+            <div class="space-y-1.5 pt-2 border-t border-slate-200/60">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <div class="w-2.5 h-2.5 rounded-full bg-indigo-600"></div>
+                  <span class="font-bold text-slate-800">2. Current Bonus Share (% of Fixed Salary):</span>
+                  <span class="text-[10px] text-slate-500 font-normal">(Adjusts the scale and height of the weighted curve)</span>
+                </div>
+                <div class="flex items-center gap-2 font-mono text-xs">
+                  <span class="text-slate-400">Current:</span>
+                  <span id="chart-bonus-pct-val" class="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">10.0%</span>
+                  <span class="text-slate-400 font-bold">&rarr; New:</span>
+                  <span id="chart-bonus-pct-new-val" class="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded shadow-sm">20.0%</span>
+                  <span id="chart-nominal-multiplier-badge" class="font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded text-[10px]">&times;2.00 nominal</span>
+                </div>
+              </div>
+              <input type="range" id="slider-chart-bonus-sync" min="0" max="30" step="0.5" value="10" class="w-full cursor-pointer accent-indigo-600">
+              <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+                <span class="absolute left-[0%] -translate-x-1/2">0%</span>
+                <span class="absolute left-[33.33%] -translate-x-1/2">10%</span>
+                <span class="absolute left-[56.67%] -translate-x-1/2">17%</span>
+                <span class="absolute left-[66.67%] -translate-x-1/2">20%</span>
+                <span class="absolute left-[100%] -translate-x-1/2">30%</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Legend explanations -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs pt-2 border-t border-slate-100">
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-slate-400 mt-0.5 shrink-0 opacity-70 border border-dashed border-slate-600"></span>
+              <div>
+                <span class="font-bold text-slate-700">Initial Gaussian</span>
+                <p class="text-[10px] text-slate-400" id="legend-mu">&mu; = 110%</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-indigo-600 mt-0.5 shrink-0"></span>
+              <div>
+                <span class="font-bold text-indigo-700">New Gaussian</span>
+                <p class="text-[10px] text-slate-400">Shifted</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-slate-400 mt-1.5 shrink-0 border-t border-dashed border-slate-400"></span>
+              <div>
+                <span class="font-bold text-slate-700">Old Curve</span>
+                <p class="text-[10px] text-slate-400">1:1 no threshold</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-indigo-600 mt-1.5 shrink-0"></span>
+              <div>
+                <span class="font-bold text-indigo-700">New Curve</span>
+                <p class="text-[10px] text-slate-400">% New Nominal</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-1.5">
+              <span class="w-3 h-1 bg-purple-600 mt-1.5 shrink-0 border-t-2 border-dashed border-purple-600"></span>
+              <div>
+                <span class="font-bold text-purple-700">Weighted Curve</span>
+                <p class="text-[10px] text-slate-400">Purple Point &bull; Old Nominal Equiv.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. INDIVIDUAL INSPECTOR WITH BONUS SLIDERS (0-30%) & NO-DECREASE CLAUSE -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="user-check" class="w-4 h-4"></i></div>
+              <div>
+                <h2 class="font-bold text-slate-900 text-sm">Individual Simulator &amp; Bonus Analysis</h2>
+                <p class="text-xs text-slate-500">Grandfathering: reps at &ge; 20% keep their higher rate</p>
+              </div>
+            </div>
+            <span class="font-mono text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200" id="badge-rep-archetype">
+              Average Rep (110%)
+            </span>
+          </div>
+
+          <!-- Individual rep specific parameters (Fixed Salary + Bonus Slider 0-30% of Fixed) -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-purple-50/40 rounded-xl border border-purple-100 text-xs">
+            <div>
+              <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                <span>Annual Fixed Salary</span>
+                <span class="text-[10px] font-bold text-purple-600">Base</span>
+              </label>
+              <div class="relative">
+                <input type="number" id="input-rep-fixed-salary" value="50000" step="1000" min="10000" max="250000" class="w-full font-mono font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-purple-500">
+                <span class="absolute right-2.5 top-1.5 text-slate-400 font-semibold">€</span>
+              </div>
+            </div>
+
+            <!-- Slider: Rep's Achievement Position (20% to 200%) -->
+            <div class="space-y-1 sm:col-span-2">
+              <div class="flex justify-between items-center">
+                <label for="slider-rep-achievement" class="font-semibold text-slate-700 flex items-center gap-1">
+                  <span>Historical Achievement Position</span>
+                  <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Rep's historical achievement rate (20% to 200%)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+                </label>
+                <div class="flex items-center gap-2 font-mono text-xs">
+                  <span class="text-slate-400">Before:</span>
+                  <span id="val-rep-achieve-before" class="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">110%</span>
+                  <span class="text-slate-400 font-bold">&rarr;</span>
+                  <span id="val-rep-achieve-after" class="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded shadow-sm">110.0%</span>
+                </div>
+              </div>
+              <input type="range" id="slider-rep-achievement" min="20" max="200" step="1" value="110" class="w-full cursor-pointer accent-purple-600">
+              <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+                <span class="absolute left-[0%] -translate-x-1/2">20%</span>
+                <span class="absolute left-[16.67%] -translate-x-1/2">50%</span>
+                <span class="absolute left-[33.33%] -translate-x-1/2">80%</span>
+                <span class="absolute left-[44.44%] -translate-x-1/2">100%</span>
+                <span class="absolute left-[72.22%] -translate-x-1/2">150%</span>
+                <span class="absolute left-[100%] -translate-x-1/2">200%</span>
+              </div>
+            </div>
+
+            <!-- Slider: Current bonuses paid (0 to 30% of fixed) -->
+            <div class="space-y-1 sm:col-span-2 pt-2 border-t border-purple-200/50">
+              <div class="flex justify-between items-center">
+                <label for="slider-rep-bonus-pct" class="font-semibold text-slate-700 flex items-center gap-1">
+                  <span>Current bonus share (% of fixed)</span>
+                  <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Percentage of fixed salary currently paid as nominal variable (0 to 30%)"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+                </label>
+                <div class="flex items-center gap-2">
+                  <span class="text-slate-400 text-[10px]">Current:</span>
+                  <span id="val-rep-bonus-pct" class="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">10.0%</span>
+                  <span class="text-slate-400 text-[10px]">&rarr; New:</span>
+                  <span id="val-rep-new-bonus-pct" class="font-mono font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">20.0%</span>
+                </div>
+              </div>
+              <input type="range" id="slider-rep-bonus-pct" min="0" max="30" step="0.5" value="10" class="w-full cursor-pointer accent-purple-600">
+              <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+                <span class="absolute left-[0%] -translate-x-1/2">0%</span>
+                <span class="absolute left-[33.33%] -translate-x-1/2">10%</span>
+                <span class="absolute left-[56.67%] -translate-x-1/2">17%</span>
+                <span class="absolute left-[66.67%] -translate-x-1/2">20%</span>
+                <span class="absolute left-[100%] -translate-x-1/2">30%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Rep Impact Summary Cards: Focus on Nominal & Variable Paid -->
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
+            <!-- Card Achievement Trajectory -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+              <span class="text-[11px] font-semibold text-slate-500 block mb-1">Achievement Trajectory</span>
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-sm font-bold font-mono text-slate-400" id="rep-initial-achieve">110%</span>
+                <span class="text-xs text-slate-400">&rarr;</span>
+                <span class="text-lg font-black font-mono text-indigo-700" id="rep-calibrated-achieve">110.0%</span>
+              </div>
+              <span class="text-[10px] text-slate-400 block mt-1" id="rep-achieve-details">(Target increase &amp; overperf)</span>
+            </div>
+
+            <!-- Card Old Scheme -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-semibold text-slate-500">Old Scheme</span>
+                <span class="text-[10px] font-mono font-bold text-slate-500" id="rep-old-payout">110.0% payout</span>
+              </div>
+              <div class="text-lg font-black font-mono text-slate-700" id="rep-old-euros">5 500 €</div>
+              <div class="mt-1 pt-1 border-t border-slate-200/60 flex justify-between text-[11px] text-slate-500 font-mono">
+                <span>Nominal:</span>
+                <span class="font-bold text-slate-700" id="rep-old-nominal">5 000 €</span>
+              </div>
+            </div>
+
+            <!-- Card New Scheme -->
+            <div class="p-3 bg-indigo-50/80 rounded-xl border border-indigo-100">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-semibold text-indigo-700">New Scheme</span>
+                <span class="text-[10px] font-mono font-bold text-indigo-600" id="rep-new-payout">110.0% payout</span>
+              </div>
+              <div class="text-lg font-black font-mono text-indigo-700" id="rep-new-euros">11 000 €</div>
+              <div class="mt-1 pt-1 border-t border-indigo-200/60 flex justify-between text-[11px] text-indigo-700 font-mono">
+                <span>Nominal:</span>
+                <span class="font-bold text-indigo-900" id="rep-new-nominal">10 000 €</span>
+              </div>
+            </div>
+
+            <!-- Card Variable & Nominal Change -->
+            <div class="p-3 rounded-xl border" id="rep-delta-card">
+              <span class="text-[11px] font-semibold block mb-1" id="rep-delta-label">&Delta; Variable Paid</span>
+              <div class="text-lg font-black font-mono" id="rep-delta-payout">+5 500 €</div>
+              <div class="mt-1 pt-1 border-t border-current/20 flex justify-between text-[11px] font-mono opacity-90">
+                <span>&Delta; Nominal:</span>
+                <span class="font-bold" id="rep-delta-nominal">+5 000 €</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. COMPARATIVE ANALYSIS BY SEGMENT / POPULATION -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="users" class="w-4 h-4"></i></div>
+              <h2 class="font-bold text-slate-900 text-sm">Sales Population Breakdown by Segment (<span id="segments-sigma">&sigma; = 30%</span>)</h2>
+            </div>
+            <span class="text-xs text-slate-500 font-medium">Continuous integration calculation</span>
+          </div>
+
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
+              <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Segment / Band</th>
+                  <th class="py-2.5 px-3">% Population</th>
+                  <th class="py-2.5 px-3"># Reps</th>
+                  <th class="py-2.5 px-3">Avg. Old Payout</th>
+                  <th class="py-2.5 px-3">Avg. New Payout</th>
+                  <th class="py-2.5 px-3 font-semibold">Avg. Variable Impact / Rep</th>
+                </tr>
+              </thead>
+              <tbody id="segments-table-body" class="divide-y divide-slate-100 font-mono">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 4. MATH EXPLANATIONS & STRATEGIC SYNTHESIS SECTION (100% clean rendering via KaTeX) -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4 text-xs text-slate-600">
+      <div class="flex items-center gap-2 text-slate-900 font-bold text-sm">
+        <i data-lucide="book-open" class="w-4 h-4 text-indigo-600"></i>
+        <span>Formulas &amp; Economic Model (Native KaTeX Formulas)</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+        <div class="space-y-1.5">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+            1. Grandfathering (&ge; 20%)
+          </h4>
+          <p class="text-slate-500 leading-relaxed">
+            The new bonus share is defined by the rule:
+            <span class="block my-1 font-mono text-indigo-950 bg-indigo-50/80 p-2 rounded border border-indigo-100">
+              \(\text{Share}_{\text{new}} = \max(20\%, \text{Share}_{\text{current}})\)
+            </span>
+            A rep at \(25\%\) stays at \(25\%\), while a rep at \(10\%\) or \(17\%\) automatically moves to \(20\%\).
+          </p>
+        </div>
+        <div class="space-y-1.5">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            2. Weighted Curve & Purple Point
+          </h4>
+          <p class="text-slate-500 leading-relaxed">
+            The frame automatically adapts its scale to show the full weighted payout:
+            <span class="block my-1 font-mono text-purple-950 bg-purple-50/80 p-2 rounded border border-purple-100">
+              \(\text{Payout}_{\text{weighted}} = \text{Payout}_{\text{new}}(x) \times \frac{\text{Nominal}_{\text{new}}}{\text{Nominal}_{\text{old}}}\)
+            </span>
+            Even for small initial bonuses, the curve remains fully visible.
+          </p>
+        </div>
+        <div class="space-y-1.5">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            3. Synchronization & Global Corridor
+          </h4>
+          <p class="text-slate-500 leading-relaxed">
+            The additional corridor gain is computed as:
+            <span class="block my-1 font-mono text-emerald-950 bg-emerald-50/80 p-2 rounded border border-emerald-100">
+              \(\text{Gain C2P} = \text{C2P Total} \times \Delta_{\text{perf}} \times \text{Corridor}\)
+            </span>
+            with \(700\text{ M€} \times 1\% \times 20\% = 1.4\text{ M€}\) of additional gross C2P per point of overperformance.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
