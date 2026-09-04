@@ -1,8 +1,8 @@
 
     // ===== ADVANCED VIEW: 90% HYBRID SCHEME =====
     let advChartInstance = null;
-    const advState = { x: 110, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
-    const fourToOneState = { corridorC2P: 600000 };
+    const advState = { x: 110, zeroThreshold: 0, t1: 85, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
+    const fourToOneState = { corridorC2P: 300000 };
     const STANDARD_TARGET_SHARE_PCT = 20;
 
     function normalizeFourToOneCorridor(value) {
@@ -216,6 +216,7 @@
       document.getElementById('adv-val-achieve-before').innerText = x + '%';
       document.getElementById('adv-val-achieve-after').innerText = calibrated.toFixed(1) + '%';
       syncTargetSliders();
+      if (typeof syncOverperfSliders === 'function') syncOverperfSliders();
       document.getElementById('adv-val-zero').innerText = zero + '%';
       document.getElementById('adv-val-t1').innerText = t1 + '%';
       document.getElementById('adv-val-t2').innerText = t2 + '%';
@@ -230,17 +231,30 @@
       document.getElementById('adv-badge-r').innerText = oldNomE > 0 ? `\u00D7${r.toFixed(2)} nominal` : '—';
       document.getElementById('adv-nominal-new').innerText = Math.round(newNominal).toLocaleString('en-US') + ' €';
 
-      // KPI cards
-      document.getElementById('adv-kpi-old').innerText = Math.round(paidOld).toLocaleString('en-US') + ' €';
-      document.getElementById('adv-kpi-hyb').innerText = Math.round(paidHyb).toLocaleString('en-US') + ' €';
-      document.getElementById('adv-kpi-new').innerText = Math.round(paidNew).toLocaleString('en-US') + ' €';
+      // KPI cards (compact: Old / Hybrid / Δ — no all-new card)
+      const kpiOldEl = document.getElementById('adv-kpi-old');
+      if (kpiOldEl) kpiOldEl.innerText = Math.round(paidOld).toLocaleString('en-US') + ' €';
+      const kpiHybEl = document.getElementById('adv-kpi-hyb');
+      if (kpiHybEl) kpiHybEl.innerText = Math.round(paidHyb).toLocaleString('en-US') + ' €';
+      const kpiNewEl = document.getElementById('adv-kpi-new');
+      if (kpiNewEl) kpiNewEl.innerText = Math.round(paidNew).toLocaleString('en-US') + ' €';
 
       const deltaOld = paidHyb - paidOld;
       const deltaNewEl = document.getElementById('adv-kpi-delta-new');
+      if (deltaNewEl) deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('en-US') + ' €';
       const deltaEl = document.getElementById('adv-kpi-delta');
-      deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('en-US') + ' €';
-      deltaEl.className = 'text-2xl font-black mt-1 ' + (deltaOld >= 0 ? 'text-emerald-600' : 'text-rose-600');
-      deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('en-US') + ' €';
+      if (deltaEl) {
+        deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('en-US') + ' €';
+        deltaEl.className = 'text-lg font-black mt-0.5 ' + (deltaOld >= 0 ? 'text-emerald-600' : 'text-rose-600');
+      }
+
+      // Dynamic transition labels (title, legend)
+      const titleT1 = document.getElementById('adv-title-t1');
+      if (titleT1) titleT1.innerText = t1 + '%';
+      const titleT2 = document.getElementById('adv-title-t2');
+      if (titleT2) titleT2.innerText = t2 + '%';
+      const legendT1 = document.getElementById('adv-legend-t1');
+      if (legendT1) legendT1.innerText = t1 + '%';
 
       // Chart data (% of old nominal)
       const labels = [];

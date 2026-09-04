@@ -84,7 +84,8 @@
       const marginGainEl = document.getElementById('kpi-margin-gain');
       marginGainEl.innerText = (marginGainM >= 0 ? '+' : '') + marginGainM.toFixed(2) + ' M€';
       marginGainEl.className = marginGainM >= 0 ? 'text-2xl font-black text-emerald-600' : 'text-2xl font-black text-rose-600';
-      document.getElementById('kpi-c2p-gain').innerText = (c2pGainM >= 0 ? '+' : '') + c2pGainM.toFixed(1) + ' M€ C2P';
+      const c2pBadge = document.getElementById('kpi-c2p-gain');
+      if (c2pBadge) c2pBadge.innerText = (c2pGainM >= 0 ? '+' : '') + c2pGainM.toFixed(1) + ' M€ C2P';
 
       const netGainEl = document.getElementById('kpi-net-gain');
       netGainEl.innerText = (netGainM >= 0 ? '+' : '') + netGainM.toFixed(2) + ' M€';

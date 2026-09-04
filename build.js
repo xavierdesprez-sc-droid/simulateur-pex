@@ -1,20 +1,23 @@
 'use strict';
 /**
  * Build: concatène src/*.html + src/js/*.js -> index.html (monofichier Apps Script).
+ * Les placeholders <!-- @@TOP-STRIP:<nom> --> sont expansés via src/top-strip.js
+ * (bandeau haut ΔPEX + slider, source unique pour Hybrid / 4:1 / Matrix).
  * Usage: node build.js | node build.js --check
  * Node seul, zéro dépendance, déterministe (pas de timestamp).
  */
 const fs = require('fs');
 const path = require('path');
+const { renderTopStrip } = require('./src/top-strip');
 
 const ROOT = __dirname;
 const HTML_PARTS = [
   'head.html',
   'body-header.html',
   'body-standard.html',
+  'body-four-to-one.html',
   'body-advanced.html',
   'body-matrix.html',
-  'body-four-to-one.html',
   'body-footer.html',
 ];
 const JS_PARTS = [
@@ -47,7 +50,8 @@ function concatJs() {
 }
 
 function buildString() {
-  const html = HTML_PARTS.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', f)))).join('\n');
+  const html = HTML_PARTS.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', f)))).join('\n')
+    .replace(/<!-- @@TOP-STRIP:([a-z0-9-]+) -->/g, (m, name) => stripTrailingNewlines(renderTopStrip(name)));
   const js = concatJs();
   return html + '\n\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
 }

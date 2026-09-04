@@ -107,11 +107,11 @@
           <button id="tab-standard" onclick="setView('standard')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm">
             Standard Scenario
           </button>
-          <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
-            Hybrid Scenario
-          </button>
           <button id="tab-four-to-one" onclick="setView('four-to-one')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
             4:1 Scenario
+          </button>
+          <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
+            Hybrid Scenario
           </button>
           <button id="tab-matrix" onclick="setView('matrix')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
             Matrix
@@ -180,7 +180,6 @@
         </div>
         <div class="flex items-baseline gap-2">
           <span id="kpi-margin-gain" class="text-2xl font-black text-emerald-600">+0.00 M€</span>
-          <span id="kpi-c2p-gain" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">+0 M€ C2P</span>
         </div>
         <p class="mt-2 text-xs text-slate-500">
           Formula: <span class="font-mono font-medium text-slate-700">C2P Total &times; Overperf &times; Corridor</span>
@@ -246,10 +245,10 @@
               <span id="val-overperf" class="font-mono font-bold text-emerald-600 text-sm bg-emerald-50 px-2 py-0.5 rounded-md">+0.0%</span>
             </div>
             <input type="range" id="slider-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
-            <div class="flex justify-between text-[10px] text-slate-400 font-medium">
-              <span>-10%</span>
-              <span>0%</span>
-              <span>+15% (strong incentive)</span>
+            <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+              <span class="absolute left-[0%] -translate-x-1/2">-10%</span>
+              <span class="absolute left-[40%] -translate-x-1/2">0%</span>
+              <span class="absolute left-[100%] -translate-x-1/2">+15%</span>
             </div>
           </div>
 
@@ -537,7 +536,7 @@
               <div class="p-1.5 bg-purple-50 text-purple-600 rounded-lg"><i data-lucide="user-check" class="w-4 h-4"></i></div>
               <div>
                 <h2 class="font-bold text-slate-900 text-sm">Individual Simulator &amp; Bonus Analysis</h2>
-                <p class="text-xs text-slate-500">Grandfathering: reps at &ge; 20% keep their higher rate</p>
+                <p class="text-xs text-slate-500">Reps at &ge; 20% keep their higher rate</p>
               </div>
             </div>
             <span class="font-mono text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-lg border border-purple-200" id="badge-rep-archetype">
@@ -702,7 +701,7 @@
         <div class="space-y-1.5">
           <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
             <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            1. Grandfathering (&ge; 20%)
+            1. 20% floor — no decrease (&ge; 20%)
           </h4>
           <p class="text-slate-500 leading-relaxed">
             The new bonus share is defined by the rule:
@@ -743,24 +742,165 @@
 
   </main>
 
-  <!-- ===== ADVANCED VIEW: 90% HYBRID SCHEME ===== -->
+  <!-- ===== 4:1 VIEW: NOMINAL TO OBJECTIVE ===== -->
+  <main id="view-four-to-one" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+        <div class="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg"><i data-lucide="repeat-2" class="w-4 h-4"></i></div>
+        <div>
+          <h2 class="font-bold text-slate-900 text-sm">Scenario 4:1 — Nominal to Objective</h2>
+          <p class="text-xs text-slate-500">The standard curve with a 4 € objective increase for each 1 € nominal increase</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center text-xs">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+          <span class="text-slate-500 font-semibold block">Current PEX</span>
+          <span id="four-to-one-pex-old" class="text-lg font-black font-mono text-slate-700">—</span>
+        </div>
+<div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+          <span class="text-indigo-500 font-semibold block">Standard ΔPEX</span>
+          <span id="four-to-one-pex-standard" class="text-lg font-black font-mono text-indigo-700">—</span>
+          <span id="four-to-one-pex-standard-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+          <span class="text-cyan-600 font-semibold block">4:1 ΔPEX</span>
+          <span id="four-to-one-pex-fourtoone" class="text-lg font-black font-mono text-cyan-700">—</span>
+          <span id="four-to-one-pex-fourtoone-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="p-3 bg-orange-50 rounded-xl border border-orange-200">
+          <span class="text-orange-600 font-semibold block">Hybrid ΔPEX</span>
+          <span id="four-to-one-pex-hybrid" class="text-lg font-black font-mono text-orange-700">—</span>
+          <span id="four-to-one-pex-hybrid-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-3 rounded-xl shadow-md">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">P&L</span>
+          <div id="four-to-one-pnl" class="text-2xl font-black text-white">—</div>
+          <div class="text-[10px] text-indigo-200 mt-0.5">C2P <span id="four-to-one-pnl-c2p" class="font-bold">—</span> + savings</div>
+          <span id="four-to-one-c2p-gain" class="hidden"></span>
+          <span id="four-to-one-c2p-gain-gross" class="hidden"></span>
+        </div>
+      </div>
+      <div class="px-4 py-2 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-1">
+        <div class="flex items-center justify-between text-xs">
+          <label for="four-to-one-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
+            <span>Induced overperformance (scheme)</span>
+            <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the scheme on C2P — synced everywhere"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+          </label>
+          <span id="four-to-one-overperf-value" class="font-mono font-bold text-emerald-700 text-sm bg-emerald-100 px-2 py-0.5 rounded-md">+0.0%</span>
+        </div>
+        <input type="range" id="four-to-one-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
+        <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+          <span class="absolute left-[0%] -translate-x-1/2">-10%</span>
+          <span class="absolute left-[40%] -translate-x-1/2">0%</span>
+          <span class="absolute left-[100%] -translate-x-1/2">+15%</span>
+        </div>
+      </div>
+            <p id="four-to-one-status" class="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">Load a population to display the 4:1 scenario.</p>
+    </div>
+
+    <!-- Controls: corridor + filters -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Corridor C2P moyen</label>
+          <div class="relative">
+            <input type="number" id="four-to-one-corridor" value="300000" step="10000" min="1" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500">
+            <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 md:col-span-2">Each rep's added objective is <span class="font-mono font-bold text-slate-700">4 × added nominal</span>. With a <span id="four-to-one-corridor-echo" class="font-mono font-bold text-slate-700">300 000 €</span> corridor, +60 000 € objective means <span id="four-to-one-points-echo" class="font-mono font-bold text-slate-700">+20.0 points</span> of target.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Orga</label>
+          <select id="four-to-one-filter-orga" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Country</label>
+          <select id="four-to-one-filter-country" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Position</label>
+          <select id="four-to-one-filter-position" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        </div>
+      </div>
+      <div id="four-to-one-input-zone" class="space-y-2">
+        <button onclick="loadPopulationFromSheet()" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm transition-all">Load population</button>
+        <p class="text-[10px] text-slate-400">The population is shared with the Advanced and Matrix views.</p>
+      </div>
+    </div>
+
+    <div id="four-to-one-results" class="hidden bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+      <div class="overflow-x-auto custom-scrollbar max-h-96 overflow-y-auto border border-slate-200 rounded-xl">
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
+            <tr>
+              <th class="py-2 px-3">ID</th>
+              <th class="py-2 px-3">Fixed</th>
+              <th class="py-2 px-3">Nominal</th>
+              <th class="py-2 px-3">Added nominal</th>
+              <th class="py-2 px-3">Added objective</th>
+              <th class="py-2 px-3">Target shift</th>
+              <th class="py-2 px-3">Current expected</th>
+              <th class="py-2 px-3">Standard expected</th>
+              <th class="py-2 px-3">4:1 expected</th>
+              <th class="py-2 px-3">Δ €</th>
+            </tr>
+          </thead>
+          <tbody id="four-to-one-table-body" class="divide-y divide-slate-100 font-mono"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== ADVANCED VIEW: HYBRID SCHEME ===== -->
   <main id="view-advanced" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
 
-    <!-- Rule explained -->
-    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-      <div class="flex items-center gap-2 mb-2">
-        <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="flask-conical" class="w-4 h-4"></i></div>
-        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between 90% and 100%</h2>
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+        <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="scale" class="w-4 h-4"></i></div>
+        <div>
+          <h2 class="font-bold text-slate-900 text-sm">PEX Impact vs Current — All Scenarios</h2>
+          <p class="text-xs text-slate-500">Same population, same filters · <span id="hyb-top-status" class="font-semibold">load a population below</span></p>
+        </div>
       </div>
-      <p class="text-xs text-slate-500 leading-relaxed">
-        Below <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> achievement: <strong>0 paid</strong>.
-        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">90%</span>: old scheme (linear on the old nominal).
-        From <span id="adv-desc-t1b" class="font-mono">90%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear transition from the old curve to the new one.
-        Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
-        <strong>New nominal</strong> = max(20% target, € minimum nominal, grandfathered) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
-        Each rep has their own curve: the lower their old nominal, the bigger the jump between 90% and 100%.
-        A rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme (grandfathered).
-      </p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center text-xs">
+        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+          <span class="text-indigo-500 font-semibold block">Standard ΔPEX</span>
+          <span id="hyb-top-pex-standard" class="text-xl mt-1 font-black font-mono text-indigo-700">—</span>
+          <span id="hyb-top-pex-standard-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+          <span class="text-cyan-600 font-semibold block">4:1 ΔPEX</span>
+          <span id="hyb-top-pex-fourtoone" class="text-xl mt-1 font-black font-mono text-cyan-700">—</span>
+          <span id="hyb-top-pex-fourtoone-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="p-3 bg-orange-50 rounded-xl border border-orange-200">
+          <span class="text-orange-600 font-semibold block">Hybrid ΔPEX</span>
+          <span id="hyb-top-pex-hybrid" class="text-xl mt-1 font-black font-mono text-orange-700">—</span>
+          <span id="hyb-top-pex-hybrid-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-3 rounded-xl shadow-md">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Hybrid P&L</span>
+          <div id="hyb-top-pnl" class="text-2xl mt-1 font-black text-white">—</div>
+          <div class="text-[10px] text-indigo-200 mt-0.5">C2P contribution + Hybrid savings · <span id="hyb-top-c2p" class="font-bold">—</span></div>
+        </div>
+      </div>
+      <div class="px-4 py-2 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-1">
+        <div class="flex items-center justify-between text-xs">
+          <label for="hyb-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
+            <span>Induced overperformance (scheme)</span>
+            <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the scheme on C2P — synced everywhere"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+          </label>
+          <span id="hyb-overperf-value" class="font-mono font-bold text-emerald-700 text-sm bg-emerald-100 px-2 py-0.5 rounded-md">+0.0%</span>
+        </div>
+        <input type="range" id="hyb-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
+        <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+          <span class="absolute left-[0%] -translate-x-1/2">-10%</span>
+          <span class="absolute left-[40%] -translate-x-1/2">0%</span>
+          <span class="absolute left-[100%] -translate-x-1/2">+15%</span>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -832,15 +972,15 @@
             <div class="flex justify-between items-center text-xs">
               <label class="font-semibold text-slate-700">Transition to New Nominal (start &rarr; end)</label>
               <div class="flex items-center gap-1.5 font-mono text-xs">
-                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">90%</span>
+                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">85%</span>
                 <span class="text-slate-400 font-bold">&rarr;</span>
                 <span id="adv-val-t2" class="font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md">100%</span>
               </div>
             </div>
             <div class="relative h-6">
               <div class="absolute w-full top-1/2 -translate-y-1/2 h-2 bg-slate-200 rounded-full"></div>
-              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:45%; width:5%"></div>
-              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="90" class="dual-range dual-t1 absolute inset-0 w-full m-0">
+              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:42.5%; width:7.5%"></div>
+              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="85" class="dual-range dual-t1 absolute inset-0 w-full m-0">
               <input type="range" id="adv-dual-t2" min="0" max="200" step="1" value="100" class="dual-range dual-t2 absolute inset-0 w-full m-0">
             </div>
             <div class="relative h-4 text-[10px] text-slate-400 font-mono">
@@ -898,8 +1038,24 @@
         </div>
       </div>
 
-      <!-- RIGHT: Chart + KPIs + Aggregate -->
+      <!-- RIGHT: Individual mini-cards + Chart + Aggregate -->
       <div class="lg:col-span-8 space-y-6">
+
+        <!-- Individual mini-cards (compact, above the chart) -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Old Paid</span>
+            <div id="adv-kpi-old" class="text-lg font-black text-slate-700 mt-0.5">5 500 €</div>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border-2 border-orange-300 shadow-sm">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-orange-500">Hybrid Paid</span>
+            <div id="adv-kpi-hyb" class="text-lg font-black text-orange-600 mt-0.5">5 500 €</div>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">&Delta; Hybrid vs Old</span>
+            <div id="adv-kpi-delta" class="text-lg font-black text-emerald-600 mt-0.5">+0 €</div>
+          </div>
+        </div>
 
         <!-- Chart -->
         <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
@@ -929,7 +1085,7 @@
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-orange-600 mt-1.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-orange-700">Hybrid 90%</span>
+                <span class="font-bold text-orange-700">Hybrid <span id="adv-legend-t1">85%</span></span>
                 <p class="text-[10px] text-slate-400">This rep</p>
               </div>
             </div>
@@ -961,27 +1117,6 @@
                 <p class="text-[10px] text-slate-400">Breakpoints (hidden by default)</p>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- Individual KPIs -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Old Paid</span>
-            <div id="adv-kpi-old" class="text-2xl font-black text-slate-700 mt-1">5 500 €</div>
-          </div>
-          <div class="bg-white p-5 rounded-2xl border-2 border-orange-300 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-orange-500">Hybrid Paid</span>
-            <div id="adv-kpi-hyb" class="text-2xl font-black text-orange-600 mt-1">5 500 €</div>
-          </div>
-          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">All-New Paid</span>
-            <div id="adv-kpi-new" class="text-2xl font-black text-indigo-600 mt-1">11 000 €</div>
-          </div>
-          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">&Delta; Hybrid vs Old</span>
-            <div id="adv-kpi-delta" class="text-2xl font-black text-emerald-600 mt-1">+0 €</div>
-            <p class="text-[10px] text-slate-400 mt-1">Vs all-new: <span id="adv-kpi-delta-new" class="font-bold text-slate-600">-5 500 €</span></p>
           </div>
         </div>
 
@@ -1025,22 +1160,6 @@
             </div>
 
             <div class="grid grid-cols-3 gap-3 text-center text-xs">
-              <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-                <span class="text-slate-500 font-semibold block">Current PEX (actual)</span>
-                <span id="pop-pex-old" class="text-lg font-black font-mono text-slate-700">0.00 M€</span>
-              </div>
-              <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <span class="text-emerald-600 font-semibold block">Hybrid PEX (actual)</span>
-                <span id="pop-pex-hyb" class="text-lg font-black font-mono text-emerald-700">0.00 M€</span>
-                <span id="pop-pex-delta" class="text-[10px] font-bold block text-slate-500">(-0.00 M€)</span>
-              </div>
-              <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-                <span class="text-indigo-500 font-semibold block">All-New PEX (actual)</span>
-                <span id="pop-pex-new" class="text-lg font-black font-mono text-indigo-700">0.00 M€</span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3 text-center text-xs">
               <div class="p-2.5 bg-rose-50 rounded-xl border border-rose-100">
                 <span class="text-rose-500 font-semibold block text-[10px] uppercase tracking-wide">Losers</span>
                 <span id="pop-risk-count" class="text-base font-black font-mono text-rose-700">0</span>
@@ -1078,10 +1197,72 @@
 
       </div>
     </div>
+
+    <!-- Rule explained (bottom) -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="flask-conical" class="w-4 h-4"></i></div>
+        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between <span id="adv-title-t1">85%</span> and <span id="adv-title-t2">100%</span></h2>
+      </div>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Below <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> achievement: <strong>0 paid</strong>.
+        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">85%</span>: old scheme (linear on the old nominal).
+        From <span id="adv-desc-t1b" class="font-mono">85%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear transition from the old curve to the new one.
+        Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
+        <strong>New nominal</strong> = max(20% target, € minimum nominal, existing nominal kept) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
+        Each rep has their own curve: the lower their old nominal, the bigger the jump between the transition bounds.
+        A rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.
+      </p>
+    </div>
   </main>
 
   <!-- ===== MATRIX VIEW: SALARY × PERFORMANCE ===== -->
   <main id="view-matrix" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
+    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
+        <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="scale" class="w-4 h-4"></i></div>
+        <div>
+          <h2 class="font-bold text-slate-900 text-sm">PEX Impact vs Current — All Scenarios</h2>
+          <p class="text-xs text-slate-500">Same population, same filters · <span id="matrix-top-status" class="font-semibold">load a population to display the matrix</span></p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center text-xs">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+          <span class="text-slate-500 font-semibold block">Current PEX</span>
+          <span id="matrix-pex-old" class="text-lg font-black font-mono text-slate-700">—</span>
+        </div>
+<div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+          <span class="text-indigo-500 font-semibold block">Standard ΔPEX</span>
+          <span id="matrix-pex-standard" class="text-lg font-black font-mono text-indigo-700">—</span>
+          <span id="matrix-pex-standard-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="p-3 bg-orange-50 rounded-xl border border-orange-200">
+          <span class="text-orange-600 font-semibold block">Hybrid ΔPEX</span>
+          <span id="matrix-pex-hybrid" class="text-lg font-black font-mono text-orange-700">—</span>
+          <span id="matrix-pex-hybrid-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+<div class="p-3 bg-cyan-50 rounded-xl border border-cyan-200">
+          <span class="text-cyan-600 font-semibold block">4:1 ΔPEX</span>
+          <span id="matrix-pex-fourtoone" class="text-lg font-black font-mono text-cyan-700">—</span>
+          <span id="matrix-pex-fourtoone-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
+        </div>
+      </div>
+      <div class="px-4 py-2 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-1">
+        <div class="flex items-center justify-between text-xs">
+          <label for="matrix-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
+            <span>Induced overperformance (scheme)</span>
+            <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the scheme on C2P — synced everywhere"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
+          </label>
+          <span id="matrix-overperf-value" class="font-mono font-bold text-emerald-700 text-sm bg-emerald-100 px-2 py-0.5 rounded-md">+0.0%</span>
+        </div>
+        <input type="range" id="matrix-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
+        <div class="relative h-4 text-[10px] text-slate-400 font-mono">
+          <span class="absolute left-[0%] -translate-x-1/2">-10%</span>
+          <span class="absolute left-[40%] -translate-x-1/2">0%</span>
+          <span class="absolute left-[100%] -translate-x-1/2">+15%</span>
+        </div>
+      </div>
+    </div>
     <!-- Controls: synced sliders & minimums & filters -->
     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
       <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1167,121 +1348,6 @@
           <div id="matrix-high-mid" class="hidden p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
           <div id="matrix-high-top" class="p-2 rounded-lg bg-slate-50 border border-slate-200 text-center"></div>
         </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- ===== 4:1 VIEW: NOMINAL TO OBJECTIVE ===== -->
-  <main id="view-four-to-one" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
-    <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
-        <div class="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg"><i data-lucide="repeat-2" class="w-4 h-4"></i></div>
-        <div>
-          <h2 class="font-bold text-slate-900 text-sm">Scenario 4:1 — Nominal to Objective</h2>
-          <p class="text-xs text-slate-500">The standard curve with a 4 € objective increase for each 1 € nominal increase</p>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Corridor C2P moyen</label>
-          <div class="relative">
-            <input type="number" id="four-to-one-corridor" value="600000" step="10000" min="1" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500">
-            <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
-          </div>
-        </div>
-        <p class="text-xs text-slate-500 md:col-span-2">Each rep's added objective is <span class="font-mono font-bold text-slate-700">4 × added nominal</span>. With a 600 000 € corridor, +60 000 € objective means +10 points of target.</p>
-      </div>
-      <div class="p-4 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-2">
-        <div class="flex items-center justify-between text-xs">
-          <label for="four-to-one-overperf" class="font-semibold text-slate-700 flex items-center gap-1">
-            <span>Induced overperformance (scheme)</span>
-            <span class="text-slate-400 hover:text-slate-600 cursor-help" title="Incentive effect of the 4:1 scheme on C2P"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i></span>
-          </label>
-          <span id="four-to-one-overperf-value" class="font-mono font-bold text-emerald-700 text-sm bg-emerald-100 px-2 py-0.5 rounded-md">+0.0%</span>
-        </div>
-        <input type="range" id="four-to-one-overperf" min="-10" max="15" step="0.2" value="0" class="w-full cursor-pointer accent-emerald-600">
-        <div class="flex justify-between text-[10px] text-slate-400 font-medium">
-          <span>-10%</span>
-          <span>0%</span>
-          <span>+15%</span>
-        </div>
-      </div>
-      <div class="grid grid-cols-3 gap-3">
-        <div>
-          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Orga</label>
-          <select id="four-to-one-filter-orga" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Country</label>
-          <select id="four-to-one-filter-country" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
-        </div>
-        <div>
-          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Position</label>
-          <select id="four-to-one-filter-position" onchange="onFourToOneFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
-        </div>
-      </div>
-      <div id="four-to-one-input-zone" class="space-y-2">
-        <button onclick="loadPopulationFromSheet()" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm transition-all">Load population</button>
-        <p class="text-[10px] text-slate-400">The population is shared with the Advanced and Matrix views.</p>
-      </div>
-      <p id="four-to-one-status" class="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">Load a population to display the 4:1 scenario.</p>
-    </div>
-
-    <div id="four-to-one-results" class="hidden bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-      <div class="grid grid-cols-3 gap-3 text-center text-xs">
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-          <span class="text-slate-500 font-semibold block">Current PEX</span>
-          <span id="four-to-one-pex-old" class="text-lg font-black font-mono text-slate-700">0.00 M€</span>
-        </div>
-        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-          <span class="text-indigo-500 font-semibold block">Standard PEX</span>
-          <span id="four-to-one-pex-standard" class="text-lg font-black font-mono text-indigo-700">0.00 M€</span>
-        </div>
-        <div class="p-3 bg-cyan-50 rounded-xl border border-cyan-200">
-          <span class="text-cyan-600 font-semibold block">4:1 PEX</span>
-          <span id="four-to-one-pex" class="text-lg font-black font-mono text-cyan-700">0.00 M€</span>
-          <span id="four-to-one-pex-delta" class="text-[10px] font-bold block text-slate-500">0.00 M€ vs current</span>
-        </div>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white p-4 rounded-xl border border-emerald-200 shadow-sm">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Additional C2P Gain</span>
-            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="badge-percent" class="w-4 h-4"></i></div>
-          </div>
-          <div class="flex items-baseline gap-2">
-            <span id="four-to-one-c2p-gain" class="text-2xl font-black text-emerald-600">+0.00 M€</span>
-            <span id="four-to-one-c2p-gain-gross" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">+0 M€ C2P</span>
-          </div>
-          <p class="mt-2 text-xs text-slate-500">After corridor margin contribution</p>
-        </div>
-        <div class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-4 rounded-xl shadow-md">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">P&amp;L</span>
-            <div class="p-1.5 bg-white/10 text-indigo-200 rounded-lg"><i data-lucide="circle-dollar-sign" class="w-4 h-4"></i></div>
-          </div>
-          <span id="four-to-one-pnl" class="text-2xl font-black text-white">+0.00 M€</span>
-          <p class="mt-2 text-xs text-indigo-200">C2P contribution + 4:1 PEX savings</p>
-        </div>
-      </div>
-      <div class="overflow-x-auto custom-scrollbar max-h-96 overflow-y-auto border border-slate-200 rounded-xl">
-        <table class="w-full text-xs text-left border-collapse">
-          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200 sticky top-0">
-            <tr>
-              <th class="py-2 px-3">ID</th>
-              <th class="py-2 px-3">Fixed</th>
-              <th class="py-2 px-3">Nominal</th>
-              <th class="py-2 px-3">Added nominal</th>
-              <th class="py-2 px-3">Added objective</th>
-              <th class="py-2 px-3">Target shift</th>
-              <th class="py-2 px-3">Current expected</th>
-              <th class="py-2 px-3">Standard expected</th>
-              <th class="py-2 px-3">4:1 expected</th>
-              <th class="py-2 px-3">Δ €</th>
-            </tr>
-          </thead>
-          <tbody id="four-to-one-table-body" class="divide-y divide-slate-100 font-mono"></tbody>
-        </table>
       </div>
     </div>
   </main>
@@ -1528,7 +1594,8 @@
       const marginGainEl = document.getElementById('kpi-margin-gain');
       marginGainEl.innerText = (marginGainM >= 0 ? '+' : '') + marginGainM.toFixed(2) + ' M€';
       marginGainEl.className = marginGainM >= 0 ? 'text-2xl font-black text-emerald-600' : 'text-2xl font-black text-rose-600';
-      document.getElementById('kpi-c2p-gain').innerText = (c2pGainM >= 0 ? '+' : '') + c2pGainM.toFixed(1) + ' M€ C2P';
+      const c2pBadge = document.getElementById('kpi-c2p-gain');
+      if (c2pBadge) c2pBadge.innerText = (c2pGainM >= 0 ? '+' : '') + c2pGainM.toFixed(1) + ' M€ C2P';
 
       const netGainEl = document.getElementById('kpi-net-gain');
       netGainEl.innerText = (netGainM >= 0 ? '+' : '') + netGainM.toFixed(2) + ' M€';
@@ -2018,8 +2085,8 @@
 
     // ===== ADVANCED VIEW: 90% HYBRID SCHEME =====
     let advChartInstance = null;
-    const advState = { x: 110, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
-    const fourToOneState = { corridorC2P: 600000 };
+    const advState = { x: 110, zeroThreshold: 0, t1: 85, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
+    const fourToOneState = { corridorC2P: 300000 };
     const STANDARD_TARGET_SHARE_PCT = 20;
 
     function normalizeFourToOneCorridor(value) {
@@ -2233,6 +2300,7 @@
       document.getElementById('adv-val-achieve-before').innerText = x + '%';
       document.getElementById('adv-val-achieve-after').innerText = calibrated.toFixed(1) + '%';
       syncTargetSliders();
+      if (typeof syncOverperfSliders === 'function') syncOverperfSliders();
       document.getElementById('adv-val-zero').innerText = zero + '%';
       document.getElementById('adv-val-t1').innerText = t1 + '%';
       document.getElementById('adv-val-t2').innerText = t2 + '%';
@@ -2247,17 +2315,30 @@
       document.getElementById('adv-badge-r').innerText = oldNomE > 0 ? `\u00D7${r.toFixed(2)} nominal` : '—';
       document.getElementById('adv-nominal-new').innerText = Math.round(newNominal).toLocaleString('en-US') + ' €';
 
-      // KPI cards
-      document.getElementById('adv-kpi-old').innerText = Math.round(paidOld).toLocaleString('en-US') + ' €';
-      document.getElementById('adv-kpi-hyb').innerText = Math.round(paidHyb).toLocaleString('en-US') + ' €';
-      document.getElementById('adv-kpi-new').innerText = Math.round(paidNew).toLocaleString('en-US') + ' €';
+      // KPI cards (compact: Old / Hybrid / Δ — no all-new card)
+      const kpiOldEl = document.getElementById('adv-kpi-old');
+      if (kpiOldEl) kpiOldEl.innerText = Math.round(paidOld).toLocaleString('en-US') + ' €';
+      const kpiHybEl = document.getElementById('adv-kpi-hyb');
+      if (kpiHybEl) kpiHybEl.innerText = Math.round(paidHyb).toLocaleString('en-US') + ' €';
+      const kpiNewEl = document.getElementById('adv-kpi-new');
+      if (kpiNewEl) kpiNewEl.innerText = Math.round(paidNew).toLocaleString('en-US') + ' €';
 
       const deltaOld = paidHyb - paidOld;
       const deltaNewEl = document.getElementById('adv-kpi-delta-new');
+      if (deltaNewEl) deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('en-US') + ' €';
       const deltaEl = document.getElementById('adv-kpi-delta');
-      deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('en-US') + ' €';
-      deltaEl.className = 'text-2xl font-black mt-1 ' + (deltaOld >= 0 ? 'text-emerald-600' : 'text-rose-600');
-      deltaNewEl.innerText = (paidHyb - paidNew >= 0 ? '+' : '') + Math.round(paidHyb - paidNew).toLocaleString('en-US') + ' €';
+      if (deltaEl) {
+        deltaEl.innerText = (deltaOld >= 0 ? '+' : '') + Math.round(deltaOld).toLocaleString('en-US') + ' €';
+        deltaEl.className = 'text-lg font-black mt-0.5 ' + (deltaOld >= 0 ? 'text-emerald-600' : 'text-rose-600');
+      }
+
+      // Dynamic transition labels (title, legend)
+      const titleT1 = document.getElementById('adv-title-t1');
+      if (titleT1) titleT1.innerText = t1 + '%';
+      const titleT2 = document.getElementById('adv-title-t2');
+      if (titleT2) titleT2.innerText = t2 + '%';
+      const legendT1 = document.getElementById('adv-legend-t1');
+      if (legendT1) legendT1.innerText = t1 + '%';
 
       // Chart data (% of old nominal)
       const labels = [];
@@ -2413,6 +2494,13 @@
       refreshPopulation();
     }
 
+    function updateFourToOneExplainer() {
+      const corridorEcho = document.getElementById('four-to-one-corridor-echo');
+      if (corridorEcho) corridorEcho.innerText = Math.round(normalizeFourToOneCorridor(fourToOneState.corridorC2P)).toLocaleString('en-US') + ' €';
+      const pointsEcho = document.getElementById('four-to-one-points-echo');
+      if (pointsEcho) pointsEcho.innerText = '+' + (60000 / normalizeFourToOneCorridor(fourToOneState.corridorC2P) * 100).toFixed(1) + ' points';
+    }
+
     function refreshPopulation() {
       const has = advPopulation.length > 0;
       document.getElementById('pop-results').classList.toggle('hidden', !has);
@@ -2421,7 +2509,28 @@
       document.getElementById('matrix-filter-zone').classList.toggle('hidden', !has);
       document.getElementById('four-to-one-results').classList.toggle('hidden', !has);
       document.getElementById('four-to-one-input-zone').classList.toggle('hidden', has);
-      if (!has) { realAgg = null; popMatrix = null; return; }
+      updateFourToOneExplainer();
+      if (!has) {
+        realAgg = null; popMatrix = null;
+        // Reset the 3 shared top strips (markup: src/top-strip.js)
+        ['hyb-top', 'four-to-one', 'matrix'].forEach(p => {
+          [p + '-pex-old', p + '-pex-standard', p + '-pex-fourtoone', p + '-pex-hybrid'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.innerText = '—';
+          });
+          [p + '-pex-standard-delta', p + '-pex-fourtoone-delta', p + '-pex-hybrid-delta'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.innerText = '— vs current';
+          });
+        });
+        ['hyb-top-pnl', 'four-to-one-pnl', 'four-to-one-pnl-c2p'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.innerText = '—';
+        });
+        const htStatus = document.getElementById('hyb-top-status');
+        if (htStatus) htStatus.innerText = 'load a population below';
+        const mxStatus = document.getElementById('matrix-top-status');
+        if (mxStatus) mxStatus.innerText = 'load a population to display the matrix';
+        renderMatrix();
+        return;
+      }
 
       populatePopFilters();
       const population = filteredPopulation();
@@ -2468,24 +2577,33 @@
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
       const fmtE = v => Math.round(v).toLocaleString('en-US') + ' €';
-      document.getElementById('pop-pex-old').innerText = fmtM(pexOld);
-      document.getElementById('pop-pex-hyb').innerText = fmtM(pexHyb);
-      document.getElementById('pop-pex-new').innerText = fmtM(pexNew);
-      const pd = document.getElementById('pop-pex-delta');
-      pd.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + ((pexHyb - pexOld) / 1e6).toFixed(2) + ' M€ vs current';
-      pd.className = 'text-[10px] font-bold block ' + (pexHyb <= pexOld ? 'text-emerald-600' : 'text-rose-600');
+      // Safe DOM setter (elements may differ per view)
+      const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+      // Shared top strips (Hybrid / 4:1 / Matrix): main figure = ΔPEX vs current,
+      // colored by sign (emerald = savings at/below current, rose = overrun).
+      const setDeltaMain = (id, deltaM) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = (deltaM >= 0 ? '+' : '') + deltaM.toFixed(2) + ' M€';
+        const cls = typeof el.className === 'string' ? el.className : '';
+        el.className = cls.replace(/text-(slate|indigo|cyan|orange|emerald|rose)-[0-9]00/g, deltaM <= 0 ? 'text-emerald-600' : 'text-rose-600');
+      };
+      const updateTopStrip = (p, vals) => {
+        setText(p + '-pex-old', fmtM(vals.old));
+        setDeltaMain(p + '-pex-standard', (vals.std - vals.old) / 1e6);
+        setText(p + '-pex-standard-delta', 'vs current');
+        setDeltaMain(p + '-pex-fourtoone', (vals.four - vals.old) / 1e6);
+        setText(p + '-pex-fourtoone-delta', 'vs current');
+        setDeltaMain(p + '-pex-hybrid', (vals.hyb - vals.old) / 1e6);
+        setText(p + '-pex-hybrid-delta', 'vs current');
+      };
 
       document.getElementById('pop-risk-count').innerText = losers + ' / ' + population.length;
       document.getElementById('pop-risk-max').innerText = losers ? fmtE(worstLoss) : '—';
       document.getElementById('pop-risk-avg').innerText = losers ? fmtE(lossSum / losers) : '—';
 
-      document.getElementById('four-to-one-pex-old').innerText = fmtM(pexOld);
-      document.getElementById('four-to-one-pex-standard').innerText = fmtM(stdNew);
-      document.getElementById('four-to-one-pex').innerText = fmtM(pexFourToOne);
-      const fourDelta = pexFourToOne - pexOld;
-      const fourDeltaEl = document.getElementById('four-to-one-pex-delta');
-      fourDeltaEl.innerText = (fourDelta >= 0 ? '+' : '') + (fourDelta / 1e6).toFixed(2) + ' M€ vs current';
-      fourDeltaEl.className = 'text-[10px] font-bold block ' + (fourDelta <= 0 ? 'text-emerald-600' : 'text-rose-600');
+      // Dynamic 4:1 explainer: points of target for +60 000 € objective at the entered corridor
+      updateFourToOneExplainer();
 
       // Keep the C2P and PEX impacts in the same scope when filters are active.
       const populationShare = advPopulation.length ? population.length / advPopulation.length : 1;
@@ -2500,7 +2618,26 @@
       const fourPnlM = fourC2pGainM + (pexOld - pexFourToOne) / 1e6;
       const fourPnlEl = document.getElementById('four-to-one-pnl');
       fourPnlEl.innerText = (fourPnlM >= 0 ? '+' : '') + fourPnlM.toFixed(2) + ' M€';
-      fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-white' : 'text-rose-300');
+      fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      setText('four-to-one-pnl-c2p', (fourC2pGainM >= 0 ? '+' : '') + fourC2pGainM.toFixed(2) + ' M€');
+
+      // Hybrid P&L (same filtered scope)
+      const hybC2pGainM = fourC2pGainGrossM * (state.marginRate / 100);
+      const hybPnlM = hybC2pGainM + (pexOld - pexHyb) / 1e6;
+      const hybPnlEl = document.getElementById('hyb-top-pnl');
+      if (hybPnlEl) {
+        hybPnlEl.innerText = (hybPnlM >= 0 ? '+' : '') + hybPnlM.toFixed(2) + ' M€';
+        hybPnlEl.className = 'text-2xl mt-1 font-black ' + (hybPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      }
+      setText('hyb-top-c2p', (hybC2pGainM >= 0 ? '+' : '') + hybC2pGainM.toFixed(2) + ' M€');
+      setText('hyb-top-status', population.length + ' rep(s) displayed');
+      setText('matrix-top-status', population.length + ' rep(s) displayed');
+
+      // One call per tab — same numbers, same filters (see src/top-strip.js)
+      const stripVals = { old: pexOld, std: stdNew, hyb: pexHyb, four: pexFourToOne };
+      updateTopStrip('hyb-top', stripVals);
+      updateTopStrip('four-to-one', stripVals);
+      updateTopStrip('matrix', stripVals);
 
       const escapeHtml = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
       rows.sort((a, b) => a.delta - b.delta);
@@ -2520,7 +2657,7 @@
       }).join('');
 
       const fourTbody = document.getElementById('four-to-one-table-body');
-      const fourRows = [...rows].sort((a, b) => a.eFourToOne - a.eOld - (b.eFourToOne - b.eOld));
+      const fourRows = [...rows].sort((a, b) => b.fourToOne.achievementShift - a.fourToOne.achievementShift);
       fourTbody.innerHTML = fourRows.map(r => {
         const deltaFour = r.eFourToOne - r.eOld;
         const deltaFourCls = deltaFour > 20 ? 'text-emerald-600' : deltaFour < -20 ? 'text-rose-600' : 'text-slate-400';
@@ -2825,7 +2962,7 @@
       state.repFixedSalary = 50000;
       state.repCurrentBonusPct = 10;
       state.repInitPerf = 110;
-      fourToOneState.corridorC2P = 600000;
+      fourToOneState.corridorC2P = 300000;
       state.breakpoints = [
         { achievement: 0, payout: 0 },
         { achievement: 40, payout: 0 },
@@ -2836,17 +2973,23 @@
       applyPreset('initial');
     }
 
+    // All overperformance sliders (Standard + the 3 shared top strips), kept in sync
+    const OVERPERF_PAIRS = [
+      ['slider-overperf', 'val-overperf'],
+      ['four-to-one-overperf', 'four-to-one-overperf-value'],
+      ['hyb-overperf', 'hyb-overperf-value'],
+      ['matrix-overperf', 'matrix-overperf-value']
+    ];
+
     function syncOverperfSliders() {
       const value = state.overperf;
       const label = (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
-      const globalSlider = document.getElementById('slider-overperf');
-      const globalLabel = document.getElementById('val-overperf');
-      const fourSlider = document.getElementById('four-to-one-overperf');
-      const fourLabel = document.getElementById('four-to-one-overperf-value');
-      if (globalSlider) globalSlider.value = value;
-      if (globalLabel) globalLabel.innerText = label;
-      if (fourSlider) fourSlider.value = value;
-      if (fourLabel) fourLabel.innerText = label;
+      OVERPERF_PAIRS.forEach(([sliderId, labelId]) => {
+        const s = document.getElementById(sliderId);
+        const l = document.getElementById(labelId);
+        if (s) s.value = value;
+        if (l) l.innerText = label;
+      });
     }
 
     function syncInputsFromState() {
@@ -2878,18 +3021,15 @@
         updateDashboard();
       });
 
-      // Slider Overperf
-      document.getElementById('slider-overperf').addEventListener('input', (e) => {
-        state.overperf = parseFloat(e.target.value);
-        syncOverperfSliders();
-        updateDashboard();
-      });
-
-      // Slider 4:1 overperformance (synchronized with the global control)
-      document.getElementById('four-to-one-overperf').addEventListener('input', (e) => {
-        state.overperf = parseFloat(e.target.value);
-        syncOverperfSliders();
-        updateDashboard();
+      // Overperformance sliders (Standard + the 3 shared top strips, all synced)
+      OVERPERF_PAIRS.forEach(([sliderId]) => {
+        document.getElementById(sliderId).addEventListener('input', (e) => {
+          state.overperf = parseFloat(e.target.value);
+          syncOverperfSliders();
+          updateDashboard();
+          refreshPopulation();
+          updateAdvancedView();
+        });
       });
 
       // Slider Rep Sync (Under Chart - Achievement)

@@ -102,7 +102,7 @@
       state.repFixedSalary = 50000;
       state.repCurrentBonusPct = 10;
       state.repInitPerf = 110;
-      fourToOneState.corridorC2P = 600000;
+      fourToOneState.corridorC2P = 300000;
       state.breakpoints = [
         { achievement: 0, payout: 0 },
         { achievement: 40, payout: 0 },
@@ -113,17 +113,23 @@
       applyPreset('initial');
     }
 
+    // All overperformance sliders (Standard + the 3 shared top strips), kept in sync
+    const OVERPERF_PAIRS = [
+      ['slider-overperf', 'val-overperf'],
+      ['four-to-one-overperf', 'four-to-one-overperf-value'],
+      ['hyb-overperf', 'hyb-overperf-value'],
+      ['matrix-overperf', 'matrix-overperf-value']
+    ];
+
     function syncOverperfSliders() {
       const value = state.overperf;
       const label = (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
-      const globalSlider = document.getElementById('slider-overperf');
-      const globalLabel = document.getElementById('val-overperf');
-      const fourSlider = document.getElementById('four-to-one-overperf');
-      const fourLabel = document.getElementById('four-to-one-overperf-value');
-      if (globalSlider) globalSlider.value = value;
-      if (globalLabel) globalLabel.innerText = label;
-      if (fourSlider) fourSlider.value = value;
-      if (fourLabel) fourLabel.innerText = label;
+      OVERPERF_PAIRS.forEach(([sliderId, labelId]) => {
+        const s = document.getElementById(sliderId);
+        const l = document.getElementById(labelId);
+        if (s) s.value = value;
+        if (l) l.innerText = label;
+      });
     }
 
     function syncInputsFromState() {
@@ -155,18 +161,15 @@
         updateDashboard();
       });
 
-      // Slider Overperf
-      document.getElementById('slider-overperf').addEventListener('input', (e) => {
-        state.overperf = parseFloat(e.target.value);
-        syncOverperfSliders();
-        updateDashboard();
-      });
-
-      // Slider 4:1 overperformance (synchronized with the global control)
-      document.getElementById('four-to-one-overperf').addEventListener('input', (e) => {
-        state.overperf = parseFloat(e.target.value);
-        syncOverperfSliders();
-        updateDashboard();
+      // Overperformance sliders (Standard + the 3 shared top strips, all synced)
+      OVERPERF_PAIRS.forEach(([sliderId]) => {
+        document.getElementById(sliderId).addEventListener('input', (e) => {
+          state.overperf = parseFloat(e.target.value);
+          syncOverperfSliders();
+          updateDashboard();
+          refreshPopulation();
+          updateAdvancedView();
+        });
       });
 
       // Slider Rep Sync (Under Chart - Achievement)

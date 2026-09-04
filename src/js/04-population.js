@@ -123,6 +123,13 @@
       refreshPopulation();
     }
 
+    function updateFourToOneExplainer() {
+      const corridorEcho = document.getElementById('four-to-one-corridor-echo');
+      if (corridorEcho) corridorEcho.innerText = Math.round(normalizeFourToOneCorridor(fourToOneState.corridorC2P)).toLocaleString('en-US') + ' €';
+      const pointsEcho = document.getElementById('four-to-one-points-echo');
+      if (pointsEcho) pointsEcho.innerText = '+' + (60000 / normalizeFourToOneCorridor(fourToOneState.corridorC2P) * 100).toFixed(1) + ' points';
+    }
+
     function refreshPopulation() {
       const has = advPopulation.length > 0;
       document.getElementById('pop-results').classList.toggle('hidden', !has);
@@ -131,7 +138,28 @@
       document.getElementById('matrix-filter-zone').classList.toggle('hidden', !has);
       document.getElementById('four-to-one-results').classList.toggle('hidden', !has);
       document.getElementById('four-to-one-input-zone').classList.toggle('hidden', has);
-      if (!has) { realAgg = null; popMatrix = null; return; }
+      updateFourToOneExplainer();
+      if (!has) {
+        realAgg = null; popMatrix = null;
+        // Reset the 3 shared top strips (markup: src/top-strip.js)
+        ['hyb-top', 'four-to-one', 'matrix'].forEach(p => {
+          [p + '-pex-old', p + '-pex-standard', p + '-pex-fourtoone', p + '-pex-hybrid'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.innerText = '—';
+          });
+          [p + '-pex-standard-delta', p + '-pex-fourtoone-delta', p + '-pex-hybrid-delta'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.innerText = '— vs current';
+          });
+        });
+        ['hyb-top-pnl', 'four-to-one-pnl', 'four-to-one-pnl-c2p'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.innerText = '—';
+        });
+        const htStatus = document.getElementById('hyb-top-status');
+        if (htStatus) htStatus.innerText = 'load a population below';
+        const mxStatus = document.getElementById('matrix-top-status');
+        if (mxStatus) mxStatus.innerText = 'load a population to display the matrix';
+        renderMatrix();
+        return;
+      }
 
       populatePopFilters();
       const population = filteredPopulation();
@@ -178,24 +206,33 @@
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
       const fmtE = v => Math.round(v).toLocaleString('en-US') + ' €';
-      document.getElementById('pop-pex-old').innerText = fmtM(pexOld);
-      document.getElementById('pop-pex-hyb').innerText = fmtM(pexHyb);
-      document.getElementById('pop-pex-new').innerText = fmtM(pexNew);
-      const pd = document.getElementById('pop-pex-delta');
-      pd.innerText = (pexHyb - pexOld >= 0 ? '+' : '') + ((pexHyb - pexOld) / 1e6).toFixed(2) + ' M€ vs current';
-      pd.className = 'text-[10px] font-bold block ' + (pexHyb <= pexOld ? 'text-emerald-600' : 'text-rose-600');
+      // Safe DOM setter (elements may differ per view)
+      const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
+      // Shared top strips (Hybrid / 4:1 / Matrix): main figure = ΔPEX vs current,
+      // colored by sign (emerald = savings at/below current, rose = overrun).
+      const setDeltaMain = (id, deltaM) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = (deltaM >= 0 ? '+' : '') + deltaM.toFixed(2) + ' M€';
+        const cls = typeof el.className === 'string' ? el.className : '';
+        el.className = cls.replace(/text-(slate|indigo|cyan|orange|emerald|rose)-[0-9]00/g, deltaM <= 0 ? 'text-emerald-600' : 'text-rose-600');
+      };
+      const updateTopStrip = (p, vals) => {
+        setText(p + '-pex-old', fmtM(vals.old));
+        setDeltaMain(p + '-pex-standard', (vals.std - vals.old) / 1e6);
+        setText(p + '-pex-standard-delta', 'vs current');
+        setDeltaMain(p + '-pex-fourtoone', (vals.four - vals.old) / 1e6);
+        setText(p + '-pex-fourtoone-delta', 'vs current');
+        setDeltaMain(p + '-pex-hybrid', (vals.hyb - vals.old) / 1e6);
+        setText(p + '-pex-hybrid-delta', 'vs current');
+      };
 
       document.getElementById('pop-risk-count').innerText = losers + ' / ' + population.length;
       document.getElementById('pop-risk-max').innerText = losers ? fmtE(worstLoss) : '—';
       document.getElementById('pop-risk-avg').innerText = losers ? fmtE(lossSum / losers) : '—';
 
-      document.getElementById('four-to-one-pex-old').innerText = fmtM(pexOld);
-      document.getElementById('four-to-one-pex-standard').innerText = fmtM(stdNew);
-      document.getElementById('four-to-one-pex').innerText = fmtM(pexFourToOne);
-      const fourDelta = pexFourToOne - pexOld;
-      const fourDeltaEl = document.getElementById('four-to-one-pex-delta');
-      fourDeltaEl.innerText = (fourDelta >= 0 ? '+' : '') + (fourDelta / 1e6).toFixed(2) + ' M€ vs current';
-      fourDeltaEl.className = 'text-[10px] font-bold block ' + (fourDelta <= 0 ? 'text-emerald-600' : 'text-rose-600');
+      // Dynamic 4:1 explainer: points of target for +60 000 € objective at the entered corridor
+      updateFourToOneExplainer();
 
       // Keep the C2P and PEX impacts in the same scope when filters are active.
       const populationShare = advPopulation.length ? population.length / advPopulation.length : 1;
@@ -210,7 +247,26 @@
       const fourPnlM = fourC2pGainM + (pexOld - pexFourToOne) / 1e6;
       const fourPnlEl = document.getElementById('four-to-one-pnl');
       fourPnlEl.innerText = (fourPnlM >= 0 ? '+' : '') + fourPnlM.toFixed(2) + ' M€';
-      fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-white' : 'text-rose-300');
+      fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      setText('four-to-one-pnl-c2p', (fourC2pGainM >= 0 ? '+' : '') + fourC2pGainM.toFixed(2) + ' M€');
+
+      // Hybrid P&L (same filtered scope)
+      const hybC2pGainM = fourC2pGainGrossM * (state.marginRate / 100);
+      const hybPnlM = hybC2pGainM + (pexOld - pexHyb) / 1e6;
+      const hybPnlEl = document.getElementById('hyb-top-pnl');
+      if (hybPnlEl) {
+        hybPnlEl.innerText = (hybPnlM >= 0 ? '+' : '') + hybPnlM.toFixed(2) + ' M€';
+        hybPnlEl.className = 'text-2xl mt-1 font-black ' + (hybPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      }
+      setText('hyb-top-c2p', (hybC2pGainM >= 0 ? '+' : '') + hybC2pGainM.toFixed(2) + ' M€');
+      setText('hyb-top-status', population.length + ' rep(s) displayed');
+      setText('matrix-top-status', population.length + ' rep(s) displayed');
+
+      // One call per tab — same numbers, same filters (see src/top-strip.js)
+      const stripVals = { old: pexOld, std: stdNew, hyb: pexHyb, four: pexFourToOne };
+      updateTopStrip('hyb-top', stripVals);
+      updateTopStrip('four-to-one', stripVals);
+      updateTopStrip('matrix', stripVals);
 
       const escapeHtml = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
       rows.sort((a, b) => a.delta - b.delta);
@@ -230,7 +286,7 @@
       }).join('');
 
       const fourTbody = document.getElementById('four-to-one-table-body');
-      const fourRows = [...rows].sort((a, b) => a.eFourToOne - a.eOld - (b.eFourToOne - b.eOld));
+      const fourRows = [...rows].sort((a, b) => b.fourToOne.achievementShift - a.fourToOne.achievementShift);
       fourTbody.innerHTML = fourRows.map(r => {
         const deltaFour = r.eFourToOne - r.eOld;
         const deltaFourCls = deltaFour > 20 ? 'text-emerald-600' : deltaFour < -20 ? 'text-rose-600' : 'text-slate-400';
