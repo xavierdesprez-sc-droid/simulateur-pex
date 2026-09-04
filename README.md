@@ -112,7 +112,7 @@ The application itself has no local installation requirement. Node.js is only ne
 node tests/run.js
 ```
 
-206 checks in 4 suites (simulated DOM, no dependencies):
+213 checks in 4 suites (simulated DOM, no dependencies):
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)
