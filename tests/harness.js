@@ -28,10 +28,25 @@ function extractPageScript(html) {
   return scripts[scripts.length - 1][1];
 }
 
+function loadPageScript() {
+  const srcDir = path.join(__dirname, '..', 'src', 'js');
+  if (fs.existsSync(srcDir)) {
+    const order = ['00-state.js', '01-engine.js', '02-standard.js', '03-advanced.js', '04-population.js', '05-matrix.js', '06-app.js'];
+    return order.map(f => {
+      const p = path.join(srcDir, f);
+      if (!fs.existsSync(p)) throw new Error(`harness: src/js manquant: ${f} — relance le split (Task 2)`);
+      return fs.readFileSync(p, 'utf8');
+    }).join('\n');
+  }
+  const html = fs.readFileSync(HTML_PATH, 'utf8');
+  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+  return scripts[scripts.length - 1][1];
+}
+
 function runSuite(suiteFile) {
   const suiteName = path.basename(suiteFile);
   const suiteFn = require(suiteFile);
-  const page = extractPageScript(fs.readFileSync(HTML_PATH, 'utf8'));
+  const page = loadPageScript();
 
   // Fresh DOM environment for each suite
   const els = {};
