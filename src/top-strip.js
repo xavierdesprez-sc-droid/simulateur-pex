@@ -37,6 +37,7 @@ function pnlCard(cfg, pnlCls) {
     `          <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">${cfg.label}</span>\n` +
     `          <div id="${cfg.id}" class="${pnlCls} font-black text-white">—</div>\n` +
     `          <div class="text-[10px] text-indigo-200 mt-0.5">${cfg.sub}</div>\n` +
+    (cfg.c2pId ? `          <div id="${cfg.c2pId}" class="text-lg font-black text-white">—</div>\n` : '') +
     (cfg.extra || '') +
     `        </div>`;
 }
@@ -72,7 +73,7 @@ const TOP_STRIPS = {
       { type: 'delta', kind: 'standard' },
       { type: 'delta', kind: 'fourtoone' },
       { type: 'delta', kind: 'hybrid' },
-      { type: 'pnl', label: 'Hybrid P&L', id: 'hyb-top-pnl', sub: 'C2P contribution + Hybrid savings · <span id="hyb-top-c2p" class="font-bold">—</span>' }
+      { type: 'pnl', label: 'Hybrid P&L', id: 'hyb-top-pnl', sub: 'C2P generated', c2pId: 'hyb-top-c2p' }
     ],
     sliderId: 'hyb-overperf',
     after: ''
@@ -88,7 +89,7 @@ const TOP_STRIPS = {
       { type: 'delta', kind: 'standard' },
       { type: 'delta', kind: 'fourtoone' },
       { type: 'delta', kind: 'hybrid' },
-      { type: 'pnl', label: 'P&L', id: 'four-to-one-pnl', sub: 'C2P <span id="four-to-one-pnl-c2p" class="font-bold">—</span> + savings', extra: '          <span id="four-to-one-c2p-gain" class="hidden"></span>\n          <span id="four-to-one-c2p-gain-gross" class="hidden"></span>\n' }
+      { type: 'pnl', label: 'P&L', id: 'four-to-one-pnl', sub: 'C2P generated', c2pId: 'four-to-one-pnl-c2p', extra: '          <span id="four-to-one-c2p-gain" class="hidden"></span>\n          <span id="four-to-one-c2p-gain-gross" class="hidden"></span>\n' }
     ],
     sliderId: 'four-to-one-overperf',
     after: ''

@@ -361,6 +361,10 @@ module.exports = function suite(__h) {
   check('4:1 overperformance slider exists', htmlSrc.indexOf('id="four-to-one-overperf"') > -1 && !!fourOverperf);
   check('4:1 impact cards exist', htmlSrc.indexOf('id="four-to-one-c2p-gain"') > -1
     && htmlSrc.indexOf('id="four-to-one-pnl"') > -1 && !!fourC2pGain && !!fourPnl);
+  check('4:1 P&L labels the generated C2P separately', htmlSrc.indexOf('C2P generated') > -1
+    && htmlSrc.indexOf('id="four-to-one-pnl-c2p" class="text-lg font-black text-white"') > -1);
+  check('Hybrid P&L mirrors the 4:1 C2P layout', htmlSrc.indexOf('C2P generated') > -1
+    && htmlSrc.indexOf('id="hyb-top-c2p" class="text-lg font-black text-white"') > -1);
   check('4:1 overperformance slider is synchronized', typeof syncOverperfSliders === 'function');
   state.overperf = 2;
   syncOverperfSliders();
