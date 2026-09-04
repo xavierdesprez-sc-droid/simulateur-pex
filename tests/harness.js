@@ -14,6 +14,7 @@ function makeEl() {
     {
       style: {}, classList: { toggle(){}, add(){}, remove(){} },
       innerText: '', innerHTML: '',
+      addEventListener: () => {},
       getContext: () => ({}), appendChild: () => ({}), removeChild: () => ({})
     },
     {
@@ -54,12 +55,17 @@ function runSuite(suiteFile) {
     body: makeEl(),
     addEventListener: () => {}
   };
-  global.window = { addEventListener: () => {} };
+  globalThis.__domReadyHandler = null;
+  global.window = {
+    addEventListener: (event, handler) => {
+      if (event === 'DOMContentLoaded') globalThis.__domReadyHandler = handler;
+    }
+  };
 
   // Chart.js mock: datasets are exposed for assertions
   global.Chart = function (ctx, cfg) {
     globalThis.__chartDatasets = cfg.data.datasets;
-    return { data: cfg.data, options: { scales: {} }, update() {}, getDatasetMeta() { return { hidden: null }; } };
+    return { data: cfg.data, options: cfg.options || { scales: {} }, update() {}, getDatasetMeta() { return { hidden: null }; } };
   };
   global.lucide = { createIcons() {} };
 

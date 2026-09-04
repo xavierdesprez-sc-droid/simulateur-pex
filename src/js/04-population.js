@@ -6,6 +6,7 @@
     function setPopulationStatus(text, visible = true) {
       ['pop-status', 'four-to-one-status'].forEach(id => {
           const el = document.getElementById(id);
+          if (!el) return;
           el.innerText = text;
           if (visible) el.classList.remove('hidden');
       });

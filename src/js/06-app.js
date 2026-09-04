@@ -325,7 +325,8 @@
       document.getElementById('pop-clear-btn').addEventListener('click', () => {
         advPopulation = [];
         document.getElementById('pop-status').classList.add('hidden');
-        document.getElementById('four-to-one-status').classList.remove('hidden');
+        const fourToOneStatus = document.getElementById('four-to-one-status');
+        if (fourToOneStatus) fourToOneStatus.classList.remove('hidden');
         refreshPopulation();
       });
     }
@@ -339,5 +340,9 @@
       syncInputsFromState();
       syncMinInputs();
       updateDashboard();
+      if (!popAutoLoaded) {
+        popAutoLoaded = true;
+        loadPopulationFromSheet();
+      }
       setTimeout(renderMathSafely, 150);
     });

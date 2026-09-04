@@ -3,6 +3,20 @@
 module.exports = function suite(__h) {
   const { check, els, mock, assertClose, htmlSrc } = __h;
   const S = advState;
+
+  check('4:1 top strip omits Current PEX card', htmlSrc.indexOf('id="four-to-one-pex-old"') === -1);
+  check('4:1 top strip omits population status', htmlSrc.indexOf('id="four-to-one-status"') === -1);
+
+  // ===== Preload on app startup =====
+  mock.sheetReps = [
+    { id: 'STARTUP', orga: 'FR', position: 'AE', country: 'France', fixed: 52000, nominal: 6500 }
+  ];
+  mock.sheetError = null;
+  popAutoLoaded = false;
+  advPopulation = [];
+  __domReadyHandler();
+  check('startup auto-load: population loaded before navigation', advPopulation.length === 1 && advPopulation[0].id === 'STARTUP');
+
   setView('advanced');
   S.oldNominalE = 5000; S.t1 = 90; S.t2 = 100; S.zeroThreshold = 0; S.min100E = 0; S.min200E = 0;
   S.fixedSalary = 50000; state.targetIncrease = 0; state.overperf = 0;

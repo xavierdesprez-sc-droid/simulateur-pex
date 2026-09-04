@@ -752,12 +752,8 @@
           <p class="text-xs text-slate-500">The standard curve with a 4 € objective increase for each 1 € nominal increase</p>
         </div>
       </div>
-      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center text-xs">
-        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-          <span class="text-slate-500 font-semibold block">Current PEX</span>
-          <span id="four-to-one-pex-old" class="text-lg font-black font-mono text-slate-700">—</span>
-        </div>
-<div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center text-xs">
+        <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
           <span class="text-indigo-500 font-semibold block">Standard ΔPEX</span>
           <span id="four-to-one-pex-standard" class="text-lg font-black font-mono text-indigo-700">—</span>
           <span id="four-to-one-pex-standard-delta" class="text-[10px] font-bold block text-slate-500">— vs current</span>
@@ -795,7 +791,6 @@
           <span class="absolute left-[100%] -translate-x-1/2">+15%</span>
         </div>
       </div>
-            <p id="four-to-one-status" class="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">Load a population to display the 4:1 scenario.</p>
     </div>
 
     <!-- Controls: corridor + filters -->
@@ -2377,6 +2372,7 @@
     function setPopulationStatus(text, visible = true) {
       ['pop-status', 'four-to-one-status'].forEach(id => {
           const el = document.getElementById(id);
+          if (!el) return;
           el.innerText = text;
           if (visible) el.classList.remove('hidden');
       });
@@ -3185,7 +3181,8 @@
       document.getElementById('pop-clear-btn').addEventListener('click', () => {
         advPopulation = [];
         document.getElementById('pop-status').classList.add('hidden');
-        document.getElementById('four-to-one-status').classList.remove('hidden');
+        const fourToOneStatus = document.getElementById('four-to-one-status');
+        if (fourToOneStatus) fourToOneStatus.classList.remove('hidden');
         refreshPopulation();
       });
     }
@@ -3199,6 +3196,10 @@
       syncInputsFromState();
       syncMinInputs();
       updateDashboard();
+      if (!popAutoLoaded) {
+        popAutoLoaded = true;
+        loadPopulationFromSheet();
+      }
       setTimeout(renderMathSafely, 150);
     });
   </script>

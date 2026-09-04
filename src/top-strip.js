@@ -85,14 +85,13 @@ const TOP_STRIPS = {
     valCls: 'text-lg',
     pnlCls: 'text-2xl',
     cards: [
-      { type: 'current' },
       { type: 'delta', kind: 'standard' },
       { type: 'delta', kind: 'fourtoone' },
       { type: 'delta', kind: 'hybrid' },
       { type: 'pnl', label: 'P&L', id: 'four-to-one-pnl', sub: 'C2P <span id="four-to-one-pnl-c2p" class="font-bold">—</span> + savings', extra: '          <span id="four-to-one-c2p-gain" class="hidden"></span>\n          <span id="four-to-one-c2p-gain-gross" class="hidden"></span>\n' }
     ],
     sliderId: 'four-to-one-overperf',
-    after: '      <p id="four-to-one-status" class="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">Load a population to display the 4:1 scenario.</p>'
+    after: ''
   },
   matrix: {
     prefix: 'matrix',
