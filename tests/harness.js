@@ -31,16 +31,14 @@ function extractPageScript(html) {
 function loadPageScript() {
   const srcDir = path.join(__dirname, '..', 'src', 'js');
   if (fs.existsSync(srcDir)) {
-    const order = ['00-state.js', '01-engine.js', '02-standard.js', '03-advanced.js', '04-population.js', '05-matrix.js', '06-app.js'];
-    return order.map(f => {
+    const { JS_PARTS } = require('../build');
+    return JS_PARTS.map(f => {
       const p = path.join(srcDir, f);
       if (!fs.existsSync(p)) throw new Error(`harness: src/js manquant: ${f} — relance le split (Task 2)`);
       return fs.readFileSync(p, 'utf8');
     }).join('\n');
   }
-  const html = fs.readFileSync(HTML_PATH, 'utf8');
-  const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
-  return scripts[scripts.length - 1][1];
+  return extractPageScript(fs.readFileSync(HTML_PATH, 'utf8'));
 }
 
 function runSuite(suiteFile) {

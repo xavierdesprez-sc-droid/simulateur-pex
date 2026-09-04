@@ -41,17 +41,24 @@ function buildString() {
   return html + '\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
 }
 
-const check = process.argv.includes('--check');
-const out = buildString();
 const OUT_PATH = path.join(ROOT, 'index.html');
-if (check) {
-  const current = fs.existsSync(OUT_PATH) ? fs.readFileSync(OUT_PATH, 'utf8') : '';
-  if (current !== out) {
-    console.error('build.js --check: index.html périmé — relance node build.js');
-    process.exit(1);
+
+function main() {
+  const check = process.argv.includes('--check');
+  const out = buildString();
+  if (check) {
+    const current = fs.existsSync(OUT_PATH) ? fs.readFileSync(OUT_PATH, 'utf8') : '';
+    if (current !== out) {
+      console.error('build.js --check: index.html périmé — relance node build.js');
+      process.exit(1);
+    }
+    console.log('build.js --check: index.html à jour');
+  } else {
+    fs.writeFileSync(OUT_PATH, out, 'utf8');
+    console.log('build.js: index.html régénéré');
   }
-  console.log('build.js --check: index.html à jour');
-} else {
-  fs.writeFileSync(OUT_PATH, out, 'utf8');
-  console.log('build.js: index.html régénéré');
 }
+
+if (require.main === module) main();
+
+module.exports = { ROOT, HTML_PARTS, JS_PARTS, buildString, readOrFail };
