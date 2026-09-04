@@ -1,3 +1,4 @@
+
     // ===== REAL POPULATION (Google Sheet via Apps Script, or local CSV) =====
     let advPopulation = []; // { id, orga, position, country, fixed, nominal }
     let popAutoLoaded = false;

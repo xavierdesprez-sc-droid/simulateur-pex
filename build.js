@@ -35,10 +35,21 @@ function readOrFail(p) {
   return fs.readFileSync(p, 'utf8');
 }
 
+// Convention src/ (voir .editorconfig) : chaque fragment se termine par
+// exactement un '\n' (les éditeurs le garantissent). Les lignes vides de
+// séparation appartiennent au DÉBUT du fragment suivant (les fins de fichier
+// sont fragiles, les débuts ne bougent jamais). buildString est donc
+// insensible à l'ajout/retrait d'un '\n' final par un éditeur.
+const stripTrailingNewlines = s => s.replace(/\n+$/, '');
+
+function concatJs() {
+  return JS_PARTS.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', 'js', f)))).join('\n');
+}
+
 function buildString() {
-  const html = HTML_PARTS.map(f => readOrFail(path.join(ROOT, 'src', f))).join('\n');
-  const js = JS_PARTS.map(f => readOrFail(path.join(ROOT, 'src', 'js', f))).join('\n');
-  return html + '\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
+  const html = HTML_PARTS.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', f)))).join('\n');
+  const js = concatJs();
+  return html + '\n\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
 }
 
 const OUT_PATH = path.join(ROOT, 'index.html');
@@ -61,4 +72,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { ROOT, HTML_PARTS, JS_PARTS, buildString, readOrFail };
+module.exports = { ROOT, HTML_PARTS, JS_PARTS, buildString, concatJs, readOrFail };

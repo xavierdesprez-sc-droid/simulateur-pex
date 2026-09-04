@@ -103,6 +103,8 @@ node tests/run.js
 `index.html` est généré et commité (artefact Apps Script + ouverture locale).
 `node build.js --check` échoue si `index.html` est périmé (utilisé par `tests/run.js`).
 Déploiement inchangé : copier-coller `index.html` vers le fichier `index` Apps Script (+ `Code.gs` si changé).
+Convention : chaque fragment `src/` se termine par un `\n` final (voir `.editorconfig`) ; les lignes
+vides de séparation appartiennent au début du fragment suivant — ne pas les « nettoyer ».
 
 ## Tests
 

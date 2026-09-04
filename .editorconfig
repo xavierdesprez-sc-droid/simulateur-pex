@@ -1,0 +1,8 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+# Volontairement pas de trim_trailing_whitespace : index.html contient des
+# lignes d'indentation porteuses pour la preuve byte-identique du split src/.

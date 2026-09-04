@@ -1,3 +1,4 @@
+
     // ===== ADVANCED VIEW: 90% HYBRID SCHEME =====
     let advChartInstance = null;
     const advState = { x: 110, zeroThreshold: 0, t1: 90, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };

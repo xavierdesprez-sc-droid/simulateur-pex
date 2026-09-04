@@ -31,12 +31,11 @@ function extractPageScript(html) {
 function loadPageScript() {
   const srcDir = path.join(__dirname, '..', 'src', 'js');
   if (fs.existsSync(srcDir)) {
-    const { JS_PARTS } = require('../build');
-    return JS_PARTS.map(f => {
-      const p = path.join(srcDir, f);
-      if (!fs.existsSync(p)) throw new Error(`harness: src/js manquant: ${f} — relance le split (Task 2)`);
-      return fs.readFileSync(p, 'utf8');
-    }).join('\n');
+    const { JS_PARTS, concatJs } = require('../build');
+    JS_PARTS.forEach(f => {
+      if (!fs.existsSync(path.join(srcDir, f))) throw new Error(`harness: src/js manquant: ${f} — relance le split (Task 2)`);
+    });
+    return concatJs();
   }
   return extractPageScript(fs.readFileSync(HTML_PATH, 'utf8'));
 }
