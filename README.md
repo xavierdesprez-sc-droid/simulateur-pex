@@ -91,6 +91,22 @@ Two possible modes (`Code.gs` handles both):
 When opened outside Apps Script (local file), the loading button falls back to the local CSV
 (`population_test.csv` or a picked file) — the rest of the tool works normally.
 
+### Sales Rep calculator deployment
+
+Build the separate Sales Rep bundle with:
+
+```text
+node build.js --app=sales-rep
+```
+
+The output is `dist/sales-rep/index.html`. Copy that file into a separate Google Apps
+Script project as an HTML file named `index`, and configure that project's `Code.gs` using
+the existing deployment and per-person access-gate instructions above. Deploy the project
+as a distinct Web App with its own URL; do not replace the existing simulator deployment.
+
+The Sales Rep calculator runs entirely in the browser. It does not load population data,
+persist scenarios, or send scenario inputs to a server.
+
 ## Build (split src/ -> index.html monofichier)
 
 Éditer `src/**`, puis :
