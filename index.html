@@ -969,15 +969,15 @@
             <div class="flex justify-between items-center text-xs">
               <label class="font-semibold text-slate-700">Transition to New Nominal (start &rarr; end)</label>
               <div class="flex items-center gap-1.5 font-mono text-xs">
-                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">85%</span>
+                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">80%</span>
                 <span class="text-slate-400 font-bold">&rarr;</span>
                 <span id="adv-val-t2" class="font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md">100%</span>
               </div>
             </div>
             <div class="relative h-6">
               <div class="absolute w-full top-1/2 -translate-y-1/2 h-2 bg-slate-200 rounded-full"></div>
-              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:42.5%; width:7.5%"></div>
-              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="85" class="dual-range dual-t1 absolute inset-0 w-full m-0">
+              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:40%; width:10%"></div>
+              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80" class="dual-range dual-t1 absolute inset-0 w-full m-0">
               <input type="range" id="adv-dual-t2" min="0" max="200" step="1" value="100" class="dual-range dual-t2 absolute inset-0 w-full m-0">
             </div>
             <div class="relative h-4 text-[10px] text-slate-400 font-mono">
@@ -2082,7 +2082,7 @@
 
     // ===== ADVANCED VIEW: 90% HYBRID SCHEME =====
     let advChartInstance = null;
-    const advState = { x: 110, zeroThreshold: 0, t1: 85, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
+    const advState = { x: 110, zeroThreshold: 0, t1: 80, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
     const fourToOneState = { corridorC2P: 300000 };
     const STANDARD_TARGET_SHARE_PCT = 20;
 
