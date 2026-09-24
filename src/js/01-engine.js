@@ -19,10 +19,10 @@
       },
 
       // A rep's curve context (all in €)
-      hybridContext(oldNomE, fixedE, targetSharePct, min100E, min200E, zero, t1, t2, cap) {
+      hybridContext(oldNomE, fixedE, targetSharePct, min100E, min200E, zero, t1, t2, cap, oldCurveShift = 0) {
         const newNomE = Math.max(fixedE * targetSharePct / 100, min100E, oldNomE);
         const val200E = Math.max(2 * newNomE, min200E);
-        return { oldNomE, newNomE, val200E, zero, t1, t2, cap };
+        return { oldNomE, newNomE, val200E, zero, t1, t2, cap, oldCurveShift };
       },
 
       oldE(x, ctx) { return Math.min(x, ctx.cap) / 100 * ctx.oldNomE; },
@@ -35,11 +35,11 @@
 
       hybridE(x, ctx) {
         if (x < ctx.zero) return 0;
-        if (x < ctx.t1) return Engine.oldE(x, ctx);
+        if (x < ctx.t1) return Engine.oldE(x + ctx.oldCurveShift, ctx);
         if (x <= ctx.t2) {
           if (ctx.t2 <= ctx.t1) return Engine.newBaseE(x, ctx);
           const t = (x - ctx.t1) / (ctx.t2 - ctx.t1);
-          const start = Engine.oldE(ctx.t1, ctx);
+          const start = Engine.oldE(ctx.t1 + ctx.oldCurveShift, ctx);
           return start + t * (Engine.newBaseE(ctx.t2, ctx) - start);
         }
         return Engine.newBaseE(x, ctx);

@@ -957,6 +957,17 @@
             </div>
           </div>
 
+          <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-orange-100 bg-orange-50/60 px-3 py-2">
+            <span class="text-xs">
+              <span class="block font-semibold text-slate-700">Adjust old payout for target increase</span>
+              <span class="mt-0.5 block text-slate-500">+20 pp: at 80%, pay as at 100% before the increase.</span>
+            </span>
+            <span class="relative inline-flex shrink-0">
+              <input id="adv-hybrid-objective-compensation" type="checkbox" role="switch" class="peer sr-only">
+              <span aria-hidden="true" class="h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-orange-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>
+            </span>
+          </label>
+
           <!-- Slider: Trigger threshold (below: 0 paid) -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
@@ -1229,7 +1240,8 @@
         Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
         <strong>New nominal</strong> = max(20% target, € minimum nominal, existing nominal kept) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
         Each rep has their own curve: the lower their old nominal, the bigger the jump between the transition bounds.
-        A rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.
+        Without the adjustment (and when no guaranteed floors bind), a rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.
+        When enabled, the old curve and the start of the transition are evaluated at achievement plus the target increase.
       </p>
     </div>
   </main>
@@ -1380,12 +1392,10 @@
     </section>
 
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-      <label class="text-xs font-semibold text-slate-600">
-        Pays
-        <select id="personae-filter-country" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal">
-          <option value="">Tous</option>
-        </select>
-      </label>
+      <div>
+        <p class="text-xs font-semibold text-slate-600">Pays (sélection multiple)</p>
+        <div id="personae-filter-countries" class="mt-1 flex min-h-10 flex-wrap items-center gap-2 rounded-lg border border-slate-300 p-2"></div>
+      </div>
       <label class="text-xs font-semibold text-slate-600">
         Niveau de séniorité
         <select id="personae-filter-seniority" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal">
@@ -1402,6 +1412,13 @@
           <input id="personae-objective-increase" type="range" min="0" max="60" step="1" value="20" class="w-full accent-violet-600">
           <span id="personae-objective-value" class="w-12 text-right font-mono text-sm text-violet-700">+20</span>
         </div>
+      </label>
+      <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs">
+        <span class="font-semibold text-slate-700">Ajuster l’ancien paiement à la hausse d’objectif</span>
+        <span class="relative inline-flex shrink-0">
+          <input id="personae-hybrid-objective-compensation" type="checkbox" role="switch" class="peer sr-only">
+          <span aria-hidden="true" class="h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-violet-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>
+        </span>
       </label>
     </section>
 
@@ -1439,7 +1456,7 @@
     <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
       <div class="px-4 py-4 border-b border-slate-100">
         <h3 class="font-bold text-slate-800">Personas et données moyennes</h3>
-        <p class="mt-1 text-xs text-slate-500">Les personas contenant « PT » sont exclues par défaut; vous pouvez les inclure ci-dessous.</p>
+        <p class="mt-1 text-xs text-slate-500">Le Portugal est décoché par défaut; cochez-le pour l’inclure. Les personas ne sont pas filtrées par leur libellé.</p>
       </div>
       <div class="overflow-x-auto">
         <table class="min-w-full text-left text-xs">
@@ -1548,6 +1565,7 @@ const BUILD_PROFILE = "SWE";
     const state = {
       targetIncrease: 0,     // % (e.g. 0 to 60%)
       overperf: 0,           // % (e.g. -10% to +15%)
+      hybridObjectiveCompensation: false,
       muInit: 110,           // % (historical mean, default 110%)
       sigmaInit: 60,         // % (standard deviation)
       baseC2P: 700,          // M€
@@ -1611,10 +1629,10 @@ const BUILD_PROFILE = "SWE";
       },
 
       // A rep's curve context (all in €)
-      hybridContext(oldNomE, fixedE, targetSharePct, min100E, min200E, zero, t1, t2, cap) {
+      hybridContext(oldNomE, fixedE, targetSharePct, min100E, min200E, zero, t1, t2, cap, oldCurveShift = 0) {
         const newNomE = Math.max(fixedE * targetSharePct / 100, min100E, oldNomE);
         const val200E = Math.max(2 * newNomE, min200E);
-        return { oldNomE, newNomE, val200E, zero, t1, t2, cap };
+        return { oldNomE, newNomE, val200E, zero, t1, t2, cap, oldCurveShift };
       },
 
       oldE(x, ctx) { return Math.min(x, ctx.cap) / 100 * ctx.oldNomE; },
@@ -1627,11 +1645,11 @@ const BUILD_PROFILE = "SWE";
 
       hybridE(x, ctx) {
         if (x < ctx.zero) return 0;
-        if (x < ctx.t1) return Engine.oldE(x, ctx);
+        if (x < ctx.t1) return Engine.oldE(x + ctx.oldCurveShift, ctx);
         if (x <= ctx.t2) {
           if (ctx.t2 <= ctx.t1) return Engine.newBaseE(x, ctx);
           const t = (x - ctx.t1) / (ctx.t2 - ctx.t1);
-          const start = Engine.oldE(ctx.t1, ctx);
+          const start = Engine.oldE(ctx.t1 + ctx.oldCurveShift, ctx);
           return start + t * (Engine.newBaseE(ctx.t2, ctx) - start);
         }
         return Engine.newBaseE(x, ctx);
@@ -2283,7 +2301,8 @@ const BUILD_PROFILE = "SWE";
     // The transition passage blends pointwise (linearly) from the old curve to the new curve.
     function advNominals(oldNomE, fixedE = advState.fixedSalary) {
       return Engine.hybridContext(oldNomE, fixedE, state.newVarShare, advState.min100E, advState.min200E,
-        advState.zeroThreshold, advState.t1, advState.t2, state.payoutCap);
+        advState.zeroThreshold, advState.t1, advState.t2, state.payoutCap,
+        state.hybridObjectiveCompensation ? state.targetIncrease : 0);
     }
 
     function evalOldE(x, oldNomE) {
@@ -2299,11 +2318,11 @@ const BUILD_PROFILE = "SWE";
     function evalHybridE(x, oldNomE, fixedE = advState.fixedSalary) {
       const n = advNominals(oldNomE, fixedE);
       if (x < advState.zeroThreshold) return 0;
-      if (x < advState.t1) return evalOldE(x, n.oldNomE);
+      if (x < advState.t1) return evalOldE(x + n.oldCurveShift, n.oldNomE);
       if (x <= advState.t2) {
         if (advState.t2 <= advState.t1) return evalNewBaseE(x, n);
         // Linear transition: straight segment from (T1, old curve) to (T2, new curve)
-        const start = evalOldE(advState.t1, n.oldNomE);
+        const start = evalOldE(advState.t1 + n.oldCurveShift, n.oldNomE);
         const end = evalNewBaseE(advState.t2, n);
         const t = (x - advState.t1) / (advState.t2 - advState.t1);
         return start + t * (end - start);
@@ -3262,6 +3281,21 @@ const BUILD_PROFILE = "SWE";
       });
     }
 
+    function syncHybridObjectiveCompensationSwitches() {
+      ['adv-hybrid-objective-compensation', 'personae-hybrid-objective-compensation'].forEach(id => {
+        const toggle = document.getElementById(id);
+        if (toggle) toggle.checked = state.hybridObjectiveCompensation;
+      });
+    }
+
+    function setHybridObjectiveCompensation(enabled) {
+      state.hybridObjectiveCompensation = enabled === true;
+      syncHybridObjectiveCompensationSwitches();
+      if (advChartInstance) updateAdvancedView();
+      else refreshPopulation();
+      if (personaeInitialized) renderPersonaeView();
+    }
+
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
@@ -3380,6 +3414,7 @@ const BUILD_PROFILE = "SWE";
     function syncInputsFromState() {
       syncTargetSliders();
       syncOverperfSliders();
+      syncHybridObjectiveCompensationSwitches();
 
       document.getElementById('input-mu-init').value = state.muInit;
       document.getElementById('input-sigma-init').value = state.sigmaInit;
@@ -3499,6 +3534,10 @@ const BUILD_PROFILE = "SWE";
         syncTargetSliders();
         updateDashboard();
         updateAdvancedView();
+      });
+
+      document.getElementById('adv-hybrid-objective-compensation').addEventListener('change', (e) => {
+        setHybridObjectiveCompensation(e.target.checked);
       });
 
       document.getElementById('adv-zero-threshold').addEventListener('input', (e) => {
@@ -3623,7 +3662,8 @@ const BUILD_PROFILE = "SWE";
 
     let personaeData = [];
     let personaeIncluded = new Set();
-    let personaeFilters = { country: '', seniority: '' };
+    let personaeFilters = { countries: new Set(), seniority: '' };
+    let personaeKnownCountries = new Set();
     let personaeMode = 'euros';
     let personaeMinimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT;
     let personaeObjectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT;
@@ -3642,7 +3682,7 @@ const BUILD_PROFILE = "SWE";
       };
     }
 
-    function getPersonaeContext(persona, minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT) {
+    function getPersonaeContext(persona, minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT, oldCurveShift = 0) {
       return Engine.hybridContext(
         persona.oldNominal,
         persona.fixedSalary,
@@ -3652,7 +3692,8 @@ const BUILD_PROFILE = "SWE";
         PERSONAE_ZERO_THRESHOLD,
         PERSONAE_ACCELERATION_START,
         PERSONAE_ACCELERATION_END,
-        state.payoutCap
+        state.payoutCap,
+        oldCurveShift
       );
     }
 
@@ -3661,7 +3702,8 @@ const BUILD_PROFILE = "SWE";
       objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT) {
       if (!isFinite(achievement)) throw new Error('Achievement must be a finite number.');
       if (mode !== 'euros' && mode !== 'percent') throw new Error('Unknown Personae curve mode: ' + mode);
-      const ctx = getPersonaeContext(persona, minimumNominal);
+      const oldCurveShift = mode === 'euros' && state.hybridObjectiveCompensation ? objectiveIncrease : 0;
+      const ctx = getPersonaeContext(persona, minimumNominal, oldCurveShift);
       if (mode === 'percent') {
         return {
           oldPayout: achievement,
@@ -3693,8 +3735,13 @@ const BUILD_PROFILE = "SWE";
       return null;
     }
 
-    function shouldIncludePersonaeByDefault(segment) {
-      return !/PT/i.test(String(segment || ''));
+    function isPersonaePortugalCountry(country) {
+      const normalized = String(country || '').trim().toLowerCase();
+      return normalized === 'pt' || normalized === 'portugal';
+    }
+
+    function shouldSelectPersonaeCountryByDefault(country) {
+      return !isPersonaePortugalCountry(country);
     }
 
     function getPersonaeRowKey(row) {
@@ -3706,12 +3753,31 @@ const BUILD_PROFILE = "SWE";
     }
 
     function filterPersonaeRows(rows, filters = {}) {
-      const { country = '', seniority = '', includedSegments } = filters;
+      const { countries, seniority = '', includedSegments } = filters;
       return rows.filter(row =>
-        (!country || row.country === country) &&
+        (!countries || countries.has(row.country)) &&
         (!seniority || row.seniority === seniority) &&
         (!includedSegments || includedSegments.has(getPersonaeRowKey(row)))
       );
+    }
+
+    function getPersonaeCurvePoints(persona, mode, maxAchievement,
+      minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT,
+      objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT,
+      step = 2) {
+      const thresholdX = PERSONAE_ZERO_THRESHOLD + (mode === 'euros' ? objectiveIncrease : 0);
+      const xValues = new Set();
+      for (let x = 0; x <= maxAchievement; x += step) xValues.add(x);
+      xValues.add(thresholdX);
+      return Array.from(xValues)
+        .filter(x => x >= 0 && x <= maxAchievement)
+        .sort((a, b) => a - b)
+        .flatMap(x => {
+          const payout = getPersonaePayouts(persona, x, mode, minimumNominal, objectiveIncrease).newPayout;
+          return x === thresholdX
+            ? [{ x, y: 0 }, { x, y: payout }]
+            : [{ x, y: payout }];
+        });
     }
 
     function escapePersonaeHtml(value) {
@@ -3769,7 +3835,7 @@ const BUILD_PROFILE = "SWE";
             personaeIncluded = new Set(nextRows
               .filter(row => previousSegments.has(getPersonaeRowKey(row))
                 ? previousIncluded.has(getPersonaeRowKey(row))
-                : shouldIncludePersonaeByDefault(row.segment))
+                : true)
               .map(getPersonaeRowKey));
             updatePersonaeFilterOptions();
             status.innerText = personaeData.length + ' persona(s) chargée(s), ' +
@@ -3791,24 +3857,33 @@ const BUILD_PROFILE = "SWE";
     }
 
     function updatePersonaeFilterOptions() {
-      [
-        ['personae-filter-country', 'country'],
-        ['personae-filter-seniority', 'seniority']
-      ].forEach(([id, key]) => {
-        const select = document.getElementById(id);
-        const current = personaeFilters[key];
-        const options = Array.from(new Set(personaeData.map(row => row[key]))).sort((a, b) => a.localeCompare(b));
-        if (current && !options.includes(current)) personaeFilters[key] = '';
-        select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
-          '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
-        ).join('');
-        select.value = personaeFilters[key];
-      });
+      const countries = Array.from(new Set(personaeData.map(row => row.country))).sort((a, b) => a.localeCompare(b));
+      const selectedCountries = new Set(countries.filter(country =>
+        personaeKnownCountries.has(country)
+          ? personaeFilters.countries.has(country)
+          : shouldSelectPersonaeCountryByDefault(country)
+      ));
+      personaeFilters.countries = selectedCountries;
+      personaeKnownCountries = new Set(countries);
+      document.getElementById('personae-filter-countries').innerHTML = countries.map(country => {
+        const checked = selectedCountries.has(country) ? ' checked' : '';
+        return '<label class="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">' +
+          '<input type="checkbox" data-country="' + escapePersonaeHtml(country) + '"' + checked +
+          ' class="accent-violet-600">' + escapePersonaeHtml(country) + '</label>';
+      }).join('');
+
+      const select = document.getElementById('personae-filter-seniority');
+      const options = Array.from(new Set(personaeData.map(row => row.seniority))).sort((a, b) => a.localeCompare(b));
+      if (personaeFilters.seniority && !options.includes(personaeFilters.seniority)) personaeFilters.seniority = '';
+      select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
+        '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
+      ).join('');
+      select.value = personaeFilters.seniority;
     }
 
     function visiblePersonaeRows() {
       return filterPersonaeRows(personaeData, {
-        country: personaeFilters.country,
+        countries: personaeFilters.countries,
         seniority: personaeFilters.seniority,
         includedSegments: personaeIncluded
       });
@@ -3816,7 +3891,7 @@ const BUILD_PROFILE = "SWE";
 
     function rowsForPersonaeTable() {
       return filterPersonaeRows(personaeData, {
-        country: personaeFilters.country,
+        countries: personaeFilters.countries,
         seniority: personaeFilters.seniority,
         includedSegments: new Set(personaeData.map(getPersonaeRowKey))
       });
@@ -3892,7 +3967,12 @@ const BUILD_PROFILE = "SWE";
                   const value = personaeMode === 'percent'
                     ? formatPersonaeNumber(point.y, 1) + '%'
                     : formatPersonaeEuros(point.y);
-                  return context.dataset.label + ': ' + value;
+                  const headcount = context.dataset.personaeHeadcount;
+                  const headcountInfo = Number.isFinite(headcount)
+                    ? ' · Effectif : ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
+                      (headcount === 1 ? ' personne' : ' personnes')
+                    : '';
+                  return context.dataset.label + ': ' + value + headcountInfo;
                 }
               }
             }
@@ -3902,7 +3982,7 @@ const BUILD_PROFILE = "SWE";
               type: 'linear',
               min: 0,
               max: 150,
-              title: { display: true, text: 'Atteinte de l’objectif (%)' },
+              title: { display: true, text: 'Atteinte avant hausse d’objectif (%)' },
               ticks: { callback: value => value + '%' }
             },
             y: {
@@ -3970,6 +4050,7 @@ const BUILD_PROFILE = "SWE";
         if (personaeMode === 'euros') {
           datasets.push({
             label: getPersonaeDisplayName(row) + ' — ancienne',
+            personaeHeadcount: row.headcount,
             data: points.map(x => ({ x, y: getPersonaePayouts(
               row, x, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
             ).oldPayout })),
@@ -3983,9 +4064,10 @@ const BUILD_PROFILE = "SWE";
         }
         datasets.push({
           label: getPersonaeDisplayName(row) + ' — hybride',
-          data: points.map(x => ({ x, y: getPersonaePayouts(
-            row, x, personaeMode, personaeMinimumNominal, personaeObjectiveIncrease
-          ).newPayout })),
+          personaeHeadcount: row.headcount,
+          data: getPersonaeCurvePoints(
+            row, personaeMode, xMax, personaeMinimumNominal, personaeObjectiveIncrease
+          ),
           borderColor: color,
           borderWidth: 2.5,
           pointRadius: 0,
@@ -4000,6 +4082,7 @@ const BUILD_PROFILE = "SWE";
             datasets.push({
               type: 'scatter',
               label: getPersonaeDisplayName(row) + ' — début du dépassement',
+              personaeHeadcount: row.headcount,
               data: [{ x: crossing, y: getPersonaePayouts(
                 row, crossing, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
               ).newPayout }],
@@ -4036,10 +4119,17 @@ const BUILD_PROFILE = "SWE";
       if (personaeInitialized) return;
       personaeInitialized = true;
       personaeChart = null;
-      const country = document.getElementById('personae-filter-country');
+      const countries = document.getElementById('personae-filter-countries');
       const seniority = document.getElementById('personae-filter-seniority');
-      country.addEventListener('change', event => {
-        personaeFilters.country = event.target.value;
+      document.getElementById('personae-hybrid-objective-compensation').addEventListener('change', event => {
+        setHybridObjectiveCompensation(event.target.checked);
+      });
+      syncHybridObjectiveCompensationSwitches();
+      countries.addEventListener('change', event => {
+        const input = event.target;
+        if (!input || !input.dataset || !input.dataset.country) return;
+        if (input.checked) personaeFilters.countries.add(input.dataset.country);
+        else personaeFilters.countries.delete(input.dataset.country);
         renderPersonaeView();
       });
       seniority.addEventListener('change', event => {

@@ -25,6 +25,21 @@
       });
     }
 
+    function syncHybridObjectiveCompensationSwitches() {
+      ['adv-hybrid-objective-compensation', 'personae-hybrid-objective-compensation'].forEach(id => {
+        const toggle = document.getElementById(id);
+        if (toggle) toggle.checked = state.hybridObjectiveCompensation;
+      });
+    }
+
+    function setHybridObjectiveCompensation(enabled) {
+      state.hybridObjectiveCompensation = enabled === true;
+      syncHybridObjectiveCompensationSwitches();
+      if (advChartInstance) updateAdvancedView();
+      else refreshPopulation();
+      if (personaeInitialized) renderPersonaeView();
+    }
+
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
@@ -143,6 +158,7 @@
     function syncInputsFromState() {
       syncTargetSliders();
       syncOverperfSliders();
+      syncHybridObjectiveCompensationSwitches();
 
       document.getElementById('input-mu-init').value = state.muInit;
       document.getElementById('input-sigma-init').value = state.sigmaInit;
@@ -262,6 +278,10 @@
         syncTargetSliders();
         updateDashboard();
         updateAdvancedView();
+      });
+
+      document.getElementById('adv-hybrid-objective-compensation').addEventListener('change', (e) => {
+        setHybridObjectiveCompensation(e.target.checked);
       });
 
       document.getElementById('adv-zero-threshold').addEventListener('input', (e) => {

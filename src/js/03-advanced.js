@@ -16,7 +16,8 @@
     // The transition passage blends pointwise (linearly) from the old curve to the new curve.
     function advNominals(oldNomE, fixedE = advState.fixedSalary) {
       return Engine.hybridContext(oldNomE, fixedE, state.newVarShare, advState.min100E, advState.min200E,
-        advState.zeroThreshold, advState.t1, advState.t2, state.payoutCap);
+        advState.zeroThreshold, advState.t1, advState.t2, state.payoutCap,
+        state.hybridObjectiveCompensation ? state.targetIncrease : 0);
     }
 
     function evalOldE(x, oldNomE) {
@@ -32,11 +33,11 @@
     function evalHybridE(x, oldNomE, fixedE = advState.fixedSalary) {
       const n = advNominals(oldNomE, fixedE);
       if (x < advState.zeroThreshold) return 0;
-      if (x < advState.t1) return evalOldE(x, n.oldNomE);
+      if (x < advState.t1) return evalOldE(x + n.oldCurveShift, n.oldNomE);
       if (x <= advState.t2) {
         if (advState.t2 <= advState.t1) return evalNewBaseE(x, n);
         // Linear transition: straight segment from (T1, old curve) to (T2, new curve)
-        const start = evalOldE(advState.t1, n.oldNomE);
+        const start = evalOldE(advState.t1 + n.oldCurveShift, n.oldNomE);
         const end = evalNewBaseE(advState.t2, n);
         const t = (x - advState.t1) / (advState.t2 - advState.t1);
         return start + t * (end - start);

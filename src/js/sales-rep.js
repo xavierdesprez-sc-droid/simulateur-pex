@@ -185,6 +185,12 @@ function updateSalesRepCalculator() {
   salesRepSetOutput('sr-performance-subtotal', salesRepFormatE(result.performanceSubtotal));
   salesRepSetOutput('sr-qualifier-multiplier', (result.qualifierMultiplier * 100).toFixed(0) + '%');
   salesRepSetOutput('sr-final-payout', salesRepFormatE(result.finalPayout));
+  salesRepSetOutput(
+    'sr-final-payout-percent',
+    result.context.newNomE === 0
+      ? '—'
+      : ((result.finalPayout / result.context.newNomE) * 100).toFixed(1) + '%'
+  );
   salesRepSetOutput('sr-qualifier-portfolio-value', Math.min(salesRepState.qualifiers.portfolio, 100).toFixed(0) + '%');
   salesRepSetOutput('sr-qualifier-visits-value', Math.min(salesRepState.qualifiers.visits, 100).toFixed(0) + '%');
   salesRepRefreshCharts(result);

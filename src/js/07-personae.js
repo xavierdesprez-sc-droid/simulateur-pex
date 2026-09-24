@@ -13,7 +13,8 @@
 
     let personaeData = [];
     let personaeIncluded = new Set();
-    let personaeFilters = { country: '', seniority: '' };
+    let personaeFilters = { countries: new Set(), seniority: '' };
+    let personaeKnownCountries = new Set();
     let personaeMode = 'euros';
     let personaeMinimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT;
     let personaeObjectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT;
@@ -32,7 +33,7 @@
       };
     }
 
-    function getPersonaeContext(persona, minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT) {
+    function getPersonaeContext(persona, minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT, oldCurveShift = 0) {
       return Engine.hybridContext(
         persona.oldNominal,
         persona.fixedSalary,
@@ -42,7 +43,8 @@
         PERSONAE_ZERO_THRESHOLD,
         PERSONAE_ACCELERATION_START,
         PERSONAE_ACCELERATION_END,
-        state.payoutCap
+        state.payoutCap,
+        oldCurveShift
       );
     }
 
@@ -51,7 +53,8 @@
       objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT) {
       if (!isFinite(achievement)) throw new Error('Achievement must be a finite number.');
       if (mode !== 'euros' && mode !== 'percent') throw new Error('Unknown Personae curve mode: ' + mode);
-      const ctx = getPersonaeContext(persona, minimumNominal);
+      const oldCurveShift = mode === 'euros' && state.hybridObjectiveCompensation ? objectiveIncrease : 0;
+      const ctx = getPersonaeContext(persona, minimumNominal, oldCurveShift);
       if (mode === 'percent') {
         return {
           oldPayout: achievement,
@@ -83,8 +86,13 @@
       return null;
     }
 
-    function shouldIncludePersonaeByDefault(segment) {
-      return !/PT/i.test(String(segment || ''));
+    function isPersonaePortugalCountry(country) {
+      const normalized = String(country || '').trim().toLowerCase();
+      return normalized === 'pt' || normalized === 'portugal';
+    }
+
+    function shouldSelectPersonaeCountryByDefault(country) {
+      return !isPersonaePortugalCountry(country);
     }
 
     function getPersonaeRowKey(row) {
@@ -96,12 +104,31 @@
     }
 
     function filterPersonaeRows(rows, filters = {}) {
-      const { country = '', seniority = '', includedSegments } = filters;
+      const { countries, seniority = '', includedSegments } = filters;
       return rows.filter(row =>
-        (!country || row.country === country) &&
+        (!countries || countries.has(row.country)) &&
         (!seniority || row.seniority === seniority) &&
         (!includedSegments || includedSegments.has(getPersonaeRowKey(row)))
       );
+    }
+
+    function getPersonaeCurvePoints(persona, mode, maxAchievement,
+      minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT,
+      objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT,
+      step = 2) {
+      const thresholdX = PERSONAE_ZERO_THRESHOLD + (mode === 'euros' ? objectiveIncrease : 0);
+      const xValues = new Set();
+      for (let x = 0; x <= maxAchievement; x += step) xValues.add(x);
+      xValues.add(thresholdX);
+      return Array.from(xValues)
+        .filter(x => x >= 0 && x <= maxAchievement)
+        .sort((a, b) => a - b)
+        .flatMap(x => {
+          const payout = getPersonaePayouts(persona, x, mode, minimumNominal, objectiveIncrease).newPayout;
+          return x === thresholdX
+            ? [{ x, y: 0 }, { x, y: payout }]
+            : [{ x, y: payout }];
+        });
     }
 
     function escapePersonaeHtml(value) {
@@ -159,7 +186,7 @@
             personaeIncluded = new Set(nextRows
               .filter(row => previousSegments.has(getPersonaeRowKey(row))
                 ? previousIncluded.has(getPersonaeRowKey(row))
-                : shouldIncludePersonaeByDefault(row.segment))
+                : true)
               .map(getPersonaeRowKey));
             updatePersonaeFilterOptions();
             status.innerText = personaeData.length + ' persona(s) chargée(s), ' +
@@ -181,24 +208,33 @@
     }
 
     function updatePersonaeFilterOptions() {
-      [
-        ['personae-filter-country', 'country'],
-        ['personae-filter-seniority', 'seniority']
-      ].forEach(([id, key]) => {
-        const select = document.getElementById(id);
-        const current = personaeFilters[key];
-        const options = Array.from(new Set(personaeData.map(row => row[key]))).sort((a, b) => a.localeCompare(b));
-        if (current && !options.includes(current)) personaeFilters[key] = '';
-        select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
-          '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
-        ).join('');
-        select.value = personaeFilters[key];
-      });
+      const countries = Array.from(new Set(personaeData.map(row => row.country))).sort((a, b) => a.localeCompare(b));
+      const selectedCountries = new Set(countries.filter(country =>
+        personaeKnownCountries.has(country)
+          ? personaeFilters.countries.has(country)
+          : shouldSelectPersonaeCountryByDefault(country)
+      ));
+      personaeFilters.countries = selectedCountries;
+      personaeKnownCountries = new Set(countries);
+      document.getElementById('personae-filter-countries').innerHTML = countries.map(country => {
+        const checked = selectedCountries.has(country) ? ' checked' : '';
+        return '<label class="inline-flex items-center gap-1.5 rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700">' +
+          '<input type="checkbox" data-country="' + escapePersonaeHtml(country) + '"' + checked +
+          ' class="accent-violet-600">' + escapePersonaeHtml(country) + '</label>';
+      }).join('');
+
+      const select = document.getElementById('personae-filter-seniority');
+      const options = Array.from(new Set(personaeData.map(row => row.seniority))).sort((a, b) => a.localeCompare(b));
+      if (personaeFilters.seniority && !options.includes(personaeFilters.seniority)) personaeFilters.seniority = '';
+      select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
+        '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
+      ).join('');
+      select.value = personaeFilters.seniority;
     }
 
     function visiblePersonaeRows() {
       return filterPersonaeRows(personaeData, {
-        country: personaeFilters.country,
+        countries: personaeFilters.countries,
         seniority: personaeFilters.seniority,
         includedSegments: personaeIncluded
       });
@@ -206,7 +242,7 @@
 
     function rowsForPersonaeTable() {
       return filterPersonaeRows(personaeData, {
-        country: personaeFilters.country,
+        countries: personaeFilters.countries,
         seniority: personaeFilters.seniority,
         includedSegments: new Set(personaeData.map(getPersonaeRowKey))
       });
@@ -282,7 +318,12 @@
                   const value = personaeMode === 'percent'
                     ? formatPersonaeNumber(point.y, 1) + '%'
                     : formatPersonaeEuros(point.y);
-                  return context.dataset.label + ': ' + value;
+                  const headcount = context.dataset.personaeHeadcount;
+                  const headcountInfo = Number.isFinite(headcount)
+                    ? ' · Effectif : ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
+                      (headcount === 1 ? ' personne' : ' personnes')
+                    : '';
+                  return context.dataset.label + ': ' + value + headcountInfo;
                 }
               }
             }
@@ -292,7 +333,7 @@
               type: 'linear',
               min: 0,
               max: 150,
-              title: { display: true, text: 'Atteinte de l’objectif (%)' },
+              title: { display: true, text: 'Atteinte avant hausse d’objectif (%)' },
               ticks: { callback: value => value + '%' }
             },
             y: {
@@ -360,6 +401,7 @@
         if (personaeMode === 'euros') {
           datasets.push({
             label: getPersonaeDisplayName(row) + ' — ancienne',
+            personaeHeadcount: row.headcount,
             data: points.map(x => ({ x, y: getPersonaePayouts(
               row, x, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
             ).oldPayout })),
@@ -373,9 +415,10 @@
         }
         datasets.push({
           label: getPersonaeDisplayName(row) + ' — hybride',
-          data: points.map(x => ({ x, y: getPersonaePayouts(
-            row, x, personaeMode, personaeMinimumNominal, personaeObjectiveIncrease
-          ).newPayout })),
+          personaeHeadcount: row.headcount,
+          data: getPersonaeCurvePoints(
+            row, personaeMode, xMax, personaeMinimumNominal, personaeObjectiveIncrease
+          ),
           borderColor: color,
           borderWidth: 2.5,
           pointRadius: 0,
@@ -390,6 +433,7 @@
             datasets.push({
               type: 'scatter',
               label: getPersonaeDisplayName(row) + ' — début du dépassement',
+              personaeHeadcount: row.headcount,
               data: [{ x: crossing, y: getPersonaePayouts(
                 row, crossing, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
               ).newPayout }],
@@ -426,10 +470,17 @@
       if (personaeInitialized) return;
       personaeInitialized = true;
       personaeChart = null;
-      const country = document.getElementById('personae-filter-country');
+      const countries = document.getElementById('personae-filter-countries');
       const seniority = document.getElementById('personae-filter-seniority');
-      country.addEventListener('change', event => {
-        personaeFilters.country = event.target.value;
+      document.getElementById('personae-hybrid-objective-compensation').addEventListener('change', event => {
+        setHybridObjectiveCompensation(event.target.checked);
+      });
+      syncHybridObjectiveCompensationSwitches();
+      countries.addEventListener('change', event => {
+        const input = event.target;
+        if (!input || !input.dataset || !input.dataset.country) return;
+        if (input.checked) personaeFilters.countries.add(input.dataset.country);
+        else personaeFilters.countries.delete(input.dataset.country);
         renderPersonaeView();
       });
       seniority.addEventListener('change', event => {

@@ -52,6 +52,17 @@
             </div>
           </div>
 
+          <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-orange-100 bg-orange-50/60 px-3 py-2">
+            <span class="text-xs">
+              <span class="block font-semibold text-slate-700">Adjust old payout for target increase</span>
+              <span class="mt-0.5 block text-slate-500">+20 pp: at 80%, pay as at 100% before the increase.</span>
+            </span>
+            <span class="relative inline-flex shrink-0">
+              <input id="adv-hybrid-objective-compensation" type="checkbox" role="switch" class="peer sr-only">
+              <span aria-hidden="true" class="h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-orange-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>
+            </span>
+          </label>
+
           <!-- Slider: Trigger threshold (below: 0 paid) -->
           <div class="space-y-2">
             <div class="flex justify-between items-center text-xs">
@@ -324,7 +335,8 @@
         Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
         <strong>New nominal</strong> = max(20% target, € minimum nominal, existing nominal kept) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
         Each rep has their own curve: the lower their old nominal, the bigger the jump between the transition bounds.
-        A rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.
+        Without the adjustment (and when no guaranteed floors bind), a rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.
+        When enabled, the old curve and the start of the transition are evaluated at achievement plus the target increase.
       </p>
     </div>
   </main>

@@ -8,6 +8,16 @@ module.exports = function suite(__h) {
   S.fixedSalary = 50000; state.targetIncrease = 0; state.overperf = 0;
   const H = evalHybridPayoutOldNominal;
 
+  // ===== Optional compensation for target increase =====
+  S.t1 = 80; S.t2 = 100; state.targetIncrease = 20;
+  state.hybridObjectiveCompensation = false;
+  assertClose('target increase does not shift the old hybrid curve by default', H(80, 5000), 80);
+  state.hybridObjectiveCompensation = true;
+  assertClose('at 80% with +20 points, old hybrid payout matches prior 100%', H(80, 5000), 100);
+  assertClose('population hybrid engine uses the same adjusted old curve', Engine.hybridE(80, advNominals(5000)), 5000);
+  state.hybridObjectiveCompensation = false;
+  state.targetIncrease = 0; S.t1 = 90;
+
   // ===== Breakpoint curve (standard view) =====
   check('default breakpoints: 4 rows, threshold 40% → 0', state.breakpoints.length === 4 && state.breakpoints[1].achievement === 40 && state.breakpoints[1].payout === 0);
   assertClose('below threshold 40% → 0', evalNewPayout(30), 0);

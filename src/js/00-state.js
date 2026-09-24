@@ -2,6 +2,7 @@
     const state = {
       targetIncrease: 0,     // % (e.g. 0 to 60%)
       overperf: 0,           // % (e.g. -10% to +15%)
+      hybridObjectiveCompensation: false,
       muInit: 110,           // % (historical mean, default 110%)
       sigmaInit: 60,         // % (standard deviation)
       baseC2P: 700,          // M€

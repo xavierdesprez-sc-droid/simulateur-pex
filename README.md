@@ -52,11 +52,14 @@ in C2:H2 and data starts on row 3. The expected headers are `Effectif`, `Âge Mo
 and is protected by the same access list as the rest of the app. Open the Apps Script
 deployment to load this data; the local-file mode does not have a Personae CSV fallback.
 
-Country and seniority filters combine, and every persona can be included or excluded.
-Names containing `PT` are excluded by default. The view overlays all included curves and
-marks where the new plan first pays more in the **Courbe %/€** mode. That mode defaults
-to a 20-point objective increase and an €8,000 nominal floor; the hybrid pays from 40%
-achievement and begins accelerating at 80%, reaching the new curve at 100%.
+Country is a multi-select filter and combines with the seniority filter. Portugal
+(`PT` or `Portugal` in the country column) is unselected by default but can be selected;
+persona labels are not used for country filtering. Every persona can also be included or
+excluded individually. The view overlays all included curves and marks where the new
+plan first pays more in the **Courbe %/€** mode. That mode defaults to a 20-point
+objective increase and an €8,000 nominal floor; the hybrid pays from 40% achievement
+and begins accelerating at 80%, reaching the new curve at 100%. The x-axis is labeled
+as achievement before the objective increase.
 
 The **Courbe %/%** mode does not apply an objective increase. It displays the old common
 reference `y = x` and each hybrid curve as a percentage of that persona's new nominal.

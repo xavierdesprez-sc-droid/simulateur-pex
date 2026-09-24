@@ -80,6 +80,9 @@ module.exports = function suite(__h) {
   if (uiReady) {
     __domReadyHandler();
     check('four KPI charts initialize independently', __chartInstances.length === 4);
+    check('responsive KPI charts stay inside fixed-height containers',
+      ['c2p-total', 'c2p-price', 'dev', 'churn'].every(id =>
+        new RegExp(`<div class="mt-3 relative h-48">\\s*<canvas id="sr-chart-${id}" class="w-full h-full"><\\/canvas>\\s*<\\/div>`).test(salesRepHtml)));
     check('salary and nominal controls use approved defaults',
       els['sr-fixed-salary'].value === '40000' &&
       els['sr-old-nominal-mode'].value === 'fixed' &&
@@ -140,5 +143,34 @@ module.exports = function suite(__h) {
     h.input('sr-min-nominal', '8000');
     check('validation clears after every invalid numeric input is corrected',
       els['sr-validation-message'].innerText.length === 0);
+
+    h.change('sr-old-nominal-mode', 'fixed');
+    h.input('sr-fixed-salary', '40000');
+    h.input('sr-old-nominal-fixed', '6000');
+    h.input('sr-min-nominal', '8000');
+    h.input('sr-achievement-c2p-total', '100');
+    h.input('sr-qualifier-portfolio', '100');
+    h.input('sr-qualifier-visits', '100');
+    const finalPayoutPercent = () =>
+      els['sr-final-payout-percent'] ? els['sr-final-payout-percent'].innerText : '';
+    check('final payout percentage is labeled as a percentage of new nominal',
+      /id="sr-final-payout-percent"/.test(salesRepHtml) &&
+      /Percentage of new nominal/.test(salesRepHtml));
+    check('full final payout displays as 100.0% of the new nominal',
+      finalPayoutPercent() === '100.0%');
+    h.input('sr-qualifier-visits', '50');
+    check('changing a qualifier updates the final payout percentage',
+      finalPayoutPercent() === '75.0%');
+    h.input('sr-qualifier-visits', '100');
+    h.input('sr-achievement-c2p-total', '200');
+    check('changing a KPI input updates the final payout percentage',
+      finalPayoutPercent() === '150.0%');
+
+    h.input('sr-fixed-salary', '0');
+    h.input('sr-old-nominal-fixed', '0');
+    h.input('sr-min-nominal', '0');
+    check('zero new nominal displays an em dash instead of dividing by zero',
+      calculateSalesRepPayout().context.newNomE === 0 &&
+      finalPayoutPercent() === '—');
   }
 };
