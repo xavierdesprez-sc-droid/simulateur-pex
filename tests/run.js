@@ -19,11 +19,16 @@ if (fs.existsSync(path.join(__dirname, '..', 'src', 'js'))) {
 new Function(fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8'));
 console.log('Code.gs: syntax OK');
 
-const suites = fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js')).sort();
+const suites = fs.readdirSync(__dirname).filter(f => f.endsWith('.test.js') && !['build-target.test.js', '07-sales-rep.test.js'].includes(f)).sort();
 for (const f of suites) {
   console.log(f);
   runSuite(path.join(__dirname, f));
 }
+console.log('07-sales-rep.test.js');
+runSuite(path.join(__dirname, '07-sales-rep.test.js'), 'sales-rep');
+
+console.log('build-target.test.js');
+execFileSync(process.execPath, [path.join(__dirname, 'build-target.test.js')], { stdio: 'inherit' });
 
 console.log('-------------------------------------------');
 console.log(`TOTAL: ${results.pass} pass / ${results.fail} fail`);

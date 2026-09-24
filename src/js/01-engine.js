@@ -64,27 +64,6 @@
       }
     };
 
-    // Parses a population CSV (header line 1, cols A=Orga B=Position C=Country
-    // D=ID E-F ignored G=Base Salary H=Amount) — same mapping as Code.gs.
-    function parsePopulationCsv(text) {
-      const lines = String(text || '').split(/\r?\n/).filter(l => l.trim() !== '');
-      const reps = [];
-      let ignored = 0;
-      for (let i = 1; i < lines.length; i++) { // skip header
-        const cells = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
-        const cell = n => cells.length > n ? cells[n] : '';
-        const fixed = Number(cell(6)) || 0;
-        const nominal = Number(cell(7)) || 0;
-        if (!(fixed > 0 && nominal >= 0)) { ignored++; continue; }
-        reps.push({
-          id: cell(3) || 'rep' + i,
-          orga: cell(0), position: cell(1), country: cell(2),
-          fixed, nominal
-        });
-      }
-      return { reps, ignored };
-    }
-
     // Normal probability density function with constant sigma
     function normalPdf(x, mu, sigma) {
       const coeff = 1 / (sigma * Math.sqrt(2 * Math.PI));

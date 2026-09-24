@@ -1,5 +1,37 @@
 
     // ===== REAL POPULATION (Google Sheet via Apps Script, or local CSV) =====
+    // Population parsing belongs to this feature boundary rather than the pure engine.
+    function isExcludedPopulationOrga(orga) {
+      const pattern = activePopulationProfile.excludedOrgaPattern;
+      return Boolean(pattern && pattern.test(String(orga || '')));
+    }
+
+    function parsePopulationCsv(text) {
+      const lines = String(text || '').split(/\r?\n/).filter(l => l.trim() !== '');
+      const reps = [];
+      let ignored = 0;
+      const c = activePopulationProfile.columns;
+      for (let i = activePopulationProfile.csvHeaderRow; i < lines.length; i++) {
+        const cells = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+        const cell = n => cells.length > n ? cells[n] : '';
+        const fixed = Number(cell(c.fixed)) || 0;
+        const nominal = Number(cell(c.nominal)) || 0;
+        if (isExcludedPopulationOrga(c.orga === undefined ? '' : cell(c.orga)) ||
+            !cell(c.country).trim() ||
+            !cell(c.jobProfile).trim() ||
+            !(fixed > 0 && nominal >= 0)) {
+          ignored++;
+          continue;
+        }
+        reps.push({
+          jobProfile: cell(c.jobProfile),
+          country: cell(c.country),
+          fixed, nominal
+        });
+      }
+      return { reps, ignored };
+    }
+
     let advPopulation = []; // { id, orga, position, country, fixed, nominal }
     let popAutoLoaded = false;
 
