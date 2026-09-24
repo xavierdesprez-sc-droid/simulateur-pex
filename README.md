@@ -195,6 +195,21 @@ and updates the existing deployment ID (listed by `clasp deployments`), preservi
 URL. Verify the web app in a browser signed in to an allowed organization account; an
 unauthenticated HTTP request redirects to Google sign-in. NCE uses a separate Apps Script
 project and must not be deployed through this SWE configuration.
+### Sales Rep calculator deployment
+
+Build the separate Sales Rep bundle with:
+
+```text
+node build.js --app=sales-rep
+```
+
+The output is `dist/sales-rep/index.html`. Copy that file into a separate Google Apps
+Script project as an HTML file named `index`, and configure that project's `Code.gs` using
+the existing deployment and per-person access-gate instructions above. Deploy the project
+as a distinct Web App with its own URL; do not replace the existing simulator deployment.
+
+The Sales Rep calculator runs entirely in the browser. It does not load population data,
+persist scenarios, or send scenario inputs to a server.
 
 ## Build (split src/ -> index.html monofichier)
 

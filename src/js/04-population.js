@@ -1,5 +1,51 @@
 
     // ===== REAL POPULATION (Google Sheet via Apps Script, or local CSV) =====
+    // Population parsing belongs to this feature boundary rather than the pure engine.
+    function isExcludedPopulationOrga(orga) {
+      const profile = typeof activePopulationProfile === 'undefined' ? null : activePopulationProfile;
+      const pattern = profile && profile.excludedOrgaPattern;
+      return Boolean(pattern && pattern.test(String(orga || '')));
+    }
+
+    function parsePopulationCsv(text) {
+      const lines = String(text || '').split(/\r?\n/).filter(l => l.trim() !== '');
+      const reps = [];
+      let ignored = 0;
+      const profile = typeof activePopulationProfile === 'undefined' ? null : activePopulationProfile;
+      const columns = profile && profile.columns;
+      for (let i = profile ? profile.csvHeaderRow : 1; i < lines.length; i++) {
+        const cells = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+        const cell = n => cells.length > n ? cells[n] : '';
+        const fixed = Number(cell(columns ? columns.fixed : 6)) || 0;
+        const nominal = Number(cell(columns ? columns.nominal : 7)) || 0;
+        if (profile) {
+          if (isExcludedPopulationOrga(columns.orga === undefined ? '' : cell(columns.orga)) ||
+              !cell(columns.country).trim() ||
+              !cell(columns.jobProfile).trim() ||
+              !(fixed > 0 && nominal >= 0)) {
+            ignored++;
+            continue;
+          }
+          reps.push({
+            jobProfile: cell(columns.jobProfile),
+            country: cell(columns.country),
+            fixed, nominal
+          });
+        } else {
+          if (!(fixed > 0 && nominal >= 0)) {
+            ignored++;
+            continue;
+          }
+          reps.push({
+            id: cell(3) || 'rep' + i,
+            orga: cell(0), position: cell(1), country: cell(2),
+            fixed, nominal
+          });
+        }
+      }
+      return { reps, ignored };
+    }
+
     let advPopulation = []; // { jobProfile, country, fixed, nominal }
     let popAutoLoaded = false;
     let canViewIndividualTables = false;

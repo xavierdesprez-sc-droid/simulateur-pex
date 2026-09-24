@@ -5,6 +5,12 @@ module.exports = function suite(__h) {
   const S = advState;
   setView('advanced');
 
+  check('hybrid T1 defaults to 80% and remains editable',
+    advState.t1 === 80 &&
+    /type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80"/.test(htmlSrc) &&
+    /id="adv-val-t1"[^>]*>80%<\/span>/.test(htmlSrc) &&
+    /id="adv-dual-track"[^>]*style="left:40%; width:10%"/.test(htmlSrc));
+
   // ===== Overlayable standard scenario (hidden by default) =====
   check('8 datasets on the advanced chart', __chartDatasets.length === 8);
   check('standard scenario hidden by default', __chartDatasets[5].hidden === true);

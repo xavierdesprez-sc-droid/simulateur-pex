@@ -32,6 +32,8 @@ module.exports = function suite(__h) {
     nceBundleHtml.indexOf('tab-four-to-one') === -1 &&
     nceBundleHtml.indexOf('view-four-to-one') === -1 &&
     nceBundleHtml.indexOf('4:1') === -1);
+  check('NCE bundle removes hidden Personae tab placeholder whitespace',
+    !/\r?\n[ \t]+\r?\n/.test(nceBundleHtml));
   check('NCE Hybrid top strip keeps its cards on one row',
     /lg:grid-cols-3\b/.test(__h.buildString('NCE')));
   check('NCE uses its configured default curve',
