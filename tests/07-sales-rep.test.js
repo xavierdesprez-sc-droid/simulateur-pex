@@ -1,6 +1,6 @@
 'use strict';
 module.exports = function suite(__h) {
-  const { check, htmlSrc, buildSalesRepString } = __h;
+  const { check, htmlSrc, defaultHtmlSrc, buildSalesRepString } = __h;
   const salesRepHtml = buildSalesRepString();
 
   check('Sales Rep bundle has its own title',
@@ -12,6 +12,8 @@ module.exports = function suite(__h) {
     !/parsePopulationCsv|google\.script\.run|localStorage|sessionStorage/.test(salesRepHtml));
   check('Sales Rep bundle excludes existing simulator views',
     !/id="view-(standard|advanced|matrix)"/.test(salesRepHtml));
+  check('Sales Rep harness exposes matching generated HTML',
+    htmlSrc === salesRepHtml);
   check('Sales Rep bundle is distinct from the default bundle',
-    salesRepHtml !== htmlSrc);
+    salesRepHtml !== defaultHtmlSrc);
 };
