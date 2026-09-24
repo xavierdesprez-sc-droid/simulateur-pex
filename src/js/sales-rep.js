@@ -84,7 +84,7 @@ function calculateSalesRepPayout(inputs = salesRepState) {
 }
 
 const SALES_REP_CHARTS = {};
-let salesRepInvalidInputId = null;
+const salesRepInvalidInputIds = new Set();
 
 function salesRepFormatE(value) {
   return '€' + Math.round(value).toLocaleString('en-US');
@@ -110,6 +110,14 @@ function salesRepSetInvalid(el, invalid) {
   if (!el || !el.classList) return;
   if (invalid && el.classList.add) el.classList.add('border-red-500');
   if (!invalid && el.classList.remove) el.classList.remove('border-red-500');
+}
+
+function salesRepUpdateValidationMessage() {
+  if (salesRepInvalidInputIds.size) {
+    salesRepShowMessage('sr-validation-message', 'Please enter a finite, non-negative number.');
+  } else {
+    salesRepHideMessage('sr-validation-message');
+  }
 }
 
 function salesRepReadNumber(el) {
@@ -189,15 +197,13 @@ function salesRepBindNumber(id, stateKey) {
     const value = salesRepReadNumber(event.target);
     if (value === null) {
       salesRepSetInvalid(event.target, true);
-      salesRepInvalidInputId = id;
-      salesRepShowMessage('sr-validation-message', 'Please enter a finite, non-negative number.');
+      salesRepInvalidInputIds.add(id);
+      salesRepUpdateValidationMessage();
       return;
     }
     salesRepSetInvalid(event.target, false);
-    if (salesRepInvalidInputId === id) {
-      salesRepInvalidInputId = null;
-      salesRepHideMessage('sr-validation-message');
-    }
+    salesRepInvalidInputIds.delete(id);
+    salesRepUpdateValidationMessage();
     salesRepState[stateKey] = value;
     updateSalesRepCalculator();
   };
@@ -243,7 +249,6 @@ function initializeSalesRepCalculator() {
   const mode = document.getElementById('sr-old-nominal-mode');
   mode.addEventListener('change', event => {
     salesRepState.oldNominalMode = event.target.value === 'percent' ? 'percent' : 'fixed';
-    salesRepHideMessage('sr-validation-message');
     updateSalesRepCalculator();
   });
   salesRepBindSlider('sr-achievement-c2p-total', 'achievements', 'c2pTotal', 200);

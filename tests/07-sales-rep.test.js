@@ -130,7 +130,15 @@ module.exports = function suite(__h) {
     h.input('sr-fixed-salary', '-1');
     assertClose('negative salary preserves the last valid calculation',
       calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
-    check('invalid input displays an inline message',
+    h.input('sr-min-nominal', '-1');
+    h.change('sr-old-nominal-mode', 'percent');
+    check('changing nominal mode keeps validation visible while numeric inputs remain invalid',
       els['sr-validation-message'].innerText.length > 0);
+    h.input('sr-fixed-salary', '40000');
+    check('correcting salary keeps validation visible for invalid minimum nominal',
+      els['sr-validation-message'].innerText.length > 0);
+    h.input('sr-min-nominal', '8000');
+    check('validation clears after every invalid numeric input is corrected',
+      els['sr-validation-message'].innerText.length === 0);
   }
 };
