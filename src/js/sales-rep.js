@@ -210,7 +210,9 @@ function salesRepBindSlider(id, target, key, max) {
   const update = event => {
     const value = Number(event.target.value);
     if (!Number.isFinite(value)) return;
-    salesRepState[target][key] = Math.max(0, Math.min(max === 100 ? value : max, value));
+    const bounded = Math.max(0, Math.min(max, value));
+    salesRepState[target][key] = bounded;
+    event.target.value = String(bounded);
     updateSalesRepCalculator();
   };
   el.addEventListener('input', update);

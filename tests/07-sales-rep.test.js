@@ -117,6 +117,9 @@ module.exports = function suite(__h) {
       els['sr-achievement-c2p-price'].value === '100');
 
     h.input('sr-qualifier-portfolio', '120');
+    check('qualifier input and state clamp values above 100%',
+      els['sr-qualifier-portfolio'].value === '100' &&
+      salesRepState.qualifiers.portfolio === 100);
     h.input('sr-qualifier-visits', '80');
     assertClose('qualifiers are individually capped before averaging',
       calculateSalesRepPayout().qualifierMultiplier, 0.9);
