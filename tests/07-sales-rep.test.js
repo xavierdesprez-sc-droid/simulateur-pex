@@ -1,6 +1,7 @@
 'use strict';
 module.exports = function suite(__h) {
-  const { check, assertClose, htmlSrc, defaultHtmlSrc, buildSalesRepString } = __h;
+  const { check, els, assertClose, htmlSrc, defaultHtmlSrc, buildSalesRepString } = __h;
+  const h = __h;
   const salesRepHtml = buildSalesRepString();
 
   check('Sales Rep bundle has its own title',
@@ -72,4 +73,61 @@ module.exports = function suite(__h) {
     salesRepState.minNominalE === 8000 &&
     Object.values(salesRepState.achievements).every(value => value === 100) &&
     Object.values(salesRepState.qualifiers).every(value => value === 100));
+
+  const uiReady = typeof __domReadyHandler === 'function';
+  check('Sales Rep app registers DOM initialization', uiReady);
+
+  if (uiReady) {
+    __domReadyHandler();
+    check('four KPI charts initialize independently', __chartInstances.length === 4);
+    check('salary and nominal controls use approved defaults',
+      els['sr-fixed-salary'].value === '40000' &&
+      els['sr-old-nominal-mode'].value === 'fixed' &&
+      els['sr-old-nominal-fixed'].value === '6000' &&
+      els['sr-old-nominal-percent'].value === '15' &&
+      els['sr-min-nominal'].value === '8000');
+    check('four KPI sliders default to 100%',
+      ['c2p-total', 'c2p-price', 'dev', 'churn'].every(key =>
+        els[`sr-achievement-${key}`].value === '100'));
+    check('two qualifier sliders default to 100%',
+      els['sr-qualifier-portfolio'].value === '100' &&
+      els['sr-qualifier-visits'].value === '100');
+    check('KPI and qualifier slider bounds are present in markup',
+      ['c2p-total', 'c2p-price', 'dev', 'churn'].every(key =>
+        new RegExp(`type="range" id="sr-achievement-${key}" min="0" max="200"`).test(h.htmlSrc)) &&
+      ['portfolio', 'visits'].every(key =>
+        new RegExp(`type="range" id="sr-qualifier-${key}" min="0" max="100"`).test(h.htmlSrc)));
+    assertClose('C2P Total chart plots its weighted €4,000 at 100%',
+      __chartInstances[0].data.datasets[0].data[100], 4000);
+
+    h.input('sr-fixed-salary', '50000');
+    h.input('sr-old-nominal-percent', '15');
+    h.change('sr-old-nominal-mode', 'percent');
+    assertClose('percentage mode derives old nominal from salary', salesRepOldNominalE(), 7500);
+    h.change('sr-old-nominal-mode', 'fixed');
+    h.input('sr-fixed-salary', '40000');
+
+    const initialFinalPayout = els['sr-final-payout'].innerText;
+    const initialC2PTotal = els['sr-payout-c2p-total'].innerText;
+    h.input('sr-achievement-c2p-total', '200');
+    check('changing one KPI updates its weighted line item and total',
+      els['sr-payout-c2p-total'].innerText !== initialC2PTotal &&
+      els['sr-final-payout'].innerText !== initialFinalPayout);
+    check('other KPI sliders remain independent',
+      els['sr-achievement-c2p-price'].value === '100');
+
+    h.input('sr-qualifier-portfolio', '120');
+    h.input('sr-qualifier-visits', '80');
+    assertClose('qualifiers are individually capped before averaging',
+      calculateSalesRepPayout().qualifierMultiplier, 0.9);
+    const finalBeforeInvalid = calculateSalesRepPayout().finalPayout;
+    h.input('sr-fixed-salary', '');
+    assertClose('empty salary preserves the last valid calculation',
+      calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
+    h.input('sr-fixed-salary', '-1');
+    assertClose('negative salary preserves the last valid calculation',
+      calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
+    check('invalid input displays an inline message',
+      els['sr-validation-message'].innerText.length > 0);
+  }
 };
