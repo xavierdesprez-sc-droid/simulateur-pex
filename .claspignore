@@ -1,0 +1,5 @@
+# Only deploy the generated Apps Script bundle, backend, and manifest.
+**/**
+!Code.gs
+!index.html
+!appsscript.json

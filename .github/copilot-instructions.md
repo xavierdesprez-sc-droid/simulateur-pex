@@ -87,3 +87,11 @@ freshness and Apps Script syntax checks; use `node tests/run.js` for those check
   `Code.gs` alongside it. Keep `SHEET_ID` empty for a Sheet-bound deployment, or set
   it to the target spreadsheet ID for a standalone deployment. Use separate fixed
   deployments when SWE and NCE need different spreadsheets or permissions.
+- `.clasp.json` targets the SWE Apps Script project. Keep `.claspignore` restricted to
+  `Code.gs`, root `index.html`, and `appsscript.json`; never push `src/**` or test files.
+  Before pushing, run `node build.js --check`, `node tests/run.js`, and inspect
+  `clasp status --json`; `filesToPush` must contain exactly those three files. `clasp push`
+  replaces the remote file set but does not publish a web app. Get the production ID from
+  `clasp deployments`, then use `clasp redeploy <production-deployment-id>` to create a
+  version and preserve the existing URL. Verify the result in an authenticated browser
+  session.

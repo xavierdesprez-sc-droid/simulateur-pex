@@ -170,6 +170,32 @@ columns G/H. NCE reads `Job Profile`, `Country`, `Annual Base Pay 2026 Revised`,
 Both profiles expose only `Country` and `Job Profile` filters on the first page and calculate
 Current PEX Paid, headcount, and Avg. Current Var. Share from the filtered Sheet data.
 
+### Deploying the SWE project with clasp
+
+The repository's `.clasp.json` targets the SWE Apps Script project. `.claspignore` limits
+uploads to `Code.gs`, the generated root `index.html`, and `appsscript.json`; do not remove
+this allowlist because the browser source fragments and tests are not Apps Script files.
+The manifest preserves the existing web app settings (execute as deployer, domain access).
+
+From the repository root, verify the bundle and tests before deployment:
+
+```text
+node build.js --check
+node tests/run.js
+clasp status --json
+clasp push
+clasp deployments
+clasp redeploy <production-deployment-id> --description "Describe the change"
+```
+
+Check that `filesToPush` in the status output contains exactly `appsscript.json`,
+`Code.gs`, and `index.html` before pushing. `clasp push` replaces the remote project's
+file set but does not publish a new web-app version. `clasp redeploy` creates a version
+and updates the existing deployment ID (listed by `clasp deployments`), preserving its
+URL. Verify the web app in a browser signed in to an allowed organization account; an
+unauthenticated HTTP request redirects to Google sign-in. NCE uses a separate Apps Script
+project and must not be deployed through this SWE configuration.
+
 ## Build (split src/ -> index.html monofichier)
 
 Éditer `src/**`, puis :
