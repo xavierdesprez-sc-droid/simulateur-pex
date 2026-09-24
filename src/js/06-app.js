@@ -29,12 +29,16 @@
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
       const isFourToOne = view === 'four-to-one';
+      const isPersonae = view === 'personae';
       if (isFourToOne && !activePopulationProfile.views.fourToOne) return;
-      document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix || isFourToOne);
+      if (isPersonae && !activePopulationProfile.views.personae) return;
+      document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix || isFourToOne || isPersonae);
       document.getElementById('view-advanced').classList.toggle('hidden', !isAdv);
       document.getElementById('view-matrix').classList.toggle('hidden', !isMatrix);
       const fourToOneView = document.getElementById('view-four-to-one');
       if (fourToOneView) fourToOneView.classList.toggle('hidden', !isFourToOne);
+      const personaeView = document.getElementById('view-personae');
+      if (personaeView) personaeView.classList.toggle('hidden', !isPersonae);
       const active = 'px-3 py-1.5 rounded-lg bg-white shadow-sm ';
       const inactive = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
       document.getElementById('tab-standard').className = (view === 'standard') ? active + 'text-indigo-600' : inactive;
@@ -42,6 +46,8 @@
       document.getElementById('tab-matrix').className = isMatrix ? active + 'text-emerald-600' : inactive;
       const fourToOneTab = document.getElementById('tab-four-to-one');
       if (fourToOneTab) fourToOneTab.className = isFourToOne ? active + 'text-cyan-600' : inactive;
+      const personaeTab = document.getElementById('tab-personae');
+      if (personaeTab) personaeTab.className = isPersonae ? active + 'text-violet-600' : inactive;
       if (isAdv) {
         // Lazy init: Chart.js needs a visible container to size correctly
         if (!advChartInstance) initAdvChart();
@@ -61,6 +67,10 @@
         }
       }
       if (isMatrix) renderMatrix();
+      if (isPersonae) {
+        initPersonaeView();
+        if (!personaeLoaded && !personaeLoading) loadPersonaeFromSheet();
+      }
     }
 
     // Presets

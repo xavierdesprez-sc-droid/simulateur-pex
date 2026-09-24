@@ -9,7 +9,8 @@
  * Data is read from the active cluster profile:
  * header on row 4. SWE uses A=Orga, B=Position, C=Country, G=Base Salary,
  * H=Amount. NCE uses A=Job Profile, B=Country, D=Annual Base Pay 2026 Revised,
- * E=Nominal Bonus 2026 Revised. IDs are intentionally ignored.
+ * E=Nominal Bonus 2026 Revised. IDs are intentionally ignored. The SWE Personae
+ * view separately reads aggregate data from "Courbe %/€" in its configured sheet.
  */
 
 const POPULATION_PROFILES = {
@@ -34,6 +35,16 @@ const POPULATION_SPREADSHEET_IDS = {
   SWE: '1yszfpDvR3iVB1GX1mRTiymFIKXki2WXsAYsj7b2cP-Y',
   NCE: '1X14uFi-ykPG9hBwhGMfmZjbHKNS3CR-s8aRZPUJTYss'
 };
+const PERSONAE_SPREADSHEET_ID = '1oR8M0Mp2ve6B7TT4fHHDRQPhNfCyB2_zUoVQ8d29bXQ';
+const PERSONAE_SHEET_NAME = 'Courbe %/€';
+const PERSONAE_HEADERS = [
+  'Effectif',
+  'Âge Moyen',
+  'Salaire Fixe Moyen (€)',
+  'Bonus Cible Moyen (€)',
+  'Bonus Cible Moyen (%)',
+  'Segment ("Persona")'
+];
 const SHEET_ID = POPULATION_SPREADSHEET_IDS[DEPLOYED_PROFILE];
 const ACCESS_LIST_SPREADSHEET_ID = '1uLTW_Kk4Z5YEfsZWkLHAKWhAcBaenDsGn6t6wogzqTA';
 const ACCESS_LIST_SHEET_NAME = 'Access';
@@ -161,4 +172,65 @@ function getPopulation() {
     reps.push({ jobProfile, country, fixed, nominal });
   });
   return { reps, ignored, canViewIndividualTables: access.canViewIndividualTables };
+}
+
+function getPersonae() {
+  requireAccess_();
+  if (DEPLOYED_PROFILE !== 'SWE') {
+    throw new Error('The Personae view is only available in the SWE deployment.');
+  }
+
+  const spreadsheet = SpreadsheetApp.openById(PERSONAE_SPREADSHEET_ID);
+  const sheet = spreadsheet.getSheetByName(PERSONAE_SHEET_NAME);
+  if (!sheet) throw new Error('Sheet "' + PERSONAE_SHEET_NAME + '" not found in the Personae spreadsheet.');
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) throw new Error('The Personae sheet is missing its headers on row 2.');
+  const headers = sheet.getRange(2, 3, 1, PERSONAE_HEADERS.length).getDisplayValues()[0]
+    .map(value => String(value || '').trim());
+  if (PERSONAE_HEADERS.some((header, index) => headers[index] !== header)) {
+    throw new Error('Unexpected Personae headers in C2:H2.');
+  }
+  if (lastRow === 2) return { personae: [], ignored: 0 };
+
+  const parseNumber = value => {
+    if (value === null || typeof value === 'undefined' ||
+        (typeof value === 'string' && value.trim() === '')) return NaN;
+    return Number(value);
+  };
+  const dataRange = sheet.getRange(3, 1, lastRow - 2, 8);
+  const values = dataRange.getValues();
+  const displayValues = dataRange.getDisplayValues();
+  const personae = [];
+  let ignored = 0;
+  values.forEach((row, index) => {
+    const country = String(row[0] || '').trim();
+    const seniority = String(row[1] || '').trim();
+    const headcount = parseNumber(row[2]);
+    const meanAge = parseNumber(row[3]);
+    const fixedSalary = parseNumber(row[4]);
+    const oldNominal = parseNumber(row[5]);
+    const displayedPct = String(displayValues[index][6] || '').trim();
+    const oldNominalPct = displayedPct.includes('%')
+      ? Number(displayedPct.replace(/\s/g, '').replace('%', '').replace(',', '.'))
+      : (() => {
+        const value = parseNumber(row[6]);
+        return value >= 0 && value <= 1 ? value * 100 : value;
+      })();
+    const segment = String(row[7] || '').trim();
+    if (!country || !seniority || !segment ||
+        !isFinite(headcount) || headcount <= 0 ||
+        !isFinite(meanAge) || meanAge < 0 ||
+        !isFinite(fixedSalary) || fixedSalary <= 0 ||
+        !isFinite(oldNominal) || oldNominal < 0 ||
+        !isFinite(oldNominalPct) || oldNominalPct < 0) {
+      ignored++;
+      return;
+    }
+    personae.push({
+      country, seniority, headcount, meanAge, fixedSalary,
+      oldNominal, oldNominalPct, segment
+    });
+  });
+  return { personae, ignored };
 }

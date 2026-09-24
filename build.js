@@ -18,6 +18,7 @@ const HTML_PARTS = [
   'body-four-to-one.html',
   'body-advanced.html',
   'body-matrix.html',
+  'body-personae.html',
   'body-footer.html',
 ];
 const JS_PARTS = [
@@ -29,6 +30,7 @@ const JS_PARTS = [
   '04-population.js',
   '05-matrix.js',
   '06-app.js',
+  '07-personae.js',
 ];
 const CSV_FIXTURES = {
   SWE: 'population_test.csv',
@@ -58,15 +60,19 @@ function concatJs(profile = 'SWE') {
 
 function buildString(profile = 'SWE') {
   const normalizedProfile = String(profile).toUpperCase();
-  const htmlParts = HTML_PARTS.filter(f => normalizedProfile !== 'NCE' || f !== 'body-four-to-one.html');
+  const htmlParts = HTML_PARTS.filter(f => normalizedProfile !== 'NCE' ||
+    (f !== 'body-four-to-one.html' && f !== 'body-personae.html'));
   const html = htmlParts.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', f)))).join('\n')
     .replace(/<!-- @@TOP-STRIP:([a-z0-9-]+) -->/g, (m, name) => stripTrailingNewlines(renderTopStrip(name, normalizedProfile)))
     .replace(/^[ \t]*<!-- @@FOUR-TO-ONE-TAB -->[ \t]*$/m, match => normalizedProfile === 'NCE'
       ? ''
       : match.replace('<!-- @@FOUR-TO-ONE-TAB -->',
         '<button id="tab-four-to-one" onclick="setView(\'four-to-one\')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">4:1 Scenario</button>'));
+  const profileHtml = html.replace('<!-- @@PERSONAE-TAB -->', normalizedProfile === 'NCE'
+    ? ''
+    : '<button id="tab-personae" onclick="setView(\'personae\')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">Personae</button>');
   const js = concatJs(profile);
-  return html + '\n\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
+  return profileHtml + '\n\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
 }
 
 const OUT_PATH = path.join(ROOT, 'index.html');

@@ -42,6 +42,28 @@ old nominal (each rep therefore has their own curve depending on their nominal r
 
 Integration of the weighted curve (average nominal 11% → 20%) over the overall Gaussian.
 
+## Personae View (SWE only)
+
+The **Personae** tab reads aggregate segment data from the `Courbe %/€` tab in the
+configured Personae spreadsheet. Columns A/B supply country and seniority; headers are
+in C2:H2 and data starts on row 3. The expected headers are `Effectif`, `Âge Moyen`,
+`Salaire Fixe Moyen (€)`, `Bonus Cible Moyen (€)`, `Bonus Cible Moyen (%)`, and
+`Segment ("Persona")`. The Apps Script `getPersonae()` endpoint validates this layout
+and is protected by the same access list as the rest of the app. Open the Apps Script
+deployment to load this data; the local-file mode does not have a Personae CSV fallback.
+
+Country and seniority filters combine, and every persona can be included or excluded.
+Names containing `PT` are excluded by default. The view overlays all included curves and
+marks where the new plan first pays more in the **Courbe %/€** mode. That mode defaults
+to a 20-point objective increase and an €8,000 nominal floor; the hybrid pays from 40%
+achievement and begins accelerating at 80%, reaching the new curve at 100%.
+
+The **Courbe %/%** mode does not apply an objective increase. It displays the old common
+reference `y = x` and each hybrid curve as a percentage of that persona's new nominal.
+In **Courbe %/€**, the old payout is based on the current target bonus in euros, while
+the hybrid curve uses the larger of that bonus, 20% of average fixed salary, and the
+configured nominal floor.
+
 ## Real population (Google Sheet)
 
 In the advanced view, the **"Load from the Google Sheet"** button replaces the single average with

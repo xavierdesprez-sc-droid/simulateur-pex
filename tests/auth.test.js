@@ -7,6 +7,7 @@ const vm = require('node:vm');
 
 const code = fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8');
 const ACCESS_SPREADSHEET_ID = '1uLTW_Kk4Z5YEfsZWkLHAKWhAcBaenDsGn6t6wogzqTA';
+const PERSONAE_SPREADSHEET_ID = '1oR8M0Mp2ve6B7TT4fHHDRQPhNfCyB2_zUoVQ8d29bXQ';
 const POPULATION_SPREADSHEET_IDS = {
   SWE: '1yszfpDvR3iVB1GX1mRTiymFIKXki2WXsAYsj7b2cP-Y',
   NCE: '1X14uFi-ykPG9hBwhGMfmZjbHKNS3CR-s8aRZPUJTYss'
@@ -33,6 +34,7 @@ function createBackend({
   profile = 'SWE'
 } = {}) {
   let dataReads = 0;
+  let personaeReads = 0;
   const openedSpreadsheetIds = [];
   const accessSheet = {
     getLastRow() {
@@ -74,6 +76,38 @@ function createBackend({
           ? createDataSheet(['AE', 'France', '', 50000, 10000])
           : null;
       }
+    },
+    [PERSONAE_SPREADSHEET_ID]: {
+      getSheetByName(name) {
+        if (name !== 'Courbe %/€') return null;
+        return {
+          getLastRow: () => 4,
+          getRange(row, column, numRows, numColumns) {
+            if (row === 2 && column === 3 && numRows === 1 && numColumns === 6) {
+              return {
+                getDisplayValues: () => [[
+                  'Effectif', 'Âge Moyen', 'Salaire Fixe Moyen (€)',
+                  'Bonus Cible Moyen (€)', 'Bonus Cible Moyen (%)', 'Segment ("Persona")'
+                ]]
+              };
+            }
+            if (row === 3 && column === 1 && numRows === 2 && numColumns === 8) {
+              personaeReads++;
+              return {
+                getValues: () => [
+                  ['FR', 'Junior', 10, 32, 50000, 8000, 0.16, '1 FR - Junior Inside Sales'],
+                  ['ES', 'Senior', 5, '', 40000, 5000, '', '2 ES - Senior Outside Sales']
+                ],
+                getDisplayValues: () => [
+                  ['FR', 'Junior', '10', '32', '50 000 €', '8 000 €', '16%', '1 FR - Junior Inside Sales'],
+                  ['ES', 'Senior', '5', '', '40 000 €', '5 000 €', '', '2 ES - Senior Outside Sales']
+                ]
+              };
+            }
+            throw new Error(`Unexpected personae range: ${row},${column},${numRows},${numColumns}`);
+          }
+        };
+      }
     }
   };
   const accessSpreadsheet = {
@@ -111,7 +145,12 @@ function createBackend({
   };
   vm.createContext(context);
   vm.runInContext(profileCode, context);
-  return { backend: context, getDataReads: () => dataReads, openedSpreadsheetIds };
+  return {
+    backend: context,
+    getDataReads: () => dataReads,
+    getPersonaeReads: () => personaeReads,
+    openedSpreadsheetIds
+  };
 }
 
 test('allowlisted user can load the app and population', () => {
@@ -201,6 +240,50 @@ test('NCE deployment uses the shared Access sheet and the NCE population sheet',
     ACCESS_SPREADSHEET_ID,
     POPULATION_SPREADSHEET_IDS.NCE
   ]);
+});
+
+test('allowlisted SWE user can load the aggregate personae sheet', () => {
+  const { backend, getPersonaeReads, openedSpreadsheetIds } = createBackend({
+    email: 'alice@example.com',
+    fullAccessEmails: ['alice@example.com']
+  });
+
+  const result = backend.getPersonae();
+  assert.equal(result.personae.length, 1);
+  assert.equal(result.ignored, 1);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(result.personae[0])),
+    {
+      country: 'FR',
+      seniority: 'Junior',
+      headcount: 10,
+      meanAge: 32,
+      fixedSalary: 50000,
+      oldNominal: 8000,
+      oldNominalPct: 16,
+      segment: '1 FR - Junior Inside Sales'
+    }
+  );
+  assert.equal(getPersonaeReads(), 1);
+  assert.ok(openedSpreadsheetIds.includes(PERSONAE_SPREADSHEET_ID));
+});
+
+test('NCE deployment cannot read the SWE personae sheet', () => {
+  const { backend, openedSpreadsheetIds } = createBackend({
+    email: 'alice@example.com',
+    fullAccessEmails: ['alice@example.com'],
+    profile: 'NCE'
+  });
+
+  assert.throws(() => backend.getPersonae(), /SWE/i);
+  assert.ok(!openedSpreadsheetIds.includes(PERSONAE_SPREADSHEET_ID));
+});
+
+test('unlisted user cannot read the personae sheet', () => {
+  const { backend, getPersonaeReads } = createBackend({ email: 'alice@example.com' });
+
+  assert.throws(() => backend.getPersonae(), /access/i);
+  assert.equal(getPersonaeReads(), 0);
 });
 
 if (failed) {

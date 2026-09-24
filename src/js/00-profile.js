@@ -9,7 +9,7 @@
         csvFile: 'population_test.csv',
         columns: { orga: 0, jobProfile: 1, country: 2, fixed: 6, nominal: 7 },
         excludedOrgaPattern: /MG/i,
-        views: { fourToOne: true },
+        views: { fourToOne: true, personae: true },
         defaultBreakpoints: [
           { achievement: 0, payout: 0 },
           { achievement: 40, payout: 0 },
@@ -25,7 +25,7 @@
         csvFile: 'population_test_nce.csv',
         columns: { jobProfile: 0, country: 1, fixed: 3, nominal: 4 },
         excludedOrgaPattern: null,
-        views: { fourToOne: false },
+        views: { fourToOne: false, personae: false },
         blankPopulationInputs: true,
         blankPopulationMetrics: true,
         defaultBreakpoints: [
@@ -60,5 +60,12 @@
         if (!el) return;
         el.classList.toggle('hidden', hidden);
         if (hidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
+      });
+      const personaeHidden = !activePopulationProfile.views.personae;
+      ['tab-personae', 'view-personae'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('hidden', personaeHidden);
+        if (personaeHidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
       });
     }

@@ -71,7 +71,10 @@ function runSuite(suiteFile) {
   global.lucide = { createIcons() {} };
 
   // google.script.run mock (controlled by the suite via h.mock)
-  const mocks = { sheetReps: [], sheetError: null };
+  const mocks = {
+    sheetReps: [], sheetError: null,
+    personaeRows: { personae: [], ignored: 0 }, personaeError: null
+  };
   global.google = { script: {} };
   global.google.script.run = (() => {
     const obj = {};
@@ -79,6 +82,11 @@ function runSuite(suiteFile) {
       getPopulation() {
         if (mocks.sheetError) { if (obj.fail) obj.fail({ message: mocks.sheetError }); }
         else if (obj.ok) obj.ok(mocks.sheetReps);
+        return api;
+      },
+      getPersonae() {
+        if (mocks.personaeError) { if (obj.fail) obj.fail({ message: mocks.personaeError }); }
+        else if (obj.ok) obj.ok(mocks.personaeRows);
         return api;
       },
       withSuccessHandler(fn) { obj.ok = fn; return api; },
