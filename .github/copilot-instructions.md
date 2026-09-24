@@ -87,4 +87,3 @@ freshness and Apps Script syntax checks; use `node tests/run.js` for those check
   `Code.gs` alongside it. Keep `SHEET_ID` empty for a Sheet-bound deployment, or set
   it to the target spreadsheet ID for a standalone deployment. Use separate fixed
   deployments when SWE and NCE need different spreadsheets or permissions.
-

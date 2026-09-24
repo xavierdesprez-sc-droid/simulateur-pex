@@ -61,9 +61,10 @@ function buildString(profile = 'SWE') {
   const htmlParts = HTML_PARTS.filter(f => normalizedProfile !== 'NCE' || f !== 'body-four-to-one.html');
   const html = htmlParts.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', f)))).join('\n')
     .replace(/<!-- @@TOP-STRIP:([a-z0-9-]+) -->/g, (m, name) => stripTrailingNewlines(renderTopStrip(name, normalizedProfile)))
-    .replace('<!-- @@FOUR-TO-ONE-TAB -->', normalizedProfile === 'NCE'
+    .replace(/^[ \t]*<!-- @@FOUR-TO-ONE-TAB -->[ \t]*$/m, match => normalizedProfile === 'NCE'
       ? ''
-      : '<button id="tab-four-to-one" onclick="setView(\'four-to-one\')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">4:1 Scenario</button>');
+      : match.replace('<!-- @@FOUR-TO-ONE-TAB -->',
+        '<button id="tab-four-to-one" onclick="setView(\'four-to-one\')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">4:1 Scenario</button>'));
   const js = concatJs(profile);
   return html + '\n\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
 }

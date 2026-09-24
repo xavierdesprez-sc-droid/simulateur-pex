@@ -96,8 +96,9 @@ The deployment's **Who has access** setting is organization-wide, so keep it set
 1. Create a separate spreadsheet that is not shared with simulator users. Add a tab named
    `Access`, put the contact email in `D2`, and list full-access emails in `A2:A`.
    List restricted-access emails in `B2:B`; don't repeat emails across columns. Column A
-   users see the individual tables, while column B users see aggregate views only. If an
-   email is accidentally in both columns, restricted access takes precedence.
+   users see the individual tables, while column B users see aggregate views only. Enter
+   A/B emails as plain text, not Google Sheets people chips. If an email is accidentally
+   in both columns, restricted access takes precedence.
 2. `ACCESS_LIST_SPREADSHEET_ID` in `Code.gs` points to the private Access spreadsheet.
    Copy the same `Code.gs` to both Apps Script projects. The A/B access lists are shared:
    an email's permission applies equally to both apps; there are no separate SWE and NCE

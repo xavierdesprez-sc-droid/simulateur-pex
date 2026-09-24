@@ -76,7 +76,7 @@
       document.getElementById('kpi-pex-new').innerText = newPexM.toFixed(2) + ' M€';
       document.getElementById('kpi-pex-payout-rate').innerText = newExpectedPayoutPct.toFixed(1) + '% avg.';
       document.getElementById('kpi-pex-old').innerText = oldPexM.toFixed(2) + ' M€';
-      
+
       const pexDiffEl = document.getElementById('kpi-pex-diff');
       pexDiffEl.innerText = `(${pexDiffPct >= 0 ? '+' : ''}${pexDiffPct.toFixed(1)}%)`;
       pexDiffEl.className = pexDiffPct <= 0 ? 'font-bold text-emerald-600' : 'font-bold text-rose-600';
@@ -145,7 +145,7 @@
       else if (repInit < 105) badge.innerText = 'On target (85-105%)';
       else if (repInit < 125) badge.innerText = 'Strong performer (105-125%)';
       else badge.innerText = 'Top Performer (>125%)';
-      
+
       const oldPayout = evalOldPayout(repInit);
       const newPayout = evalNewPayout(calibratedAchieve);
 
@@ -153,7 +153,7 @@
       const fixed = state.repFixedSalary;
       const oldBonusPct = state.repCurrentBonusPct;
       const newBonusPct = getEffectiveNewBonusPct(oldBonusPct);
-      
+
       // Calculate multiplier safely (avoid division by 0 if bonus is 0%)
       const nominalMultiplier = oldBonusPct > 0 ? (newBonusPct / oldBonusPct) : (newBonusPct > 0 ? (newBonusPct / 1) : 1);
 
@@ -527,7 +527,7 @@
         xValues.push(x);
         initDensityValues.push(normalPdf(x, muInit, sigma) * 100);
         newDensityValues.push(normalPdf(x, muCalibrated, sigma) * 100);
-        
+
         const oldP = evalOldPayout(x);
         const newP = evalNewPayout(x);
         const weightedP = newP * nominalMultiplier;
