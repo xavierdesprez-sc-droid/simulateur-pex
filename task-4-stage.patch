@@ -1,0 +1,44 @@
+diff --git a/src/js/03-advanced.js b/src/js/03-advanced.js
+--- a/src/js/03-advanced.js
++++ b/src/js/03-advanced.js
+@@ -4 +4 @@
+-    const advState = { x: 110, zeroThreshold: 0, t1: 85, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
++    const advState = { x: 110, zeroThreshold: 0, t1: 80, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
+diff --git a/src/body-advanced.html b/src/body-advanced.html
+--- a/src/body-advanced.html
++++ b/src/body-advanced.html
+@@ -76 +76 @@
+-                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">85%</span>
++                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">80%</span>
+@@ -83,2 +83,2 @@
+-              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:42.5%; width:7.5%"></div>
+-              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="85" class="dual-range dual-t1 absolute inset-0 w-full m-0">
++              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:40%; width:10%"></div>
++              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80" class="dual-range dual-t1 absolute inset-0 w-full m-0">
+diff --git a/tests/02-advanced-ui.test.js b/tests/02-advanced-ui.test.js
+--- a/tests/02-advanced-ui.test.js
++++ b/tests/02-advanced-ui.test.js
+@@ -4 +4 @@
+-  const { check, els, mock } = __h;
++  const { check, els, mock, htmlSrc } = __h;
+@@ -7,0 +8,6 @@
++  check('hybrid T1 defaults to 80% and remains editable',
++    advState.t1 === 80 &&
++    /type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80"/.test(htmlSrc) &&
++    /id="adv-val-t1"[^>]*>80%<\/span>/.test(htmlSrc) &&
++    /id="adv-dual-track"[^>]*style="left:40%; width:10%"/.test(htmlSrc));
++
+diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -972 +972 @@
+-                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">85%</span>
++                <span id="adv-val-t1" class="font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">80%</span>
+@@ -979,2 +979,2 @@
+-              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:42.5%; width:7.5%"></div>
+-              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="85" class="dual-range dual-t1 absolute inset-0 w-full m-0">
++              <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:40%; width:10%"></div>
++              <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80" class="dual-range dual-t1 absolute inset-0 w-full m-0">
+@@ -2085 +2085 @@
+-    const advState = { x: 110, zeroThreshold: 0, t1: 85, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };
++    const advState = { x: 110, zeroThreshold: 0, t1: 80, t2: 100, oldNominalE: 5000, fixedSalary: 50000, min100E: 0, min200E: 0 };

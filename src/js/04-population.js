@@ -1,7 +1,24 @@
 
     // ===== REAL POPULATION (Google Sheet via Apps Script, or local CSV) =====
-    let advPopulation = []; // { id, orga, position, country, fixed, nominal }
+    let advPopulation = []; // { jobProfile, country, fixed, nominal }
     let popAutoLoaded = false;
+    let canViewIndividualTables = false;
+
+    function setIndividualTablesVisible(visible) {
+      canViewIndividualTables = Boolean(visible);
+      ['pop-individual-table', 'four-to-one-results'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.hidden = !canViewIndividualTables;
+        el.classList.toggle('hidden', !canViewIndividualTables);
+      });
+      if (!canViewIndividualTables) {
+        ['pop-table-body', 'four-to-one-table-body'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = '';
+        });
+      }
+    }
 
     function setPopulationStatus(text, visible = true) {
       ['pop-status', 'four-to-one-status'].forEach(id => {
@@ -14,11 +31,13 @@
 
     function applyPopulationCsv(res, sourceName) {
       if (!res.reps.length) {
-          setPopulationStatus('No valid rows found in ' + sourceName);
+          setPopulationStatus('No valid rows found in ' + sourceName + ' (' + res.ignored + ' ignored)');
           return;
       }
       advPopulation = res.reps;
-      setPopulationStatus(res.reps.length + ' rep(s) loaded from ' + sourceName);
+      setIndividualTablesVisible(true);
+      setPopulationStatus(res.reps.length + ' rep(s) loaded from ' + sourceName +
+        (res.ignored ? ' (' + res.ignored + ' ignored)' : ''));
       refreshPopulation();
     }
 
@@ -41,24 +60,32 @@
           setPopulationStatus('Loading from the Sheet…');
           google.script.run
             .withSuccessHandler(reps => {
-              advPopulation = Array.isArray(reps) ? reps : (reps && Array.isArray(reps.reps) ? reps.reps : []);
-              setPopulationStatus(advPopulation.length
-                ? advPopulation.length + ' rep(s) loaded from the Sheet'
-                : 'No valid rows found in the Sheet (check header row 4 and columns ID / Base Salary / Amount)');
+            const loaded = Array.isArray(reps) ? { reps, ignored: 0 } : (reps || { reps: [], ignored: 0 });
+            setIndividualTablesVisible(loaded.canViewIndividualTables === undefined
+              ? true
+              : loaded.canViewIndividualTables === true);
+            advPopulation = loaded.reps || [];
+            setPopulationStatus(advPopulation.length
+              ? advPopulation.length + ' rep(s) loaded from the Sheet' +
+                (loaded.ignored ? ' (' + loaded.ignored + ' ignored)' : '')
+              : 'No valid rows found in the Sheet (' + (loaded.ignored || 0) + ' ignored)');
               refreshPopulation();
             })
             .withFailureHandler(err => {
+              setIndividualTablesVisible(false);
               setPopulationStatus('Loading error: ' + (err && err.message ? err.message : err));
             })
             .getPopulation();
           return;
       }
-      // Local mode: fetch the CSV sitting next to index.html, fall back to a picker
-      setPopulationStatus('Loading population_test.csv…');
-      fetch('population_test.csv')
+      // Local mode: fetch the profile-specific CSV sitting next to index.html,
+      // falling back to a picker when the browser blocks file:// access.
+      const csvFile = activePopulationProfile.csvFile;
+      setPopulationStatus('Loading ' + csvFile + '…');
+      fetch(csvFile)
           .then(async r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
-          applyPopulationCsv(parsePopulationCsv(await r.text()), 'population_test.csv');
+          applyPopulationCsv(parsePopulationCsv(await r.text()), csvFile);
           })
           .catch(err => {
             if ((err instanceof TypeError) || /^HTTP/.test(String(err && err.message))) showCsvPicker();
@@ -68,15 +95,15 @@
 
     let realAgg = null; // actual aggregates (€) when a population is loaded
 
-    let popFilters = { orga: '', country: '', position: '' };
+    let popFilters = { country: '', jobProfile: '' };
 
     const escapeHtmlStr = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
 
     // Repopulates filter options from the loaded population,
     // keeping the current selection if it still exists (otherwise "All").
     // Both filter sets (Advanced view + Matrix tab) stay in sync.
-    const FILTER_KEYS = ['orga', 'country', 'position'];
-    const FILTER_SETS = ['pop', 'matrix', 'four-to-one'];
+    const FILTER_KEYS = ['country', 'jobProfile'];
+    const FILTER_SETS = ['standard', 'pop', 'matrix', 'four-to-one'];
 
     function populatePopFilters() {
       FILTER_KEYS.forEach(key => {
@@ -84,6 +111,7 @@
         if (vals.indexOf(popFilters[key]) === -1) popFilters[key] = '';
         FILTER_SETS.forEach(prefix => {
           const sel = document.getElementById(prefix + '-filter-' + key);
+          if (!sel) return;
           sel.innerHTML = '<option value="">All</option>' + vals.map(v => '<option value="' + escapeHtmlStr(v) + '">' + escapeHtmlStr(v) + '</option>').join('');
           sel.value = popFilters[key];
         });
@@ -92,7 +120,8 @@
 
     function readPopFilters(prefix) {
       FILTER_KEYS.forEach(key => {
-        popFilters[key] = document.getElementById(prefix + '-filter-' + key).value || '';
+        const source = document.getElementById(prefix + '-filter-' + key);
+        if (source) popFilters[key] = source.value || '';
       });
       FILTER_SETS.forEach(p => {
         FILTER_KEYS.forEach(key => {
@@ -104,13 +133,17 @@
 
     function filteredPopulation() {
       return advPopulation.filter(r =>
-        (!popFilters.orga || String(r.orga || '').trim() === popFilters.orga) &&
         (!popFilters.country || String(r.country || '').trim() === popFilters.country) &&
-        (!popFilters.position || String(r.position || '').trim() === popFilters.position));
+        (!popFilters.jobProfile || String(r.jobProfile || '').trim() === popFilters.jobProfile));
     }
 
     function onPopFilterChange() {
       readPopFilters('pop');
+      refreshPopulation();
+    }
+
+    function onStandardFilterChange() {
+      readPopFilters('standard');
       refreshPopulation();
     }
 
@@ -131,14 +164,22 @@
       if (pointsEcho) pointsEcho.innerText = '+' + (60000 / normalizeFourToOneCorridor(fourToOneState.corridorC2P) * 100).toFixed(1) + ' points';
     }
 
-    function refreshPopulation() {
+    function refreshPopulation(updateStandard = true) {
+      advPopulation = advPopulation.map(rep => ({
+        ...rep,
+        jobProfile: String(rep.jobProfile || rep.position || '').trim()
+      }));
       const has = advPopulation.length > 0;
       document.getElementById('pop-results').classList.toggle('hidden', !has);
+      const standardFilterZone = document.getElementById('standard-filter-zone');
+      if (standardFilterZone) standardFilterZone.classList.toggle('hidden', !has);
       document.getElementById('pop-clear-btn').classList.toggle('hidden', !has);
       document.getElementById('pop-input-zone').classList.toggle('hidden', has);
       document.getElementById('matrix-filter-zone').classList.toggle('hidden', !has);
-      document.getElementById('four-to-one-results').classList.toggle('hidden', !has);
-      document.getElementById('four-to-one-input-zone').classList.toggle('hidden', has);
+      const fourToOneResults = document.getElementById('four-to-one-results');
+      if (fourToOneResults) fourToOneResults.classList.toggle('hidden', !has || !canViewIndividualTables);
+      const fourToOneInputZone = document.getElementById('four-to-one-input-zone');
+      if (fourToOneInputZone) fourToOneInputZone.classList.toggle('hidden', has);
       updateFourToOneExplainer();
       if (!has) {
         realAgg = null; popMatrix = null;
@@ -151,7 +192,7 @@
             const el = document.getElementById(id); if (el) el.innerText = '— vs current';
           });
         });
-        ['hyb-top-pnl', 'four-to-one-pnl', 'four-to-one-pnl-c2p'].forEach(id => {
+        ['hyb-top-pnl', 'four-to-one-pnl', 'four-to-one-pnl-c2p', 'hyb-top-c2p'].forEach(id => {
           const el = document.getElementById(id); if (el) el.innerText = '—';
         });
         const htStatus = document.getElementById('hyb-top-status');
@@ -159,13 +200,37 @@
         const mxStatus = document.getElementById('matrix-top-status');
         if (mxStatus) mxStatus.innerText = 'load a population to display the matrix';
         renderMatrix();
+        if (updateStandard && appInitialized) updateDashboard(true);
         return;
       }
 
       populatePopFilters();
       const population = filteredPopulation();
-      if (popFilters.orga || popFilters.country || popFilters.position) {
+      if (popFilters.country || popFilters.jobProfile) {
         document.getElementById('pop-status').innerText = advPopulation.length + ' loaded, ' + population.length + ' displayed';
+      }
+      if (!population.length) {
+        realAgg = null;
+        popMatrix = null;
+        ['kpi-pex-new', 'kpi-pex-old', 'kpi-pex-diff', 'kpi-pex-savings',
+          'kpi-margin-gain', 'kpi-net-gain', 'kpi-pex-payout-rate'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = '—';
+        });
+        ['input-current-pex', 'input-old-var-share', 'input-headcount'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        ['hyb-top', 'four-to-one', 'matrix'].forEach(p => {
+          [p + '-pex-old', p + '-pex-standard', p + '-pex-fourtoone', p + '-pex-hybrid',
+            p + '-pex-standard-delta', p + '-pex-fourtoone-delta', p + '-pex-hybrid-delta'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = '—';
+          });
+        });
+        renderMatrix();
+        if (updateStandard && appInitialized) updateDashboard(true);
+        return;
       }
 
       // Two distributions: historical (current scheme) and calibrated (target increase)
@@ -180,9 +245,12 @@
 
       let pexOld = 0, pexHyb = 0, pexNew = 0, pexFourToOne = 0;
       let stdOld = 0, stdNew = 0, targetOld = 0, targetNew = 0;
+      let currentPaid = 0, totalFixed = 0;
       let losers = 0, worstLoss = 0, lossSum = 0;
       const rows = [];
       population.forEach(rep => {
+        currentPaid += rep.nominal;
+        totalFixed += rep.fixed;
         // Standard view: 20% floor of rep's fixed salary, breakpoint curve
         const newNomStd = Math.max(rep.fixed * state.newVarShare / 100, rep.nominal);
         const nomAdv = advNominals(rep.nominal, rep.fixed);
@@ -196,13 +264,27 @@
         pexHyb += eHyb; pexNew += eNewFull; pexFourToOne += eFourToOne;
         const delta = eHyb - eStdOld;
         if (delta < -0.5) { losers++; worstLoss = Math.min(worstLoss, delta); lossSum += delta; }
-        rows.push({
-          rep, eOld: eStdOld, eHyb, delta, eNew: eNewFull, deltaNew: eNewFull - eStdOld,
-          eStandard: eStdNew, eFourToOne, fourToOne: fourToOneNominals(rep.nominal, rep.fixed)
-        });
+        if (canViewIndividualTables) {
+          rows.push({
+            rep, eOld: eStdOld, eHyb, delta, eNew: eNewFull, deltaNew: eNewFull - eStdOld,
+            eStandard: eStdNew, eFourToOne, fourToOne: fourToOneNominals(rep.nominal, rep.fixed)
+          });
+        }
       });
 
-      realAgg = { stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew, pexFourToOne, count: population.length };
+      realAgg = {
+        stdOld, stdNew, targetOld, targetNew, pexOld, pexHyb, pexNew, pexFourToOne,
+        currentPaid, currentVarShare: totalFixed > 0 ? currentPaid / totalFixed * 100 : 0,
+        count: population.length
+      };
+      const currentPexInput = document.getElementById('input-current-pex');
+      const currentShareInput = document.getElementById('input-old-var-share');
+      const headcountInput = document.getElementById('input-headcount');
+      if (currentPexInput) currentPexInput.value = (currentPaid / 1e6).toFixed(2);
+      if (currentShareInput) currentShareInput.value = realAgg.currentVarShare.toFixed(2);
+      if (headcountInput) headcountInput.value = population.length;
+      const currentPexCard = document.getElementById('kpi-pex-old');
+      if (currentPexCard) currentPexCard.innerText = (currentPaid / 1e6).toFixed(2) + ' M€';
       popMatrix = computeMatrix(population, pts0, ptsC, mu0, muC, matrixSize);
 
       const fmtM = v => (v / 1e6).toFixed(2) + ' M€';
@@ -239,17 +321,19 @@
       const populationShare = advPopulation.length ? population.length / advPopulation.length : 1;
       const fourC2pGainGrossM = state.baseC2P * (state.overperf / 100) * populationShare;
       const fourC2pGainM = fourC2pGainGrossM * (state.marginRate / 100);
-      const fourC2pGainEl = document.getElementById('four-to-one-c2p-gain');
-      fourC2pGainEl.innerText = (fourC2pGainM >= 0 ? '+' : '') + fourC2pGainM.toFixed(2) + ' M€';
-      fourC2pGainEl.className = 'text-2xl font-black ' + (fourC2pGainM >= 0 ? 'text-emerald-600' : 'text-rose-600');
-      document.getElementById('four-to-one-c2p-gain-gross').innerText =
-        (fourC2pGainGrossM >= 0 ? '+' : '') + fourC2pGainGrossM.toFixed(1) + ' M€ C2P';
-
       const fourPnlM = fourC2pGainM + (pexOld - pexFourToOne) / 1e6;
       const fourPnlEl = document.getElementById('four-to-one-pnl');
-      fourPnlEl.innerText = (fourPnlM >= 0 ? '+' : '') + fourPnlM.toFixed(2) + ' M€';
-      fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
-      setText('four-to-one-pnl-c2p', (fourC2pGainM >= 0 ? '+' : '') + fourC2pGainM.toFixed(2) + ' M€');
+      if (fourPnlEl) {
+        fourPnlEl.innerText = (fourPnlM >= 0 ? '+' : '') + fourPnlM.toFixed(2) + ' M€';
+        fourPnlEl.className = 'text-2xl font-black ' + (fourPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      }
+      const setC2pGenerated = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = (value >= 0 ? '+' : '') + value.toFixed(2) + ' M€';
+        el.className = 'text-lg font-black ' + (value >= 0 ? 'text-emerald-600' : 'text-rose-600');
+      };
+      setC2pGenerated('four-to-one-pnl-c2p', fourC2pGainM);
 
       // Hybrid P&L (same filtered scope)
       const hybC2pGainM = fourC2pGainGrossM * (state.marginRate / 100);
@@ -259,12 +343,12 @@
         hybPnlEl.innerText = (hybPnlM >= 0 ? '+' : '') + hybPnlM.toFixed(2) + ' M€';
         hybPnlEl.className = 'text-2xl mt-1 font-black ' + (hybPnlM >= 0 ? 'text-emerald-400' : 'text-rose-400');
       }
-      setText('hyb-top-c2p', (hybC2pGainM >= 0 ? '+' : '') + hybC2pGainM.toFixed(2) + ' M€');
+      setC2pGenerated('hyb-top-c2p', hybC2pGainM);
       setText('hyb-top-status', population.length + ' rep(s) displayed');
       setText('matrix-top-status', population.length + ' rep(s) displayed');
 
       // One call per tab — same numbers, same filters (see src/top-strip.js)
-      const stripVals = { old: pexOld, std: stdNew, hyb: pexHyb, four: pexFourToOne };
+      const stripVals = { old: currentPaid, std: stdNew, hyb: pexHyb, four: pexFourToOne };
       updateTopStrip('hyb-top', stripVals);
       updateTopStrip('four-to-one', stripVals);
       updateTopStrip('matrix', stripVals);
@@ -272,11 +356,10 @@
       const escapeHtml = v => String(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c]));
       rows.sort((a, b) => a.delta - b.delta);
       const tbody = document.getElementById('pop-table-body');
-      tbody.innerHTML = rows.map(r => {
+      tbody.innerHTML = canViewIndividualTables ? rows.map(r => {
         const deltaCls = r.delta > 20 ? 'text-emerald-600' : r.delta < -20 ? 'text-rose-600' : 'text-slate-400';
         const deltaNewCls = r.deltaNew > 20 ? 'text-emerald-600' : r.deltaNew < -20 ? 'text-rose-600' : 'text-slate-400';
         return '<tr class="hover:bg-slate-50/80">' +
-          '<td class="py-1.5 px-3 text-slate-500">' + escapeHtml(r.rep.id) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.fixed) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.nominal) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-500">' + fmtE(r.eOld) + '</td>' +
@@ -284,15 +367,14 @@
           '<td class="py-1.5 px-3 font-bold ' + deltaCls + '">' + (r.delta > 0 ? '+' : '') + fmtE(r.delta) + '</td>' +
           '<td class="py-1.5 px-3 font-bold text-indigo-700">' + fmtE(r.eNew) + '</td>' +
           '<td class="py-1.5 px-3 font-bold ' + deltaNewCls + '">' + (r.deltaNew > 0 ? '+' : '') + fmtE(r.deltaNew) + '</td></tr>';
-      }).join('');
+      }).join('') : '';
 
       const fourTbody = document.getElementById('four-to-one-table-body');
       const fourRows = [...rows].sort((a, b) => b.fourToOne.achievementShift - a.fourToOne.achievementShift);
-      fourTbody.innerHTML = fourRows.map(r => {
+      if (fourTbody) fourTbody.innerHTML = canViewIndividualTables ? fourRows.map(r => {
         const deltaFour = r.eFourToOne - r.eOld;
         const deltaFourCls = deltaFour > 20 ? 'text-emerald-600' : deltaFour < -20 ? 'text-rose-600' : 'text-slate-400';
         return '<tr class="hover:bg-slate-50/80">' +
-          '<td class="py-1.5 px-3 text-slate-500">' + escapeHtml(r.rep.id) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.fixed) + '</td>' +
           '<td class="py-1.5 px-3 text-slate-600">' + fmtE(r.rep.nominal) + '</td>' +
           '<td class="py-1.5 px-3 text-cyan-700">' + fmtE(r.fourToOne.nominalIncreaseE) + '</td>' +
@@ -302,7 +384,8 @@
           '<td class="py-1.5 px-3 text-indigo-700">' + fmtE(r.eStandard) + '</td>' +
           '<td class="py-1.5 px-3 font-bold text-cyan-700">' + fmtE(r.eFourToOne) + '</td>' +
           '<td class="py-1.5 px-3 font-bold ' + deltaFourCls + '">' + (deltaFour > 0 ? '+' : '') + fmtE(deltaFour) + '</td></tr>';
-      }).join('');
+      }).join('') : '';
 
       renderMatrix();
+      if (updateStandard && appInitialized) updateDashboard(true);
     }

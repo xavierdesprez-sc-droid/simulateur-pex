@@ -1,0 +1,10 @@
+Job Profile,Country,ID,Annual Base Pay 2026 Revised,Nominal Bonus 2026 Revised
+Account Executive,France,NCE-0001,52000,6500
+Account Executive,Spain,NCE-0002,48000,7200
+Senior Account Executive,Germany,NCE-0003,68000,10200
+Inside Sales,Italy,NCE-0004,41000,4600
+Key Account Manager,United Kingdom,NCE-0005,75000,12500
+Sales Development Representative,Netherlands,NCE-0006,39000,3500
+Manager,,NCE-0007,60000,7000
+Manager,Germany,NCE-INVALID-SALARY,0,5000
+Manager,Spain,NCE-INVALID-BONUS,55000,-100

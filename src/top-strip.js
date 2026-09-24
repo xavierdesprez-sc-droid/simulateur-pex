@@ -83,13 +83,13 @@ const TOP_STRIPS = {
     icon: '<div class="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg"><i data-lucide="repeat-2" class="w-4 h-4"></i></div>',
     title: 'Scenario 4:1 — Nominal to Objective',
     subtitle: 'The standard curve with a 4 € objective increase for each 1 € nominal increase',
-    valCls: 'text-lg',
-    pnlCls: 'text-2xl',
+    valCls: 'text-xl mt-1',
+    pnlCls: 'text-2xl mt-1',
     cards: [
       { type: 'delta', kind: 'standard' },
       { type: 'delta', kind: 'fourtoone' },
       { type: 'delta', kind: 'hybrid' },
-      { type: 'pnl', label: 'P&L', id: 'four-to-one-pnl', sub: 'C2P generated', c2pId: 'four-to-one-pnl-c2p', extra: '          <span id="four-to-one-c2p-gain" class="hidden"></span>\n          <span id="four-to-one-c2p-gain-gross" class="hidden"></span>\n' }
+      { type: 'pnl', label: '4:1 P&L', id: 'four-to-one-pnl', sub: 'C2P generated', c2pId: 'four-to-one-pnl-c2p' }
     ],
     sliderId: 'four-to-one-overperf',
     after: ''
@@ -111,15 +111,16 @@ const TOP_STRIPS = {
   }
 };
 
-function renderTopStrip(name) {
+function renderTopStrip(name, profile = 'SWE') {
   const cfg = TOP_STRIPS[name];
   if (!cfg) throw new Error('top-strip: unknown strip "' + name + '"');
-  const cards = cfg.cards.map(c => {
+  const cardDefinitions = cfg.cards.filter(c => profile !== 'NCE' || c.kind !== 'fourtoone');
+  const cards = cardDefinitions.map(c => {
     if (c.type === 'current') return currentCard(cfg.prefix, cfg.valCls);
     if (c.type === 'delta') return deltaCard(cfg.prefix, c.kind, cfg.valCls);
     return pnlCard(c, cfg.pnlCls);
   }).join('\n');
-  const n = cfg.cards.length;
+  const n = cardDefinitions.length;
   return `<div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">\n` +
     `      <div class="flex items-center gap-2 border-b border-slate-100 pb-3">\n` +
     `        ${cfg.icon}\n` +

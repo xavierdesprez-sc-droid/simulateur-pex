@@ -145,6 +145,33 @@
               tension: 0,
               hidden: true,
               order: 3
+            },
+            {
+              label: 'Initial Gaussian (Historical)',
+              data: [],
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              borderDash: [4, 4],
+              borderWidth: 2,
+              pointRadius: 0,
+              tension: 0.35,
+              fill: true,
+              yAxisID: 'density',
+              hidden: true,
+              order: 4
+            },
+            {
+              label: 'New Gaussian (Calibrated)',
+              data: [],
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.15)',
+              borderWidth: 2.5,
+              pointRadius: 0,
+              tension: 0.35,
+              fill: true,
+              yAxisID: 'density',
+              hidden: true,
+              order: 4
             }
           ]
         },
@@ -186,6 +213,23 @@
                 font: { family: 'JetBrains Mono', size: 10 },
                 color: '#ea580c',
                 callback: function(v) { return v + '%'; }
+              }
+            },
+            density: {
+              position: 'right',
+              display: false,
+              min: 0,
+              title: {
+                display: true,
+                text: 'Distribution density (%)',
+                font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                color: '#2563eb'
+              },
+              grid: { drawOnChartArea: false },
+              ticks: {
+                font: { family: 'JetBrains Mono', size: 10 },
+                color: '#2563eb',
+                callback: function(v) { return v.toFixed(1) + '%'; }
               }
             }
           }
@@ -262,6 +306,8 @@
       const hybVals = [];
       const newVals = [];
       const stdVals = [];
+      const initialGaussianVals = [];
+      const newGaussianVals = [];
       const beforePoints = [];
       const afterPoints = [];
       for (let v = 20; v <= 220; v += 1) {
@@ -270,6 +316,8 @@
         hybVals.push(evalHybridPayoutOldNominal(v, oldNomE, advState.fixedSalary));
         newVals.push(evalNewBasePayoutOldNominal(v, oldNomE, advState.fixedSalary));
         stdVals.push(evalNewPayout(v) * r);
+        initialGaussianVals.push(normalPdf(v, state.muInit, state.sigmaInit) * 100);
+        newGaussianVals.push(normalPdf(v, getCalibratedAchievement(state.muInit), state.sigmaInit) * 100);
         beforePoints.push(v === x ? oldVals[oldVals.length - 1] : null);
         afterPoints.push(v === Math.round(calibrated) ? hybVals[hybVals.length - 1] : null);
       }
@@ -280,6 +328,8 @@
       advChartInstance.data.datasets[3].data = beforePoints;
       advChartInstance.data.datasets[4].data = afterPoints;
       advChartInstance.data.datasets[5].data = stdVals;
+      advChartInstance.data.datasets[6].data = initialGaussianVals;
+      advChartInstance.data.datasets[7].data = newGaussianVals;
       advChartInstance.update();
 
       // Real population (CSV) — recompute with current curve parameters

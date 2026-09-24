@@ -64,21 +64,32 @@
       }
     };
 
-    // Parses a population CSV (header line 1, cols A=Orga B=Position C=Country
-    // D=ID E-F ignored G=Base Salary H=Amount) — same mapping as Code.gs.
+    // Parses a population CSV using the active cluster profile.
+    function isExcludedPopulationOrga(orga) {
+      const pattern = activePopulationProfile.excludedOrgaPattern;
+      return Boolean(pattern && pattern.test(String(orga || '')));
+    }
+
     function parsePopulationCsv(text) {
       const lines = String(text || '').split(/\r?\n/).filter(l => l.trim() !== '');
       const reps = [];
       let ignored = 0;
-      for (let i = 1; i < lines.length; i++) { // skip header
+      const c = activePopulationProfile.columns;
+      for (let i = activePopulationProfile.csvHeaderRow; i < lines.length; i++) {
         const cells = lines[i].split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
         const cell = n => cells.length > n ? cells[n] : '';
-        const fixed = Number(cell(6)) || 0;
-        const nominal = Number(cell(7)) || 0;
-        if (!(fixed > 0 && nominal >= 0)) { ignored++; continue; }
+        const fixed = Number(cell(c.fixed)) || 0;
+        const nominal = Number(cell(c.nominal)) || 0;
+        if (isExcludedPopulationOrga(c.orga === undefined ? '' : cell(c.orga)) ||
+            !cell(c.country).trim() ||
+            !cell(c.jobProfile).trim() ||
+            !(fixed > 0 && nominal >= 0)) {
+          ignored++;
+          continue;
+        }
         reps.push({
-          id: cell(3) || 'rep' + i,
-          orga: cell(0), position: cell(1), country: cell(2),
+          jobProfile: cell(c.jobProfile),
+          country: cell(c.country),
           fixed, nominal
         });
       }

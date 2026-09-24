@@ -1,0 +1,19 @@
+diff --git a/tests/harness.js b/tests/harness.js
+index 3384878..9b212bf 100644
+--- a/tests/harness.js
++++ b/tests/harness.js
+@@ -101,11 +101,13 @@ function runSuite(suiteFile, app = 'default') {
+     if (ok) results.pass++;
+     else { results.fail++; results.failures.push({ suite: suiteName, name }); console.log('  FAIL:', name); }
+   };
++  const defaultHtmlSrc = fs.readFileSync(HTML_PATH, 'utf8');
+   const h = {
+     els,
+     mock: mocks,
+     check: record,
+-    htmlSrc: fs.readFileSync(HTML_PATH, 'utf8'),
++    htmlSrc: app === 'sales-rep' ? buildSalesRepString() : defaultHtmlSrc,
++    defaultHtmlSrc,
+     buildSalesRepString,
+     input(id, value) {
+       const el = els[id] || (els[id] = makeEl());

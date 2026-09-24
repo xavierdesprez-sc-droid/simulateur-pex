@@ -1,0 +1,13 @@
+diff --git a/tests/07-sales-rep.test.js b/tests/07-sales-rep.test.js
+--- a/tests/07-sales-rep.test.js
++++ b/tests/07-sales-rep.test.js
+@@ -3 +3 @@
+-  const { check, htmlSrc, buildSalesRepString } = __h;
++  const { check, htmlSrc, defaultHtmlSrc, buildSalesRepString } = __h;
+@@ -14,3 +14,5 @@
+     !/id="view-(standard|advanced|matrix)"/.test(salesRepHtml));
++  check('Sales Rep harness exposes matching generated HTML',
++    htmlSrc === salesRepHtml);
+   check('Sales Rep bundle is distinct from the default bundle',
+-    salesRepHtml !== htmlSrc);
++    salesRepHtml !== defaultHtmlSrc);

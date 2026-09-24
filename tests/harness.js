@@ -5,6 +5,7 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { buildString } = require('../build');
 
 const HTML_PATH = path.join(__dirname, '..', 'index.html');
 const results = { pass: 0, fail: 0, failures: [] };
@@ -95,6 +96,7 @@ function runSuite(suiteFile) {
     mock: mocks,
     check: record,
     htmlSrc: fs.readFileSync(HTML_PATH, 'utf8'),
+    buildString,
     assertClose(name, got, exp, tol = 0.01) {
       record(`${name} (got ${got}, exp ${exp})`, Math.abs(got - exp) <= tol);
     }

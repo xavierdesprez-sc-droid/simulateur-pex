@@ -29,16 +29,19 @@
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
       const isFourToOne = view === 'four-to-one';
+      if (isFourToOne && !activePopulationProfile.views.fourToOne) return;
       document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix || isFourToOne);
       document.getElementById('view-advanced').classList.toggle('hidden', !isAdv);
       document.getElementById('view-matrix').classList.toggle('hidden', !isMatrix);
-      document.getElementById('view-four-to-one').classList.toggle('hidden', !isFourToOne);
+      const fourToOneView = document.getElementById('view-four-to-one');
+      if (fourToOneView) fourToOneView.classList.toggle('hidden', !isFourToOne);
       const active = 'px-3 py-1.5 rounded-lg bg-white shadow-sm ';
       const inactive = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all';
       document.getElementById('tab-standard').className = (view === 'standard') ? active + 'text-indigo-600' : inactive;
       document.getElementById('tab-advanced').className = isAdv ? active + 'text-orange-600' : inactive;
       document.getElementById('tab-matrix').className = isMatrix ? active + 'text-emerald-600' : inactive;
-      document.getElementById('tab-four-to-one').className = isFourToOne ? active + 'text-cyan-600' : inactive;
+      const fourToOneTab = document.getElementById('tab-four-to-one');
+      if (fourToOneTab) fourToOneTab.className = isFourToOne ? active + 'text-cyan-600' : inactive;
       if (isAdv) {
         // Lazy init: Chart.js needs a visible container to size correctly
         if (!advChartInstance) initAdvChart();
@@ -71,20 +74,20 @@
         state.targetIncrease = 0;
         state.overperf = 0;
         state.muInit = 110;
-        state.sigmaInit = 30;
+        state.sigmaInit = 60;
         document.getElementById('preset-initial').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'targetGroup') {
         // Absolute pp: mu = 110, targetIncrease = +30pp → new mu = 110 - 30 = 80%
         state.targetIncrease = 30;
         state.overperf = 0;
         state.muInit = 110;
-        state.sigmaInit = 30;
+        state.sigmaInit = 60;
         document.getElementById('preset-targetGroup').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'highIncentive') {
         state.targetIncrease = 30;
         state.overperf = 2; // +2 pp induced overperformance
         state.muInit = 110;
-        state.sigmaInit = 30;
+        state.sigmaInit = 60;
         document.getElementById('preset-highIncentive').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       }
 
@@ -94,21 +97,16 @@
 
     function resetDefaults() {
       state.currentPEX = 2.5;
-      state.sigmaInit = 30;
+      state.sigmaInit = 60;
       state.muInit = 110;
       state.oldVarShare = 11;
       state.newVarShare = 20;
-      state.marginRate = 20;
+      state.marginRate = 10;
       state.repFixedSalary = 50000;
       state.repCurrentBonusPct = 10;
       state.repInitPerf = 110;
       fourToOneState.corridorC2P = 300000;
-      state.breakpoints = [
-        { achievement: 0, payout: 0 },
-        { achievement: 40, payout: 0 },
-        { achievement: 100, payout: 100 },
-        { achievement: 200, payout: 200 }
-      ];
+      state.breakpoints = activePopulationProfile.defaultBreakpoints.map(p => ({ ...p }));
       renderBreakpointsTable();
       applyPreset('initial');
     }
@@ -149,7 +147,17 @@
       document.getElementById('slider-chart-bonus-sync').value = state.repCurrentBonusPct;
       document.getElementById('slider-chart-rep-sync').value = state.repInitPerf;
       document.getElementById('slider-rep-achievement').value = state.repInitPerf;
-      document.getElementById('four-to-one-corridor').value = fourToOneState.corridorC2P;
+      const fourToOneCorridor = document.getElementById('four-to-one-corridor');
+      if (fourToOneCorridor) fourToOneCorridor.value = fourToOneState.corridorC2P;
+
+      const populationInputs = ['input-current-pex', 'input-old-var-share', 'input-base-ca', 'input-headcount'];
+      const blankPopulationInputs = activePopulationProfile.blankPopulationInputs === true;
+      populationInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.placeholder = blankPopulationInputs ? '-' : '';
+        if (blankPopulationInputs) input.value = '';
+      });
     }
 
     // Attach Event Listeners
@@ -163,7 +171,9 @@
 
       // Overperformance sliders (Standard + the 3 shared top strips, all synced)
       OVERPERF_PAIRS.forEach(([sliderId]) => {
-        document.getElementById(sliderId).addEventListener('input', (e) => {
+        const slider = document.getElementById(sliderId);
+        if (!slider) return;
+        slider.addEventListener('input', (e) => {
           state.overperf = parseFloat(e.target.value);
           syncOverperfSliders();
           updateDashboard();
@@ -222,12 +232,14 @@
       bindNumberInput('input-payout-cap', 'payoutCap', 100, 500, false);
       bindNumberInput('input-rep-fixed-salary', 'repFixedSalary', 10000, 250000, false);
 
-      document.getElementById('four-to-one-corridor').addEventListener('input', (e) => {
-        const raw = parseFloat(e.target.value);
-        fourToOneState.corridorC2P = normalizeFourToOneCorridor(raw);
-        e.target.value = fourToOneState.corridorC2P;
-        refreshPopulation();
-      });
+      if (activePopulationProfile.views.fourToOne) {
+        document.getElementById('four-to-one-corridor').addEventListener('input', (e) => {
+          const raw = parseFloat(e.target.value);
+          fourToOneState.corridorC2P = normalizeFourToOneCorridor(raw);
+          e.target.value = fourToOneState.corridorC2P;
+          refreshPopulation();
+        });
+      }
 
       // Advanced view controls
       document.getElementById('adv-achievement').addEventListener('input', (e) => {
@@ -312,6 +324,7 @@
 
       // Population from the Sheet
       document.getElementById('pop-sheet-btn').addEventListener('click', loadPopulationFromSheet);
+      document.getElementById('btn-adv-gaussian').addEventListener('click', () => toggleDatasetAdv(6));
 
       const popCsvInput = document.getElementById('pop-csv-input');
       popCsvInput.addEventListener('change', () => {
@@ -333,6 +346,8 @@
 
     // Initialize on DOM load
     window.addEventListener('DOMContentLoaded', () => {
+      appInitialized = true;
+      applyProfileUi();
       lucide.createIcons();
       renderBreakpointsTable();
       initChart();

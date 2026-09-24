@@ -36,18 +36,14 @@
           </div>
         </div>
       </div>
-      <div id="matrix-filter-zone" class="hidden grid grid-cols-3 gap-3">
-        <div>
-          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Orga</label>
-          <select id="matrix-filter-orga" onchange="onMatrixFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"><option value="">All</option></select>
-        </div>
+      <div id="matrix-filter-zone" class="hidden grid grid-cols-2 gap-3">
         <div>
           <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Country</label>
           <select id="matrix-filter-country" onchange="onMatrixFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"><option value="">All</option></select>
         </div>
         <div>
-          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Position</label>
-          <select id="matrix-filter-position" onchange="onMatrixFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"><option value="">All</option></select>
+          <label class="text-[10px] uppercase tracking-wide text-slate-500 font-semibold block mb-1">Job Profile</label>
+          <select id="matrix-filter-jobProfile" onchange="onMatrixFilterChange()" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"><option value="">All</option></select>
         </div>
       </div>
     </div>
@@ -63,8 +59,8 @@
               <button id="matrix-size-3" onclick="setMatrixSize('3x3')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">3&times;3</button>
             </div>
             <div class="flex gap-1">
-              <button id="matrix-mode-levels" onclick="setMatrixMode('levels')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">Expectations</button>
               <button id="matrix-mode-deltas" onclick="setMatrixMode('deltas')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-orange-50 text-orange-700 border border-orange-200 transition-all">&Delta; vs current</button>
+              <button id="matrix-mode-levels" onclick="setMatrixMode('levels')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">Expectations</button>
             </div>
           </div>
         </div>

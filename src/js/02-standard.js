@@ -22,7 +22,7 @@
     }
 
     // Update entire dashboard
-    function updateDashboard() {
+    function updateDashboard(skipPopulationRefresh = false) {
       // 1. Calculations
       syncOverperfSliders();
       const muCalibrated = getCalibratedAchievement(state.muInit);
@@ -30,7 +30,14 @@
       document.getElementById('val-init-mu').innerText = state.muInit.toFixed(1) + '%';
 
       // Real population loaded → actual PEX per rep (otherwise average model)
-      if (advPopulation.length) refreshPopulation();
+      if (advPopulation.length && !skipPopulationRefresh) refreshPopulation(false);
+      if (activePopulationProfile.blankPopulationMetrics && !realAgg) {
+        ['kpi-pex-new', 'kpi-pex-payout-rate', 'kpi-pex-old', 'kpi-pex-diff', 'kpi-pex-savings', 'val-new-target-pex'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = '—';
+        });
+        return;
+      }
 
       let oldPexM, newPexM, newTargetPEX_M, newExpectedPayoutPct, oldTargetPEX_M;
       if (realAgg) {
@@ -39,6 +46,11 @@
         newTargetPEX_M = realAgg.targetNew / 1e6;
         oldTargetPEX_M = realAgg.targetOld / 1e6;
         newExpectedPayoutPct = realAgg.targetNew > 0 ? realAgg.stdNew / realAgg.targetNew * 100 : 0;
+        oldPexM = realAgg.currentPaid / 1e6;
+        oldTargetPEX_M = realAgg.currentPaid;
+        const currentShare = realAgg.currentVarShare;
+        newTargetPEX_M = currentShare > 0 ? realAgg.currentPaid * (state.newVarShare / currentShare) / 1e6 : 0;
+        newPexM = newTargetPEX_M * (newExpectedPayoutPct / 100);
       } else {
         const oldExpectedPayoutPct = calculateExpectedPayout(false);
         oldTargetPEX_M = state.currentPEX / (oldExpectedPayoutPct / 100);
@@ -72,13 +84,13 @@
       const pexSavingsEl = document.getElementById('kpi-pex-savings');
       const pexSavingsLabel = document.getElementById('kpi-pex-savings-label');
       if (pexDiffM >= 0) {
-        pexSavingsEl.innerText = '+' + pexDiffM.toFixed(2) + ' M€';
+        pexSavingsEl.innerText = (-pexDiffM >= 0 ? '+' : '') + (-pexDiffM).toFixed(2) + ' M€';
         pexSavingsEl.className = 'text-2xl font-black text-emerald-600';
-        pexSavingsLabel.innerText = 'Net budget savings on PEX';
+        pexSavingsLabel.innerText = 'PEX reduction vs current';
       } else {
-        pexSavingsEl.innerText = pexDiffM.toFixed(2) + ' M€';
+        pexSavingsEl.innerText = (-pexDiffM >= 0 ? '+' : '') + (-pexDiffM).toFixed(2) + ' M€';
         pexSavingsEl.className = 'text-2xl font-black text-rose-600';
-        pexSavingsLabel.innerText = 'Budget overrun on PEX';
+        pexSavingsLabel.innerText = 'Additional PEX cost vs current';
       }
 
       const marginGainEl = document.getElementById('kpi-margin-gain');
@@ -106,9 +118,6 @@
       // 6. Dynamic texts
       document.getElementById('legend-mu').innerHTML = '&mu; = ' + state.muInit.toFixed(0) + '%';
       document.getElementById('segments-sigma').innerHTML = '&sigma; = ' + state.sigmaInit.toFixed(0) + '%';
-      document.getElementById('footer-sigma').innerHTML = state.sigmaInit.toFixed(0) + '%';
-      document.getElementById('footer-pex').innerHTML = state.currentPEX.toFixed(1) + ' M€';
-
       // 7. Refresh KaTeX math rendering
       renderMathSafely();
     }
@@ -317,8 +326,8 @@
               label: 'Initial Gaussian (Historical)',
               data: [],
               yAxisID: 'yDensity',
-              borderColor: 'rgba(148, 163, 184, 0.9)',
-              backgroundColor: 'rgba(148, 163, 184, 0.08)',
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
               borderDash: [4, 4],
               fill: true,
               borderWidth: 2,
@@ -330,8 +339,8 @@
               label: 'New Gaussian (Calibrated)',
               data: [],
               yAxisID: 'yDensity',
-              borderColor: 'rgba(99, 102, 241, 0.95)',
-              backgroundColor: 'rgba(99, 102, 241, 0.15)',
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.15)',
               fill: true,
               borderWidth: 2.5,
               tension: 0.35,
@@ -422,9 +431,9 @@
                 },
                 label: function(context) {
                   if (context.datasetIndex === 0) {
-                    return `Initial density: ${(context.raw * 100).toFixed(2)}%`;
+                    return `Initial density: ${context.raw.toFixed(2)}%`;
                   } else if (context.datasetIndex === 1) {
-                    return `New density: ${(context.raw * 100).toFixed(2)}%`;
+                    return `New density: ${context.raw.toFixed(2)}%`;
                   } else if (context.datasetIndex === 2) {
                     return `Old payout: ${context.raw.toFixed(1)}%`;
                   } else if (context.datasetIndex === 3) {
@@ -474,9 +483,18 @@
               type: 'linear',
               position: 'right',
               min: 0,
-              max: 0.016, // Fixed maximum for invariant bell height
-              grid: { display: false },
-              ticks: { display: false }
+              title: {
+                display: true,
+                text: 'Distribution density (%)',
+                font: { family: 'Plus Jakarta Sans', weight: 'bold', size: 11 },
+                color: '#2563eb'
+              },
+              grid: { drawOnChartArea: false },
+              ticks: {
+                font: { family: 'JetBrains Mono', size: 10 },
+                color: '#2563eb',
+                callback: function(v) { return v.toFixed(1) + '%'; }
+              }
             }
           }
         }
@@ -488,7 +506,7 @@
 
       const muInit = state.muInit;
       const muCalibrated = getCalibratedAchievement(state.muInit);
-      const sigma = state.sigmaInit; // Strictly constant sigma = 30%
+      const sigma = state.sigmaInit; // Strictly constant sigma
 
       // Nominal scaling factor for the weighted curve
       const oldBonusPct = state.repCurrentBonusPct;
@@ -507,8 +525,8 @@
 
       for (let x = 10; x <= 220; x += 1) {
         xValues.push(x);
-        initDensityValues.push(normalPdf(x, muInit, sigma));
-        newDensityValues.push(normalPdf(x, muCalibrated, sigma));
+        initDensityValues.push(normalPdf(x, muInit, sigma) * 100);
+        newDensityValues.push(normalPdf(x, muCalibrated, sigma) * 100);
         
         const oldP = evalOldPayout(x);
         const newP = evalNewPayout(x);

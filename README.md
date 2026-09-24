@@ -85,11 +85,67 @@ Two possible modes (`Code.gs` handles both):
 **Standalone** (a single web app, independent of the spreadsheet):
 1. Create a project on script.google.com
 2. Paste both files (HTML named `index`)
-3. Fill in `SHEET_ID` at the top of `Code.gs` with the spreadsheet ID (the string in the URL between `/d/` and `/edit`)
-4. Deploy → Web app — Google will ask for permission to access the spreadsheet on first launch
+3. Set `DEPLOYED_PROFILE` in `Code.gs` to `SWE` or `NCE`; `SHEET_ID` selects that profile's configured spreadsheet ID
+4. Deploy → Web app and authorize access to the configured spreadsheets when prompted
+
+### Per-person access for the web app
+
+The deployment's **Who has access** setting is organization-wide, so keep it set to
+**Anyone within AIR LIQUIDE** and let the server enforce the individual allowlist:
+
+1. Create a separate spreadsheet that is not shared with simulator users. Add a tab named
+   `Access`, put the contact email in `D2`, and list full-access emails in `A2:A`.
+   List restricted-access emails in `B2:B`; don't repeat emails across columns. Column A
+   users see the individual tables, while column B users see aggregate views only. If an
+   email is accidentally in both columns, restricted access takes precedence.
+2. `ACCESS_LIST_SPREADSHEET_ID` in `Code.gs` points to the private Access spreadsheet.
+   Copy the same `Code.gs` to both Apps Script projects. The A/B access lists are shared:
+   an email's permission applies equally to both apps; there are no separate SWE and NCE
+   access lists. No Script Property is required.
+3. Deploy the web app as **Execute as: Me**. `Code.gs` checks the signed-in user's email
+   before serving the simulator and again before returning population data. Unlisted users
+   see a request-access message with the contact email from `Access!D2`.
+4. Test with an ordinary user account in the organization. If Apps Script cannot identify
+   that user's email, access is denied. After code changes, edit the deployment and publish
+   a new version.
+
+The A/B distinction only controls table visibility in the UI. The browser still receives
+the individual population values for calculations, so restricted users could inspect them
+with developer tools. Local/manual CSV mode remains unchanged.
 
 When opened outside Apps Script (local file), the loading button falls back to the local CSV
 (`population_test.csv` or a picked file) — the rest of the tool works normally.
+
+### Cluster profiles
+
+The source code is shared by SWE and NCE. The generated bundle selects the profile, while
+each Apps Script project fixes its server-side profile in `Code.gs`:
+
+```js
+const DEPLOYED_PROFILE = 'SWE'; // set to 'NCE' in the NCE project
+// POPULATION_SPREADSHEET_IDS and ACCESS_LIST_SPREADSHEET_ID are configured in Code.gs.
+const SHEET_ID = POPULATION_SPREADSHEET_IDS[DEPLOYED_PROFILE];
+```
+
+Use separate Apps Script projects for the SWE and NCE deployments. Copy the common `Code.gs`
+to both projects, then set `DEPLOYED_PROFILE` to `SWE` or `NCE`. `SHEET_ID` selects the
+corresponding configured population spreadsheet. The same `ACCESS_LIST_SPREADSHEET_ID` is
+used by both projects, so the same full/restricted access lists apply to SWE and NCE. The
+browser does not choose the data profile, so an SWE deployment cannot request the NCE
+spreadsheet.
+
+The generated bundles are built with:
+
+```text
+node build.js --profile=SWE --out=dist/SWE/index.html
+node build.js --profile=NCE --out=dist/NCE/index.html
+```
+
+SWE maps `Position` to the common UI label `Job Profile` and reads base salary/nominal from
+columns G/H. NCE reads `Job Profile`, `Country`, `Annual Base Pay 2026 Revised`, and
+`Nominal Bonus 2026 Revised` from columns A/B/D/E. The ID column is ignored in both profiles.
+Both profiles expose only `Country` and `Job Profile` filters on the first page and calculate
+Current PEX Paid, headcount, and Avg. Current Var. Share from the filtered Sheet data.
 
 ## Build (split src/ -> index.html monofichier)
 
@@ -112,7 +168,8 @@ The application itself has no local installation requirement. Node.js is only ne
 node tests/run.js
 ```
 
-213 checks in 4 suites (simulated DOM, no dependencies):
+The runner checks the generated bundle, Apps Script syntax, backend authorization, and the
+simulated-DOM UI suites (no added dependencies):
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)
@@ -120,6 +177,9 @@ node tests/run.js
 - `03-population`: mocked Sheet loading, 20% floor per rep, target increase,
   € floors, HTML escaping, return to the average model
 - `04-standard-ui`: dynamic texts, archetype badges, average model, reset
+- `05-cluster-profiles`: profile-specific fields, filters, and CSV mappings
+- `06-detail-visibility`: role-controlled visibility for the two per-person tables
+- `auth.test.js`: Apps Script allowlist checks and full/restricted access lists
 
 ## Architecture
 

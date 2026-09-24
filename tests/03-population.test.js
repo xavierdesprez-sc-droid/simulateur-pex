@@ -71,34 +71,34 @@ module.exports = function suite(__h) {
   check('delta ≤ −20 € in red', els['pop-table-body'].innerHTML.indexOf('text-rose-600') > -1);
   state.targetIncrease = 0;
 
-  // ===== Orga / country / position filters =====
+  // ===== Country / job profile filters =====
   advPopulation = [
-    { id: 'F1', orga: 'FR', country: 'France', position: 'AE', fixed: 50000, nominal: 5000 },
-    { id: 'F2', orga: 'FR', country: 'Spain', position: 'AE', fixed: 50000, nominal: 5000 },
-    { id: 'F3', orga: 'DE', country: 'France', position: 'KAM', fixed: 50000, nominal: 5000 }
+    { id: 'F1', country: 'France', jobProfile: 'AE', fixed: 50000, nominal: 5000 },
+    { id: 'F2', country: 'Spain', jobProfile: 'AE', fixed: 50000, nominal: 5000 },
+    { id: 'F3', country: 'France', jobProfile: 'KAM', fixed: 50000, nominal: 5000 }
   ];
-  popFilters.orga = ''; popFilters.country = ''; popFilters.position = '';
+  popFilters.country = ''; popFilters.jobProfile = '';
   refreshPopulation();
-  check('orga options populated (DE, FR)', els['pop-filter-orga'].innerHTML.indexOf('>DE<') > -1 && els['pop-filter-orga'].innerHTML.indexOf('>FR<') > -1);
+  check('country options populated (France, Spain)', els['pop-filter-country'].innerHTML.indexOf('>France<') > -1 && els['pop-filter-country'].innerHTML.indexOf('>Spain<') > -1);
   const pexAllF = realAgg.pexHyb;
-  popFilters.orga = 'DE';
+  popFilters.country = 'France';
   refreshPopulation();
-  check('orga filter: 1 row shown', els['pop-table-body'].innerHTML.split('<tr').length - 1 === 1);
-  assertClose('orga filter: aggregates reduced to one third', realAgg.pexHyb, pexAllF / 3, 1);
-  popFilters.orga = 'FR'; popFilters.country = 'Spain';
+  check('country filter: 2 rows shown', els['pop-table-body'].innerHTML.split('<tr').length - 1 === 2);
+  assertClose('country filter: aggregates reduced to two thirds', realAgg.pexHyb, pexAllF * 2 / 3, 1);
+  popFilters.country = 'Spain'; popFilters.jobProfile = 'AE';
   refreshPopulation();
-  check('combined filters (AND): F2 only', els['pop-table-body'].innerHTML.indexOf('F2') > -1 && els['pop-table-body'].innerHTML.indexOf('F1') === -1);
-  popFilters.orga = ''; popFilters.country = ''; popFilters.position = 'KAM';
+  check('combined filters (AND): one row', els['pop-table-body'].innerHTML.split('<tr').length - 1 === 1);
+  popFilters.country = ''; popFilters.jobProfile = 'KAM';
   refreshPopulation();
-  check('position filter: F3 only', els['pop-table-body'].innerHTML.indexOf('F3') > -1 && els['pop-table-body'].innerHTML.indexOf('F2') === -1);
+  check('job profile filter: one row', els['pop-table-body'].innerHTML.split('<tr').length - 1 === 1);
   check('status shows loaded / displayed', els['pop-status'].innerText.indexOf('1 displayed') > -1);
-  els['pop-filter-orga'].value = 'FR'; els['pop-filter-country'].value = ''; els['pop-filter-position'].value = '';
+  els['pop-filter-country'].value = 'France'; els['pop-filter-jobProfile'].value = '';
   onPopFilterChange();
-  check('onPopFilterChange reads the selects', popFilters.orga === 'FR' && els['pop-table-body'].innerHTML.indexOf('F1') > -1 && els['pop-table-body'].innerHTML.indexOf('F3') === -1);
-  els['pop-filter-orga'].value = 'XX';
+  check('onPopFilterChange reads the selects', popFilters.country === 'France' && els['pop-table-body'].innerHTML.split('<tr').length - 1 === 2);
+  els['pop-filter-country'].value = 'XX';
   onPopFilterChange();
-  check('stale filter reset to All', popFilters.orga === '' && els['pop-filter-orga'].value === '');
-  popFilters.orga = ''; popFilters.country = ''; popFilters.position = '';
+  check('stale filter reset to All', popFilters.country === '' && els['pop-filter-country'].value === '');
+  popFilters.country = ''; popFilters.jobProfile = '';
   refreshPopulation();
 
   // ===== The fixed salary slider does NOT change the real PEX =====
@@ -130,11 +130,11 @@ module.exports = function suite(__h) {
   check('min100 > base', realAgg.pexHyb > base);
   S.min100E = 0;
 
-  // ===== HTML escaping of IDs =====
-  advPopulation = [{ id: '<b>&x', fixed: 50000, nominal: 5000 }];
+  // ===== IDs are not used or rendered =====
+  advPopulation = [{ id: '<b>&x', jobProfile: 'AE', country: 'France', fixed: 50000, nominal: 5000 }];
   refreshPopulation();
   const tblHtml = els['pop-table-body'].innerHTML;
-  check('ID escaped', tblHtml.indexOf('&lt;b&gt;&amp;x') > -1 && tblHtml.indexOf('<b>') === -1);
+  check('ID omitted from population table', tblHtml.indexOf('&lt;b&gt;&amp;x') === -1 && tblHtml.indexOf('<b>') === -1);
 
   // ===== Expected (new) + new Δ in the table =====
   state.targetIncrease = 30;
@@ -145,7 +145,7 @@ module.exports = function suite(__h) {
   refreshPopulation();
   check('header contains New expected value', /<tr id="pop-table-head">[\s\S]*?New expected value/.test(htmlSrc));
   const tblNew = els['pop-table-body'].innerHTML;
-  check('8 cells per row (2 new columns)', tblNew.split('<td').length - 1 === 16);
+  check('7 cells per row after removing ID (2 new columns)', tblNew.split('<td').length - 1 === 14);
   const muCt = getCalibratedAchievement(state.muInit);
   const ptsCt = Engine.densityPoints(muCt, state.sigmaInit);
   let expNewA = 0, expNewTot = 0;
@@ -195,6 +195,7 @@ module.exports = function suite(__h) {
 
   // ===== Matrix: DOM rendering and switch =====
   check('default mode is deltas', els['matrix-mode-deltas'].className.indexOf('text-orange-700') > -1 && els['matrix-mode-levels'].className.indexOf('text-slate-500') > -1);
+  check('matrix mode buttons show deltas before levels', htmlSrc.indexOf('id="matrix-mode-deltas"') < htmlSrc.indexOf('id="matrix-mode-levels"'));
   check('cells identified: Δ Hyb and Δ New chips', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('&Delta; Hyb') > -1 && els[id].innerHTML.indexOf('&Delta; New') > -1));
   check('cells colored: amber and indigo present in levels', setMatrixMode('levels') === undefined && ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('text-amber-600') > -1 && els[id].innerHTML.indexOf('text-indigo-600') > -1));
   check('levels cells identified: Hyb and New chips', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('Hyb</span>') > -1 && els[id].innerHTML.indexOf('New</span>') > -1));
@@ -248,19 +249,19 @@ module.exports = function suite(__h) {
   check('matrix card moved: matrix-card inside view-matrix', htmlSrc.indexOf('id="view-matrix"') < htmlSrc.indexOf('id="matrix-card"'));
   check('matrix card removed from advanced population card', htmlSrc.indexOf('id="pop-table-body"') < htmlSrc.indexOf('id="matrix-card"') && htmlSrc.indexOf('id="pop-results"') < htmlSrc.indexOf('id="view-matrix"'));
   advPopulation = [
-    { id: 'M1', orga: 'EMEA Direct', country: 'France', position: 'AE', fixed: 50000, nominal: 5000 },
-    { id: 'M2', orga: 'EMEA Direct', country: 'Spain', position: 'KAM', fixed: 60000, nominal: 14000 }
+    { id: 'M1', country: 'France', jobProfile: 'AE', fixed: 50000, nominal: 5000 },
+    { id: 'M2', country: 'Spain', jobProfile: 'KAM', fixed: 60000, nominal: 14000 }
   ];
   refreshPopulation();
-  els['matrix-filter-orga'].value = 'EMEA Direct';
+  els['matrix-filter-jobProfile'].value = 'AE';
   onMatrixFilterChange();
-  check('matrix filter syncs to pop filter', els['pop-filter-orga'].value === 'EMEA Direct' && popFilters.orga === 'EMEA Direct');
+  check('matrix filter syncs to pop filter', els['pop-filter-jobProfile'].value === 'AE' && popFilters.jobProfile === 'AE');
   els['pop-filter-country'].value = 'France';
   onPopFilterChange();
   check('pop filter syncs to matrix filter', els['matrix-filter-country'].value === 'France' && popFilters.country === 'France');
-  els['matrix-filter-orga'].value = ''; els['matrix-filter-country'].value = '';
+  els['matrix-filter-jobProfile'].value = ''; els['matrix-filter-country'].value = '';
   onMatrixFilterChange();
-  check('matrix filters reset', popFilters.orga === '' && popFilters.country === '' && els['pop-filter-orga'].value === '');
+  check('matrix filters reset', popFilters.jobProfile === '' && popFilters.country === '' && els['pop-filter-jobProfile'].value === '');
   // Sync target increase & minimums
   syncTargetSliders();
   check('matrix target slider synced', els['matrix-target-increase'].value == state.targetIncrease && els['matrix-val-target-increase'].innerText.indexOf('%') > -1);
@@ -277,6 +278,7 @@ module.exports = function suite(__h) {
   syncMinInputs();
   refreshPopulation();
   check('matrix min inputs exist in view', htmlSrc.indexOf('id="matrix-min-100"') > -1 && htmlSrc.indexOf('id="matrix-min-200"') > -1 && htmlSrc.indexOf('id="matrix-target-increase"') > -1);
+  check('matrix view omits Orga filter', htmlSrc.indexOf('filter-orga') === -1);
   check('min100=0 restores baseline', realAgg.pexHyb === hybBefore);
   setView('standard');
   check('tab-standard active on setView(standard)', els['tab-standard'].className.indexOf('shadow-sm') > -1);
@@ -293,14 +295,20 @@ module.exports = function suite(__h) {
     'FR,AE,Spain,C4,,,0,5000\n' +
     'FR,AE,Italy,C5\n'
   );
-  check('parse: 3 valid reps', csv1.reps.length === 3);
-  check('parse: 2 ignored rows', csv1.ignored === 2);
-  check('parse: full mapping row 1', csv1.reps[0].id === 'C1' && csv1.reps[0].orga === 'FR' && csv1.reps[0].position === 'AE' && csv1.reps[0].country === 'France' && csv1.reps[0].fixed === 50000 && csv1.reps[0].nominal === 5000);
-  check('parse: id fallback rep2', csv1.reps[1].id === 'rep2');
-  check('parse: quoted field stripped', csv1.reps[2].id === 'C 3');
+  check('parse: 2 valid reps', csv1.reps.length === 2);
+  check('parse: 3 ignored rows', csv1.ignored === 3);
+  check('parse: canonical mapping row 1', csv1.reps[0].jobProfile === 'AE' && csv1.reps[0].country === 'France' && csv1.reps[0].fixed === 50000 && csv1.reps[0].nominal === 5000 && !('id' in csv1.reps[0]));
+  check('parse: second row keeps canonical fields', csv1.reps[1].jobProfile === 'KAM' && csv1.reps[1].fixed === 40000);
+  check('parse: quoted fields are accepted', csv1.reps[1].country === 'Germany');
   check('parse: \r\n tolerated', parsePopulationCsv('H,H,H,H,,,H,H\r\nFR,AE,France,C9,,,50000,5000\r\n').reps.length === 1);
   check('parse: empty nominal kept as 0', parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,France,C6,,,40000,\n').reps[0].nominal === 0);
   check('parse: blank lines tolerated', parsePopulationCsv('\nH,H,H,H,,,H,H\n\nFR,AE,France,C7,,,45000,7000\n\n').reps.length === 1);
+  const csvWithoutMg = parsePopulationCsv(
+    'Orga,Position,Country,ID,,,Base Salary,Amount\n' +
+    'MG France,AE,France,MG1,,,50000,5000\n' +
+    'fr,AE,France,F8,,,50000,5000\n'
+  );
+  check('parse: orgas containing MG are excluded', csvWithoutMg.reps.length === 1 && csvWithoutMg.reps[0].country === 'France' && csvWithoutMg.ignored === 1);
 
   // ===== Local CSV: applyPopulationCsv (success path logic) =====
   popAutoLoaded = true;
@@ -309,13 +317,20 @@ module.exports = function suite(__h) {
     'FR,AE,France,L1,,,50000,5000\n' +
     'DE,KAM,Germany,L2,,,60000,14000\n'
   ), 'population_test.csv');
-  check('local apply: 2 reps in advPopulation', advPopulation.length === 2 && advPopulation[0].id === 'L1');
+  check('local apply: 2 reps in advPopulation', advPopulation.length === 2 && advPopulation[0].country === 'France');
   check('local apply: status names the csv', els['pop-status'].innerText.indexOf('2 rep(s) loaded from population_test.csv') > -1);
-  check('local apply: table refreshed', els['pop-table-body'].innerHTML.indexOf('L1') > -1);
+  check('local apply: table refreshed', els['pop-table-body'].innerHTML.indexOf('50,000') > -1);
+  mock.sheetReps = [
+    { jobProfile: 'AE', country: 'France', fixed: 50000, nominal: 5000 },
+    { jobProfile: 'KAM', country: 'Germany', fixed: 50000, nominal: 5000 }
+  ];
+  popAutoLoaded = true;
+  loadPopulationFromSheet();
+  check('Sheet load: canonical rows are loaded', advPopulation.length === 2 && advPopulation[0].jobProfile === 'AE');
   check('local apply: empty csv → message', (applyPopulationCsv(parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,X,C,,,0,0\n'), 'f.csv'), els['pop-status'].innerText.indexOf('No valid rows found in f.csv') > -1));
-  advPopulation = [{ id: 'KEEP', fixed: 50000, nominal: 5000 }];
+  advPopulation = [{ jobProfile: 'AE', country: 'France', fixed: 50000, nominal: 5000 }];
   applyPopulationCsv(parsePopulationCsv('H,H,H,H,,,H,H\nFR,AE,X,C,,,0,0\n'), 'bad.csv');
-  check('empty csv: existing population untouched', advPopulation.length === 1 && advPopulation[0].id === 'KEEP');
+  check('empty csv: existing population untouched', advPopulation.length === 1 && advPopulation[0].jobProfile === 'AE');
 
   // ===== 4:1 nominal-to-objective scenario =====
   const hasFourToOne = typeof fourToOneState !== 'undefined' && typeof fourToOneNominals === 'function';
@@ -330,7 +345,7 @@ module.exports = function suite(__h) {
   const fourToOneFixedFloorCtx = hasFourToOne ? fourToOneNominals(10000, 100000) : null;
   check('4:1 keeps the standard 20% fixed-salary floor', !!fourToOneFixedFloorCtx && fourToOneFixedFloorCtx.targetNomE === 20000);
   state.newVarShare = savedNewVarShare;
-  advPopulation = [{ id: 'FOUR', fixed: 150000, nominal: 15000 }];
+  advPopulation = [{ jobProfile: 'AE', country: 'France', fixed: 150000, nominal: 15000 }];
   state.targetIncrease = 0;
   refreshPopulation();
   const fourToOnePex0 = typeof realAgg.pexFourToOne === 'number' ? realAgg.pexFourToOne : null;
@@ -349,20 +364,23 @@ module.exports = function suite(__h) {
   check('4:1 view exists', htmlSrc.indexOf('id="view-four-to-one"') > -1 && !!fourView);
   check('4:1 corridor input exists', htmlSrc.indexOf('id="four-to-one-corridor"') > -1 && !!fourCorridor);
   refreshPopulation();
-  check('4:1 table renders', fourTable.innerHTML.indexOf('FOUR') > -1);
+  check('4:1 table renders', fourTable.innerHTML.indexOf('150,000') > -1);
   check('matrix includes 4:1 scenario', els['matrix-low-low'].innerHTML.indexOf('4:1') > -1 || els['matrix-high-low'].innerHTML.indexOf('4:1') > -1);
 
   // ===== 4:1 overperformance slider and impact cards =====
   const fourOverperf = document.getElementById('four-to-one-overperf');
   const fourOverperfValue = document.getElementById('four-to-one-overperf-value');
-  const fourC2pGain = document.getElementById('four-to-one-c2p-gain');
-  const fourC2pGainGross = document.getElementById('four-to-one-c2p-gain-gross');
   const fourPnl = document.getElementById('four-to-one-pnl');
   check('4:1 overperformance slider exists', htmlSrc.indexOf('id="four-to-one-overperf"') > -1 && !!fourOverperf);
-  check('4:1 impact cards exist', htmlSrc.indexOf('id="four-to-one-c2p-gain"') > -1
-    && htmlSrc.indexOf('id="four-to-one-pnl"') > -1 && !!fourC2pGain && !!fourPnl);
-  check('4:1 P&L labels the generated C2P separately', htmlSrc.indexOf('C2P generated') > -1
-    && htmlSrc.indexOf('id="four-to-one-pnl-c2p" class="text-lg font-black text-white"') > -1);
+  check('4:1 impact cards exist', htmlSrc.indexOf('id="four-to-one-pnl"') > -1
+    && htmlSrc.indexOf('id="four-to-one-pnl-c2p"') > -1 && !!fourPnl);
+  check('4:1 P&L uses the scenario-specific label', htmlSrc.indexOf('4:1 P&L') > -1);
+  check('4:1 P&L has one generated C2P value', htmlSrc.indexOf('C2P generated') > -1
+    && htmlSrc.indexOf('id="four-to-one-pnl-c2p" class="text-lg font-black text-white"') > -1
+    && htmlSrc.indexOf('id="four-to-one-c2p-gain"') === -1
+    && htmlSrc.indexOf('id="four-to-one-c2p-gain-gross"') === -1);
+  check('4:1 top strip matches Hybrid font sizes', htmlSrc.indexOf('id="four-to-one-pex-standard" class="text-xl mt-1') > -1
+    && htmlSrc.indexOf('id="four-to-one-pnl" class="text-2xl mt-1') > -1);
   check('Hybrid P&L mirrors the 4:1 C2P layout', htmlSrc.indexOf('C2P generated') > -1
     && htmlSrc.indexOf('id="hyb-top-c2p" class="text-lg font-black text-white"') > -1);
   check('4:1 overperformance slider is synchronized', typeof syncOverperfSliders === 'function');
@@ -371,18 +389,26 @@ module.exports = function suite(__h) {
   check('4:1 slider mirrors overperformance', fourOverperf.value === 2
     && fourOverperfValue.innerText === '+2.0%');
   refreshPopulation();
-  check('4:1 Additional C2P Gain uses corridor contribution', fourC2pGain.innerText === '+2.80 M€'
-    && fourC2pGainGross.innerText === '+14.0 M€ C2P');
-  const fourPnlExpected = (2.8 + (realAgg.stdOld - realAgg.pexFourToOne) / 1e6).toFixed(2);
+  const fourPnlExpected = (1.4 + (realAgg.stdOld - realAgg.pexFourToOne) / 1e6).toFixed(2);
   check('4:1 P&L combines corridor contribution and PEX delta', fourPnl.innerText === (Number(fourPnlExpected) >= 0 ? '+' : '') + fourPnlExpected + ' M€');
-  advPopulation = [
-    { id: 'F1', orga: 'FR', fixed: 50000, nominal: 5000 },
-    { id: 'D1', orga: 'DE', fixed: 50000, nominal: 5000 }
-  ];
-  popFilters.orga = 'FR'; popFilters.country = ''; popFilters.position = '';
+  check('4:1 and Hybrid C2P values are separate from P&L', fourPnl.innerText !== document.getElementById('four-to-one-pnl-c2p').innerText
+    && document.getElementById('hyb-top-pnl').innerText !== document.getElementById('hyb-top-c2p').innerText);
+  check('4:1 and Hybrid positive C2P values are green', document.getElementById('four-to-one-pnl-c2p').className === 'text-lg font-black text-emerald-600'
+    && document.getElementById('hyb-top-c2p').className === 'text-lg font-black text-emerald-600');
+  state.overperf = -2;
   refreshPopulation();
-  check('4:1 impact cards follow active population filter', fourC2pGainGross.innerText === '+7.0 M€ C2P');
-  popFilters.orga = ''; popFilters.country = ''; popFilters.position = '';
+  check('4:1 and Hybrid negative C2P values are red', document.getElementById('four-to-one-pnl-c2p').className === 'text-lg font-black text-rose-600'
+    && document.getElementById('hyb-top-c2p').className === 'text-lg font-black text-rose-600');
+  state.overperf = 2;
+  refreshPopulation();
+  advPopulation = [
+    { jobProfile: 'AE', country: 'France', fixed: 50000, nominal: 5000 },
+    { jobProfile: 'AE', country: 'Germany', fixed: 50000, nominal: 5000 }
+  ];
+  popFilters.country = 'France'; popFilters.jobProfile = '';
+  refreshPopulation();
+  check('4:1 C2P value follows active population filter', document.getElementById('four-to-one-pnl-c2p').innerText === '+0.70 M€');
+  popFilters.country = ''; popFilters.jobProfile = '';
   state.overperf = 0;
   syncOverperfSliders();
 
@@ -410,7 +436,7 @@ module.exports = function suite(__h) {
   loadPopulationCsvFile({ name: 'my_pop.csv' });
   globalThis.__lastFR.result = 'Orga,Position,Country,ID,,,Base Salary,Amount\nFR,AE,France,F1,,,45000,7000\n';
   globalThis.__lastFR.onload();
-  check('FileReader: rep loaded from chosen file', advPopulation.length === 1 && advPopulation[0].id === 'F1' && advPopulation[0].fixed === 45000);
+  check('FileReader: rep loaded from chosen file', advPopulation.length === 1 && advPopulation[0].country === 'France' && advPopulation[0].fixed === 45000);
   check('FileReader: status names the chosen file', els['pop-status'].innerText.indexOf('1 rep(s) loaded from my_pop.csv') > -1);
   delete globalThis.__lastFR;
   globalThis.FileReader = SavedFR;

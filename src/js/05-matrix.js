@@ -146,15 +146,20 @@
       const deltaCls = v => v < 0 ? 'text-rose-600' : 'text-emerald-600';
       const chip = txt => '<span class="text-[9px] font-semibold uppercase tracking-wide bg-white border border-slate-200 rounded px-1 mr-1">' + txt + '</span>';
       const cell = d => {
+        const fourToOne = activePopulationProfile.views.fourToOne
+          ? (matrixMode === 'levels'
+            ? '<span class="block font-bold text-cyan-600">' + chip('4:1') + fmtMx(d.fourToOne) + '</span>'
+            : '<span class="block font-bold ' + deltaCls(d.fourToOne - d.old) + '">' + chip('4:1') + ((d.fourToOne - d.old) > 0 ? '+' : '') + fmtMx(d.fourToOne - d.old) + '</span>')
+          : '';
         if (matrixMode === 'levels') {
           return '<span class="block font-bold text-amber-600">' + chip('Hyb') + fmtMx(d.hyb) + '</span>'
                + '<span class="block font-bold text-indigo-600">' + chip('New') + fmtMx(d.new) + '</span>'
-               + '<span class="block font-bold text-cyan-600">' + chip('4:1') + fmtMx(d.fourToOne) + '</span>';
+               + fourToOne;
         }
-        const dh = d.hyb - d.old, dn = d.new - d.old, df = d.fourToOne - d.old;
+        const dh = d.hyb - d.old, dn = d.new - d.old;
         return '<span class="block font-bold ' + deltaCls(dh) + '">' + chip('&Delta; Hyb') + (dh > 0 ? '+' : '') + fmtMx(dh) + '</span>'
              + '<span class="block font-bold ' + deltaCls(dn) + '">' + chip('&Delta; New') + (dn > 0 ? '+' : '') + fmtMx(dn) + '</span>'
-             + '<span class="block font-bold ' + deltaCls(df) + '">' + chip('4:1') + (df > 0 ? '+' : '') + fmtMx(df) + '</span>';
+             + fourToOne;
       };
       salaryKeys.forEach(q => {
         perfKeys.forEach(p => {
@@ -174,9 +179,18 @@
     function toggleDatasetAdv(index) {
       const ds = advChartInstance.data.datasets[index];
       ds.hidden = !ds.hidden;
+      if (index === 6) {
+        advChartInstance.data.datasets[7].hidden = ds.hidden;
+      }
+      if (index === 6 && advChartInstance.options.scales.density) {
+        advChartInstance.options.scales.density.display = !ds.hidden;
+      }
       advChartInstance.update();
-      const btn = document.getElementById('btn-adv-standard');
+      const btn = document.getElementById(index === 6 ? 'btn-adv-gaussian' : 'btn-adv-standard');
+      if (!btn) return;
       btn.className = ds.hidden
         ? 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all'
-        : 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 transition-all';
+        : index === 6
+          ? 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-50 text-green-700 border border-green-200 transition-all'
+          : 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 transition-all';
     }
