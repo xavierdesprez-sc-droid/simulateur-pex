@@ -280,9 +280,12 @@
         updateAdvancedView();
       });
 
-      document.getElementById('adv-hybrid-objective-compensation').addEventListener('change', (e) => {
-        setHybridObjectiveCompensation(e.target.checked);
-      });
+      const objectiveCompensationToggle = document.getElementById('adv-hybrid-objective-compensation');
+      if (objectiveCompensationToggle) {
+        objectiveCompensationToggle.addEventListener('change', (e) => {
+          setHybridObjectiveCompensation(e.target.checked);
+        });
+      }
 
       document.getElementById('adv-zero-threshold').addEventListener('input', (e) => {
         advState.zeroThreshold = parseFloat(e.target.value);

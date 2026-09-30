@@ -1,13 +1,14 @@
 # Variable Compensation & Sales PEX Simulator
 
 Interactive tool for simulating sales variable compensation scenarios and their impact
-on payroll (PEX). **100% local**: a single HTML file, no data ever leaves the
-browser, no installation required.
+on payroll (PEX). The local mode runs from a single HTML file and keeps CSV data in the
+browser; the Apps Script deployment reads authorized population data from Google Sheets.
+No installation is required for either mode.
 
 ## Getting Started
 
-Open `index.html` in a browser (double-click is enough). The libraries (Tailwind, Chart.js,
-KaTeX, Lucide) are loaded via CDN — an internet connection is needed on first load.
+Open `index.html` in a browser (double-click is enough). The libraries (Tailwind, Chart.js, KaTeX, Lucide) are loaded from pinned CDN assets with
+integrity checks, so an internet connection is needed on first load.
 
 ## Standard View
 

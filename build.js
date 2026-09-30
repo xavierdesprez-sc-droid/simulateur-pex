@@ -68,6 +68,10 @@ function buildString(profile = 'SWE') {
     (f !== 'body-four-to-one.html' && f !== 'body-personae.html'));
   const html = htmlParts.map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', f)))).join('\n')
     .replace(/<!-- @@TOP-STRIP:([a-z0-9-]+) -->/g, (m, name) => stripTrailingNewlines(renderTopStrip(name, normalizedProfile)))
+    .replace(/^[ \t]*<!-- @@NCE-EXCLUDE-START -->\r?\n[\s\S]*?^[ \t]*<!-- @@NCE-EXCLUDE-END -->[ \t]*$/gm,
+      match => normalizedProfile === 'NCE'
+        ? ''
+        : match.replace(/^[ \t]*<!-- @@NCE-EXCLUDE-(?:START|END) -->\r?\n?/gm, ''))
     .replace(/^[ \t]*<!-- @@FOUR-TO-ONE-TAB -->[ \t]*$/m, match => normalizedProfile === 'NCE'
       ? ''
       : match.replace('<!-- @@FOUR-TO-ONE-TAB -->',

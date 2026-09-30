@@ -32,6 +32,8 @@ module.exports = function suite(__h) {
     nceBundleHtml.indexOf('tab-four-to-one') === -1 &&
     nceBundleHtml.indexOf('view-four-to-one') === -1 &&
     nceBundleHtml.indexOf('4:1') === -1);
+  check('NCE bundle removes the objective-compensation control',
+    nceBundleHtml.indexOf('adv-hybrid-objective-compensation') === -1);
   check('NCE bundle removes hidden Personae tab placeholder whitespace',
     !/\r?\n[ \t]+\r?\n/.test(nceBundleHtml));
   check('NCE Hybrid top strip keeps its cards on one row',

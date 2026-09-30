@@ -9,9 +9,20 @@ const root = path.join(__dirname, '..');
 const indexPath = path.join(root, 'index.html');
 const buildPath = path.join(root, 'build.js');
 const outputPath = path.join(os.tmpdir(), `sales-rep-build-${process.pid}.html`);
+const nceIndexPath = path.join(root, 'dist', 'NCE', 'index.html');
+const nceOutputPath = path.join(os.tmpdir(), `nce-build-${process.pid}.html`);
 const originalIndex = fs.readFileSync(indexPath, 'utf8');
 
 try {
+  execFileSync(process.execPath, [
+    buildPath, '--profile=NCE', `--out=${nceOutputPath}`
+  ], { stdio: 'pipe' });
+  assert.equal(
+    fs.readFileSync(nceOutputPath, 'utf8'),
+    fs.readFileSync(nceIndexPath, 'utf8'),
+    'NCE target must be current'
+  );
+
   execFileSync(process.execPath, [
     buildPath, '--app=sales-rep', `--out=${outputPath}`
   ], { stdio: 'pipe' });
@@ -28,4 +39,5 @@ try {
   console.log('build-target.test.js: Sales Rep output remains separate');
 } finally {
   if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+  if (fs.existsSync(nceOutputPath)) fs.unlinkSync(nceOutputPath);
 }
