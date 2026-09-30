@@ -1,46 +1,48 @@
-<body class="h-full font-sans text-slate-800 antialiased flex flex-col min-h-screen">
+<body class="simulator-ui h-full font-sans text-slate-800 antialiased flex flex-col min-h-screen">
 
   <!-- Navigation Bar -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 flex flex-col gap-3 py-3 xl:flex-row xl:items-center xl:justify-between">
+      <div class="flex min-w-0 items-center gap-3">
         <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-md shadow-indigo-200">
-          <i data-lucide="trending-up" class="w-6 h-6"></i>
+          <i data-lucide="trending-up" class="w-6 h-6" aria-hidden="true"></i>
         </div>
-        <div>
-          <h1 class="text-lg font-bold text-slate-900 leading-tight">Variable Compensation & PEX Simulator</h1>
+        <div class="min-w-0">
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">Variable Compensation &amp; PEX Simulator</h1>
         </div>
       </div>
 
       <!-- View Tabs -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-          <button id="tab-standard" onclick="setView('standard')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-600 shadow-sm">
+      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end xl:flex-1">
+        <div role="group" aria-label="Simulation views" class="flex w-full min-w-0 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
+          <button id="tab-standard" onclick="setView('standard')" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg bg-white text-indigo-600 shadow-sm">
             Standard Scenario
           </button>
           <!-- @@FOUR-TO-ONE-TAB -->
-          <button id="tab-advanced" onclick="setView('advanced')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
+          <button id="tab-advanced" onclick="setView('advanced')" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
             Hybrid Scenario
           </button>
           <!-- @@PERSONAE-TAB -->
-          <button id="tab-matrix" onclick="setView('matrix')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
+          <button id="tab-matrix" onclick="setView('matrix')" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 transition-all">
             Matrix
           </button>
         </div>
-        <div class="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-          <button onclick="applyPreset('initial')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
-            Current Situation (110% avg)
-          </button>
-          <button onclick="applyPreset('targetGroup')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-targetGroup">
-            Group Target (80% avg)
-          </button>
-          <button onclick="applyPreset('highIncentive')" class="preset-btn px-3 py-1.5 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-highIncentive">
-            Optimized Scenario (+2% overperf)
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <div role="group" aria-label="Scenario presets" class="flex w-full min-w-0 flex-1 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
+            <button onclick="applyPreset('initial')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
+              Current Situation (110% avg)
+            </button>
+            <button onclick="applyPreset('targetGroup')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-targetGroup">
+              Group Target (80% avg)
+            </button>
+            <button onclick="applyPreset('highIncentive')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-highIncentive">
+              Optimized Scenario (+2% overperf)
+            </button>
+          </div>
+          <button onclick="resetDefaults()" class="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" aria-label="Reset parameters" title="Reset parameters">
+            <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
           </button>
         </div>
-        <button onclick="resetDefaults()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" title="Reset parameters">
-          <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-        </button>
       </div>
     </div>
   </header>

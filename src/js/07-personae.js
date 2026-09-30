@@ -290,6 +290,8 @@
       const inactive = 'px-3 py-2 rounded-lg text-slate-600 hover:text-violet-700';
       euroButton.className = mode === 'euros' ? active : inactive;
       percentButton.className = mode === 'percent' ? active : inactive;
+      euroButton.ariaPressed = String(mode === 'euros');
+      percentButton.ariaPressed = String(mode === 'percent');
       const increaseInput = document.getElementById('personae-objective-increase');
       increaseInput.disabled = mode === 'percent';
       const note = document.getElementById('personae-mode-note');

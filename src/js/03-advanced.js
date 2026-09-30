@@ -236,6 +236,10 @@
           }
         }
       });
+      document.getElementById('btn-adv-standard').ariaPressed =
+        String(!advChartInstance.data.datasets[5].hidden);
+      document.getElementById('btn-adv-gaussian').ariaPressed =
+        String(!advChartInstance.data.datasets[6].hidden);
     }
 
     function updateAdvancedView() {
