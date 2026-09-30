@@ -432,7 +432,7 @@ module.exports = function suite(__h) {
   // ===== Local CSV: FileReader path (chosen file) =====
   const SavedFR = globalThis.FileReader;
   globalThis.FileReader = function () {};
-  globalThis.FileReader.prototype.readAsText = function (file) { globalThis.__lastFR = this; };
+  globalThis.FileReader.prototype.readAsText = function (_file) { globalThis.__lastFR = this; };
   loadPopulationCsvFile({ name: 'my_pop.csv' });
   globalThis.__lastFR.result = 'Orga,Position,Country,ID,,,Base Salary,Amount\nFR,AE,France,F1,,,45000,7000\n';
   globalThis.__lastFR.onload();

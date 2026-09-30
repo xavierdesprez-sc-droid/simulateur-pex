@@ -1,4 +1,7 @@
 .worktrees/
 
+# Node.js development tooling.
+/node_modules/
+
 # Generated standalone Sales Rep deployment bundle.
 /dist/sales-rep/

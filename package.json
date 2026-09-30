@@ -1,0 +1,13 @@
+{
+  "name": "simulateur-pex",
+  "private": true,
+  "scripts": {
+    "lint": "node scripts/lint.js",
+    "test": "node tests/run.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.11.0",
+    "globals": "17.12.0"
+  }
+}

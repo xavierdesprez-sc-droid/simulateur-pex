@@ -29,10 +29,16 @@ choose the spreadsheet profile.
 
 ## Build and test commands
 
-Run commands from the repository root with Node.js installed. There is no package
-installation step and no separate lint configuration.
+Run commands from the repository root with Node.js installed. The build and test runner
+use Node.js built-ins; npm installs the development-only ESLint dependency.
 
 ```text
+# Install pinned development dependencies
+npm ci
+
+# Lint source, Apps Script backend, tests, and concatenated client scripts
+npm run lint
+
 # Rebuild the committed Apps Script/local bundle from src/
 node build.js
 
@@ -44,7 +50,7 @@ node build.js --profile=NCE --out=dist/NCE/index.html
 node build.js --check
 
 # Run all tests (also checks bundle freshness and Code.gs syntax)
-node tests/run.js
+npm test
 ```
 
 Tests are dependency-free Node scripts using a simulated DOM. To run one suite, invoke

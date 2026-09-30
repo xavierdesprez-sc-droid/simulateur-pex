@@ -183,6 +183,8 @@ The manifest preserves the existing web app settings (execute as deployer, domai
 From the repository root, verify the bundle and tests before deployment:
 
 ```text
+npm ci
+npm run lint
 node build.js --check
 node tests/run.js
 clasp status --json
@@ -227,16 +229,29 @@ node tests/run.js
 `node build.js --check` échoue si `index.html` est périmé (utilisé par `tests/run.js`).
 Déploiement inchangé : copier-coller `index.html` vers le fichier `index` Apps Script (+ `Code.gs` si changé).
 
+## Development checks
+
+The app and build remain dependency-free. For linting and tests, install the pinned
+development tools with `npm ci`, then run:
+
+```text
+npm run lint
+npm test
+```
+
+GitHub Actions runs both checks for pushes and pull requests.
+
 ## Tests
 
-The application itself has no local installation requirement. Node.js is only needed to run the test suite.
+The application itself has no local installation requirement. Node.js is needed to build
+and run the tests; npm is needed to install the linting development tools.
 
 ```
 node tests/run.js
 ```
 
 The runner checks the generated bundle, Apps Script syntax, backend authorization, and the
-simulated-DOM UI suites (no added dependencies):
+simulated-DOM UI suites. The test harness uses Node.js built-ins; ESLint is a development-only dependency.
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)

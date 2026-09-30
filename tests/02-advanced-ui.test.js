@@ -1,7 +1,7 @@
 'use strict';
 /** Advanced view: UI (toggles, synced sliders, points, individual KPIs). */
 module.exports = function suite(__h) {
-  const { check, els, mock, htmlSrc } = __h;
+  const { check, els, htmlSrc } = __h;
   const S = advState;
   setView('advanced');
 
