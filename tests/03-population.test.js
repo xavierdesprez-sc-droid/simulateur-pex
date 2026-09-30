@@ -16,6 +16,50 @@ module.exports = function suite(__h) {
   advPopulation = [];
   __domReadyHandler();
   check('startup auto-load: population loaded before navigation', advPopulation.length === 1 && advPopulation[0].id === 'STARTUP');
+  document.getElementById('tab-standard');
+  document.getElementById('tab-advanced');
+  document.getElementById('tab-matrix');
+  check('startup navigation exposes the visible Standard view',
+    els['tab-standard'].ariaPressed === 'true' &&
+    els['tab-advanced'].ariaPressed === 'false' &&
+    els['tab-matrix'].ariaPressed === 'false');
+
+  const previousMu = state.muInit;
+  const muInput = els['input-mu-init'];
+  muInput.value = '';
+  const typeMuKey = key => {
+    muInput.value += key;
+    muInput.__handlers.input({ target: muInput });
+  };
+  typeMuKey('1');
+  check('number input preserves first digit while keeping calculations clamped',
+    state.muInit === 30 && muInput.value === '1');
+  typeMuKey('5');
+  check('number input preserves second digit while editing',
+    state.muInit === 30 && muInput.value === '15');
+  typeMuKey('0');
+  check('number input accepts sequential multi-digit entry',
+    state.muInit === 150 && muInput.value === '150');
+  __h.input('input-mu-init', '250');
+  check('number input keeps out-of-range text while editing but bounds calculations',
+    state.muInit === 200 && muInput.value === '250');
+  __h.change('input-mu-init', '250');
+  check('number input displays its upper-clamped value after editing',
+    state.muInit === 200 && muInput.value === 200);
+  __h.input('input-mu-init', '0');
+  check('number input keeps lower out-of-range text while editing',
+    state.muInit === 30 && muInput.value === '0');
+  __h.change('input-mu-init', '0');
+  check('number input displays its lower-clamped value after editing',
+    state.muInit === 30 && muInput.value === 30);
+  state.muInit = previousMu;
+  syncInputsFromState();
+  updateDashboard();
+
+  setView('four-to-one');
+  check('4:1 navigation exposes its active view when available',
+    els['tab-four-to-one'].ariaPressed === 'true' &&
+    els['tab-standard'].ariaPressed === 'false');
 
   setView('advanced');
   S.oldNominalE = 5000; S.t1 = 90; S.t2 = 100; S.zeroThreshold = 0; S.min100E = 0; S.min200E = 0;
@@ -195,6 +239,9 @@ module.exports = function suite(__h) {
 
   // ===== Matrix: DOM rendering and switch =====
   check('default mode is deltas', els['matrix-mode-deltas'].className.indexOf('text-orange-700') > -1 && els['matrix-mode-levels'].className.indexOf('text-slate-500') > -1);
+  check('matrix mode buttons expose their selected state',
+    els['matrix-mode-deltas'].ariaPressed === 'true' &&
+    els['matrix-mode-levels'].ariaPressed === 'false');
   check('matrix mode buttons show deltas before levels', htmlSrc.indexOf('id="matrix-mode-deltas"') < htmlSrc.indexOf('id="matrix-mode-levels"'));
   check('cells identified: Δ Hyb and Δ New chips', ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('&Delta; Hyb') > -1 && els[id].innerHTML.indexOf('&Delta; New') > -1));
   check('cells colored: amber and indigo present in levels', setMatrixMode('levels') === undefined && ['matrix-low-low', 'matrix-low-top', 'matrix-high-low', 'matrix-high-top'].every(id => els[id].innerHTML.indexOf('text-amber-600') > -1 && els[id].innerHTML.indexOf('text-indigo-600') > -1));
@@ -205,12 +252,21 @@ module.exports = function suite(__h) {
   check('deltas switch: active button', els['matrix-mode-deltas'].className.indexOf('text-orange-700') > -1 && els['matrix-mode-levels'].className.indexOf('text-slate-500') > -1);
   setMatrixMode('levels');
   check('switch back to levels', els['matrix-mode-levels'].className.indexOf('text-orange-700') > -1);
+  check('matrix levels mode exposes its selected state',
+    els['matrix-mode-levels'].ariaPressed === 'true' &&
+    els['matrix-mode-deltas'].ariaPressed === 'false');
   setMatrixMode('deltas');
 
   // ===== Matrix: 2x2 / 3x3 switch =====
   check('matrix default size 2x2', matrixSize === '2x2' && els['matrix-size-2'].className.indexOf('text-orange-700') > -1 && els['matrix-size-3'].className.indexOf('text-slate-500') > -1);
+  check('matrix size buttons expose the selected 2x2 state',
+    els['matrix-size-2'].ariaPressed === 'true' &&
+    els['matrix-size-3'].ariaPressed === 'false');
   setMatrixSize('3x3');
   check('3x3: size state + active button', matrixSize === '3x3' && els['matrix-size-3'].className.indexOf('text-orange-700') > -1);
+  check('matrix size buttons expose the selected 3x3 state',
+    els['matrix-size-3'].ariaPressed === 'true' &&
+    els['matrix-size-2'].ariaPressed === 'false');
   check('3x3: counts sum to population', popMatrix.count.low + popMatrix.count.mid + popMatrix.count.high === 4);
   check('3x3: salary terciles 1/1/2', popMatrix.count.low === 1 && popMatrix.count.mid === 1 && popMatrix.count.high === 2);
   ['low', 'mid', 'high'].forEach(q => {
@@ -242,6 +298,10 @@ module.exports = function suite(__h) {
   // ===== Third tab: Matrix =====
   setView('matrix');
   check('tab-matrix active on setView(matrix)', els['tab-matrix'].className.indexOf('shadow-sm') > -1);
+  check('matrix navigation exposes the active view',
+    els['tab-matrix'].ariaPressed === 'true' &&
+    els['tab-standard'].ariaPressed === 'false' &&
+    els['tab-advanced'].ariaPressed === 'false');
   check('tab-standard inactive on setView(matrix)', els['tab-standard'].className.indexOf('shadow-sm') === -1);
   check('tab-advanced inactive on setView(matrix)', els['tab-advanced'].className.indexOf('shadow-sm') === -1);
   check('view-matrix main exists', !!els['view-matrix']);
@@ -282,9 +342,15 @@ module.exports = function suite(__h) {
   check('min100=0 restores baseline', realAgg.pexHyb === hybBefore);
   setView('standard');
   check('tab-standard active on setView(standard)', els['tab-standard'].className.indexOf('shadow-sm') > -1);
+  check('standard navigation exposes the active view',
+    els['tab-standard'].ariaPressed === 'true' &&
+    els['tab-matrix'].ariaPressed === 'false');
   check('tab-matrix inactive on setView(standard)', els['tab-matrix'].className.indexOf('shadow-sm') === -1);
   setView('advanced');
   check('tab-advanced active on setView(advanced)', els['tab-advanced'].className.indexOf('shadow-sm') > -1);
+  check('advanced navigation exposes the active view',
+    els['tab-advanced'].ariaPressed === 'true' &&
+    els['tab-standard'].ariaPressed === 'false');
 
   // ===== Local CSV: parsePopulationCsv (pure) =====
   const csv1 = parsePopulationCsv(

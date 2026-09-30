@@ -4,7 +4,7 @@
         <h2 class="text-xl font-bold text-slate-900">Personae — courbes hybrides SWE</h2>
         <p class="mt-1 text-sm text-slate-500">Comparez les courbes par pays, séniorité et persona.</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <span id="personae-status" class="text-xs text-slate-500" role="status">Données non chargées.</span>
         <button id="personae-reload" class="px-3 py-2 rounded-lg text-xs font-semibold bg-violet-600 text-white hover:bg-violet-700">
           Recharger les données
@@ -62,8 +62,9 @@
         En mode %/€, la nouvelle courbe tient compte de la hausse d’objectif.
       </p>
       <div class="h-[28rem] w-full">
-        <canvas id="personae-chart" aria-label="Comparaison des courbes de rémunération des personas"></canvas>
+        <canvas id="personae-chart" role="img" aria-label="Comparaison des courbes de rémunération des personas" aria-describedby="personae-chart-description"></canvas>
       </div>
+      <p id="personae-chart-description" class="sr-only">Le graphique compare les courbes de rémunération ancienne et hybride selon le pourcentage d’atteinte; les lignes et repères sont identifiés dans la légende.</p>
       <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
         <span class="inline-flex items-center gap-2"><span class="inline-block w-7 border-t-2 border-dashed border-slate-500"></span>Ancienne courbe</span>
         <span class="inline-flex items-center gap-2"><span class="inline-block w-7 border-t-2 border-violet-600"></span>Nouvelle courbe hybride</span>
@@ -79,8 +80,8 @@
         <h3 class="font-bold text-slate-800">Personas et données moyennes</h3>
         <p class="mt-1 text-xs text-slate-500">Le Portugal est décoché par défaut; cochez-le pour l’inclure. Les personas ne sont pas filtrées par leur libellé.</p>
       </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-left text-xs">
+      <div role="region" aria-label="Personae and average data table" tabindex="0" class="overflow-x-auto custom-scrollbar">
+        <table class="min-w-[64rem] text-left text-xs">
           <thead class="bg-slate-50 text-slate-500">
             <tr>
               <th class="px-3 py-3 font-semibold">Inclure</th>

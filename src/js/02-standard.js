@@ -499,6 +499,10 @@
           }
         }
       });
+      const weightedCurveButton = document.getElementById('btn-toggle-weighted');
+      if (weightedCurveButton) {
+        weightedCurveButton.ariaPressed = String(mainChartInstance.data.datasets[4].hidden !== true);
+      }
     }
 
     function updateChartData() {
@@ -587,6 +591,8 @@
       } else {
         meta.hidden = !meta.hidden;
       }
+      const button = document.getElementById('btn-toggle-weighted');
+      if (button) button.ariaPressed = String(!meta.hidden);
       // Re-run full update so purple point repositions immediately
       updateDashboard();
     }

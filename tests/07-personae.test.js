@@ -121,9 +121,15 @@ module.exports = function suite(__h) {
   initPersonaeView();
   setPersonaeMode('percent');
   check('percent mode disables objective increase and retains a shared old baseline', els['personae-objective-increase'].disabled && personaeChart.data.datasets.length === 4 && personaeChart.data.datasets[0].label.includes('y = x'));
+  check('Personae mode buttons expose the selected percent mode',
+    els['personae-mode-percent'].ariaPressed === 'true' &&
+    els['personae-mode-euros'].ariaPressed === 'false');
   check('percent mode keeps the segment color legend visible', !!els['personae-chart-legend'] && els['personae-chart-legend'].innerHTML.includes(persona.segment));
 
   setPersonaeMode('euros');
+  check('Personae mode buttons expose the selected euro mode',
+    els['personae-mode-euros'].ariaPressed === 'true' &&
+    els['personae-mode-percent'].ariaPressed === 'false');
   const tooltipLabel = personaeChart.options.plugins.tooltip.callbacks.label;
   const oldCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— ancienne'));
   const hybridCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— hybride'));
@@ -131,6 +137,11 @@ module.exports = function suite(__h) {
     oldCurve.personaeHeadcount === persona.headcount &&
     hybridCurve.personaeHeadcount === persona.headcount &&
     tooltipLabel({ dataset: hybridCurve, raw: { y: 10000 } }).includes('Effectif : 10'));
+
+  setView('personae');
+  check('Personae navigation exposes its active view',
+    els['tab-personae'].ariaPressed === 'true' &&
+    els['tab-standard'].ariaPressed === 'false');
 
   setupEventListeners();
   const personaeCompensationSwitch = document.getElementById('personae-hybrid-objective-compensation');

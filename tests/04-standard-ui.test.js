@@ -5,6 +5,12 @@ module.exports = function suite(__h) {
   setView('standard');
   initChart();
   updateChartData();
+  document.getElementById('btn-toggle-weighted');
+  check('weighted curve button reflects its initially visible chart dataset',
+    els['btn-toggle-weighted'].ariaPressed === 'true');
+  toggleDataset(4);
+  check('weighted curve button reflects its hidden chart dataset',
+    els['btn-toggle-weighted'].ariaPressed === 'false');
   check('standard Gaussian uses the hybrid density scale',
     Math.abs(mainChartInstance.data.datasets[0].data[100] - normalPdf(110, state.muInit, state.sigmaInit) * 100) < 0.0001 &&
     mainChartInstance.options.scales.yDensity.max === undefined &&

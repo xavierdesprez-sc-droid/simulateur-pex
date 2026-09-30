@@ -81,6 +81,8 @@
       const off = 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all';
       document.getElementById('matrix-mode-levels').className = mode === 'levels' ? on : off;
       document.getElementById('matrix-mode-deltas').className = mode === 'deltas' ? on : off;
+      document.getElementById('matrix-mode-levels').ariaPressed = String(mode === 'levels');
+      document.getElementById('matrix-mode-deltas').ariaPressed = String(mode === 'deltas');
       renderMatrix();
     }
 
@@ -90,6 +92,8 @@
       const off = 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all';
       document.getElementById('matrix-size-2').className = size === '2x2' ? on : off;
       document.getElementById('matrix-size-3').className = size === '3x3' ? on : off;
+      document.getElementById('matrix-size-2').ariaPressed = String(size === '2x2');
+      document.getElementById('matrix-size-3').ariaPressed = String(size === '3x3');
       refreshPopulation();
     }
 
@@ -193,4 +197,5 @@
         : index === 6
           ? 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-green-50 text-green-700 border border-green-200 transition-all'
           : 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 transition-all';
+      btn.ariaPressed = String(!ds.hidden);
     }

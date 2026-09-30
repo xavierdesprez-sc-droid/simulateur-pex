@@ -40,6 +40,34 @@
       if (personaeInitialized) renderPersonaeView();
     }
 
+    const VIEW_TABS = [
+      ['standard', 'tab-standard'],
+      ['advanced', 'tab-advanced'],
+      ['matrix', 'tab-matrix'],
+      ['four-to-one', 'tab-four-to-one'],
+      ['personae', 'tab-personae']
+    ];
+
+    function syncViewButtonStates(view) {
+      VIEW_TABS.forEach(([key, id]) => {
+        const button = document.getElementById(id);
+        if (button) button.ariaPressed = String(view === key);
+      });
+    }
+
+    const PRESET_BUTTONS = [
+      ['initial', 'preset-initial'],
+      ['targetGroup', 'preset-targetGroup'],
+      ['highIncentive', 'preset-highIncentive']
+    ];
+
+    function syncPresetButtonStates(presetKey) {
+      PRESET_BUTTONS.forEach(([key, id]) => {
+        const button = document.getElementById(id);
+        if (button) button.ariaPressed = String(key === presetKey);
+      });
+    }
+
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
@@ -47,6 +75,7 @@
       const isPersonae = view === 'personae';
       if (isFourToOne && !activePopulationProfile.views.fourToOne) return;
       if (isPersonae && !activePopulationProfile.views.personae) return;
+      syncViewButtonStates(view);
       document.getElementById('view-standard').classList.toggle('hidden', isAdv || isMatrix || isFourToOne || isPersonae);
       document.getElementById('view-advanced').classList.toggle('hidden', !isAdv);
       document.getElementById('view-matrix').classList.toggle('hidden', !isMatrix);
@@ -90,6 +119,7 @@
 
     // Presets
     function applyPreset(presetKey) {
+      syncPresetButtonStates(presetKey);
       document.querySelectorAll('.preset-btn').forEach(b => {
         b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
         b.classList.add('text-slate-600');
@@ -238,14 +268,17 @@
 
       // Numerical inputs: 0 is valid, empty field = keep current value, clamp to bounds
       function bindNumberInput(id, key, min, max, isInt) {
-        document.getElementById(id).addEventListener('input', (e) => {
+        function updateValue(e, normalizeDisplay) {
           const raw = parseFloat(e.target.value);
           if (!isFinite(raw)) { updateDashboard(); return; } // empty field: keep current value
           let v = Math.min(max, Math.max(min, raw));
           if (isInt) v = Math.round(v);
+          if (normalizeDisplay) e.target.value = v;
           state[key] = v;
           updateDashboard();
-        });
+        }
+        document.getElementById(id).addEventListener('input', (e) => updateValue(e, false));
+        document.getElementById(id).addEventListener('change', (e) => updateValue(e, true));
       }
       bindNumberInput('input-mu-init', 'muInit', 30, 200, false);
       bindNumberInput('input-sigma-init', 'sigmaInit', 1, 60, false);
@@ -381,6 +414,8 @@
     window.addEventListener('DOMContentLoaded', () => {
       appInitialized = true;
       applyProfileUi();
+      syncViewButtonStates('standard');
+      syncPresetButtonStates(null);
       lucide.createIcons();
       renderBreakpointsTable();
       initChart();

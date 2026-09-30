@@ -5,6 +5,11 @@ module.exports = function suite(__h) {
   const S = advState;
   setView('advanced');
 
+  check('view navigation exposes the active advanced view',
+    els['tab-advanced'].ariaPressed === 'true' &&
+    els['tab-standard'].ariaPressed === 'false' &&
+    els['tab-matrix'].ariaPressed === 'false');
+
   check('hybrid T1 defaults to 80% and remains editable',
     advState.t1 === 80 &&
     /type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80"/.test(htmlSrc) &&
@@ -20,6 +25,11 @@ module.exports = function suite(__h) {
     __chartDatasets[6].yAxisID === 'density' &&
     __chartDatasets[7].yAxisID === 'density' &&
     advChartInstance.options.scales.density.display === false);
+  document.getElementById('btn-adv-standard');
+  document.getElementById('btn-adv-gaussian');
+  check('advanced overlay buttons reflect their initially hidden datasets',
+    els['btn-adv-standard'].ariaPressed === 'false' &&
+    els['btn-adv-gaussian'].ariaPressed === 'false');
   check('advanced Gaussian curves and density axis use the same blue',
     __chartDatasets[6].borderColor === '#2563eb' &&
     __chartDatasets[7].borderColor === '#2563eb' &&
@@ -40,18 +50,22 @@ module.exports = function suite(__h) {
   state.targetIncrease = 0;
   state.overperf = 0;
   toggleDatasetAdv(5);
-  check('toggle → visible', __chartDatasets[5].hidden === false);
+  check('toggle → visible', __chartDatasets[5].hidden === false &&
+    els['btn-adv-standard'].ariaPressed === 'true');
   toggleDatasetAdv(5);
-  check('toggle → hidden', __chartDatasets[5].hidden === true);
+  check('toggle → hidden', __chartDatasets[5].hidden === true &&
+    els['btn-adv-standard'].ariaPressed === 'false');
   toggleDatasetAdv(6);
   check('gaussian toggle → visible',
     __chartDatasets[6].hidden === false &&
     __chartDatasets[7].hidden === false &&
+    els['btn-adv-gaussian'].ariaPressed === 'true' &&
     advChartInstance.options.scales.density.display === true);
   toggleDatasetAdv(6);
   check('gaussian toggle → hidden',
     __chartDatasets[6].hidden === true &&
     __chartDatasets[7].hidden === true &&
+    els['btn-adv-gaussian'].ariaPressed === 'false' &&
     advChartInstance.options.scales.density.display === false);
 
   // ===== Synced target increase sliders =====
@@ -72,8 +86,15 @@ module.exports = function suite(__h) {
 
   // ===== Preset syncs both sliders =====
   state.targetIncrease = 0;
+  document.getElementById('preset-initial');
+  document.getElementById('preset-targetGroup');
+  document.getElementById('preset-highIncentive');
   applyPreset('targetGroup');
   check('preset targetGroup → sliders at 30', parseFloat(els['adv-target-increase'].value) === 30 && parseFloat(els['slider-target-increase'].value) === 30);
+  check('preset selection exposes exactly the chosen pressed state',
+    els['preset-targetGroup'].ariaPressed === 'true' &&
+    els['preset-initial'].ariaPressed === 'false' &&
+    els['preset-highIncentive'].ariaPressed === 'false');
   check('preset targetGroup → matrix slider synced', els['matrix-target-increase'].value == state.targetIncrease && els['matrix-val-target-increase'].innerText.indexOf('+30.0%') > -1);
   state.targetIncrease = 0;
 
