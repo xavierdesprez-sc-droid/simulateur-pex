@@ -7,8 +7,10 @@ No installation is required for either mode.
 
 ## Getting Started
 
-Open `index.html` in a browser (double-click is enough). The libraries (Tailwind, Chart.js, KaTeX, Lucide) are loaded from pinned CDN assets with
-integrity checks, so an internet connection is needed on first load.
+Open `index.html` in a browser (double-click is enough). Tailwind, Chart.js, KaTeX,
+and Lucide load from version-pinned CDNs, so an internet connection is needed.
+Chart.js, KaTeX, and Lucide use integrity checks; Tailwind's Play CDN does not
+send CORS headers, so a cross-origin integrity check would block its styles.
 
 ## Standard View
 

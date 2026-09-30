@@ -4,6 +4,12 @@ module.exports = function suite(h) {
   const html = h.buildString('SWE');
   const salesRepHtml = h.buildSalesRepString();
 
+  h.check('Tailwind Play CDN loads without CORS-only attributes in every app',
+    [html, h.buildString('NCE'), salesRepHtml].every(page => {
+      const script = page.match(/<script\b[^>]*src="https:\/\/cdn\.tailwindcss\.com\/[^"]+"[^>]*><\/script>/)?.[0];
+      return script && !/\b(?:integrity|crossorigin)\s*=/.test(script);
+    }));
+
   const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
   h.check('simulator header wraps on narrow screens and keeps all presets available',
     /flex-col[^"]*xl:flex-row/.test(header) &&
