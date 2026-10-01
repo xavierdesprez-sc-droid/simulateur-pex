@@ -18,6 +18,7 @@ async function main() {
   const files = [
     'build.js',
     'eslint.config.js',
+    'playwright.config.js',
     'src/top-strip.js',
     'Code.gs',
     'scripts/**/*.js',

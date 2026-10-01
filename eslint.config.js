@@ -5,7 +5,7 @@ const globals = require('globals');
 
 module.exports = [
   {
-    ignores: ['dist/**', 'index.html', 'node_modules/**', '.superpowers/**']
+    ignores: ['dist/**', 'index.html', 'node_modules/**', '.superpowers/**', 'test-results/**', 'playwright-report/**']
   },
   js.configs.recommended,
   {
@@ -19,7 +19,7 @@ module.exports = [
     }
   },
   {
-    files: ['build.js', 'eslint.config.js', 'scripts/**/*.js', 'src/top-strip.js', 'tests/**/*.js'],
+    files: ['build.js', 'eslint.config.js', 'playwright.config.js', 'scripts/**/*.js', 'src/top-strip.js', 'tests/**/*.js'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: globals.node
@@ -78,6 +78,12 @@ module.exports = [
     files: ['tests/[0-9]*.test.js'],
     rules: {
       'no-undef': 'off'
+    }
+  },
+  {
+    files: ['tests/browser/**/*.js'],
+    languageOptions: {
+      globals: globals.browser
     }
   }
 ];

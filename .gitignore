@@ -2,6 +2,8 @@
 
 # Node.js development tooling.
 /node_modules/
+/test-results/
+/playwright-report/
 
 # Generated standalone Sales Rep deployment bundle.
 /dist/sales-rep/

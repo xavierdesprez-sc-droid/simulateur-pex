@@ -11,14 +11,30 @@ const HTML_PATH = path.join(__dirname, '..', 'index.html');
 const results = { pass: 0, fail: 0, failures: [] };
 
 function makeEl() {
-  return new Proxy(
-    {
-      style: {}, classList: { toggle(){}, add(){}, remove(){} },
-      innerText: '', innerHTML: '',
-      __handlers: {},
-      addEventListener(event, handler) { this.__handlers[event] = handler; },
-      getContext: () => ({}), appendChild: () => ({}), removeChild: () => ({})
+  const element = {
+    style: {}, className: '',
+    innerText: '', innerHTML: '',
+    __handlers: {},
+    addEventListener(event, handler) { this.__handlers[event] = handler; },
+    getContext: () => ({}), appendChild: () => ({}), removeChild: () => ({})
+  };
+  element.classList = {
+    contains(name) { return element.className.split(/\s+/).includes(name); },
+    add(...names) {
+      element.className = [...new Set([...element.className.split(/\s+/).filter(Boolean), ...names])].join(' ');
     },
+    remove(...names) {
+      element.className = element.className.split(/\s+/).filter(name => name && !names.includes(name)).join(' ');
+    },
+    toggle(name, force) {
+      const enabled = force === undefined ? !this.contains(name) : force;
+      if (enabled) this.add(name);
+      else this.remove(name);
+      return enabled;
+    }
+  };
+  return new Proxy(
+    element,
     {
       get(t, p) { if (p in t) return t[p]; return t[p] = makeEl(); },
       set(t, p, v) { t[p] = v; return true; }

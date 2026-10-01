@@ -234,15 +234,26 @@ Déploiement inchangé : copier-coller `index.html` vers le fichier `index` Apps
 
 ## Development checks
 
-The app and build remain dependency-free. For linting and tests, install the pinned
+The app and build remain dependency-free. For development checks, install the pinned
 development tools with `npm ci`, then run:
 
 ```text
 npm run lint
 npm test
+npx playwright install chromium
+npm run test:browser
 ```
 
-GitHub Actions runs both checks for pushes and pull requests.
+The browser suite exercises the committed SWE and NCE bundles in Chromium at laptop
+viewport widths (1024, 1280, and 1366 CSS pixels). It checks that only the selected
+view appears, all navigation options fit without sideways scrolling, content stays
+within the page, and sliders contrast with their backgrounds. On Windows it also
+compares reviewed screenshots of Standard, Personae, and Matrix (charts are masked
+to avoid animation-dependent pixels). Review visual changes before updating baselines
+with `npx playwright test --update-snapshots` on Windows. The suite uses synthetic
+population data, not a real spreadsheet; it needs internet access for the app's CDNs.
+GitHub Actions runs the fast checks on Ubuntu and browser/screenshot checks on Windows
+for pushes and pull requests.
 
 ## Tests
 
@@ -254,7 +265,8 @@ node tests/run.js
 ```
 
 The runner checks the generated bundle, Apps Script syntax, backend authorization, and the
-simulated-DOM UI suites. The test harness uses Node.js built-ins; ESLint is a development-only dependency.
+simulated-DOM UI suites. The Node test harness uses built-ins; Playwright is a separate
+development-only browser test dependency.
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)

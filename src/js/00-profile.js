@@ -54,18 +54,14 @@
     }
 
     function applyProfileUi() {
-      const hidden = !activePopulationProfile.views.fourToOne;
-      ['tab-four-to-one', 'view-four-to-one'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('hidden', hidden);
-        if (hidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
-      });
-      const personaeHidden = !activePopulationProfile.views.personae;
-      ['tab-personae', 'view-personae'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('hidden', personaeHidden);
-        if (personaeHidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
+      [
+        ['fourToOne', 'tab-four-to-one', 'view-four-to-one'],
+        ['personae', 'tab-personae', 'view-personae']
+      ].forEach(([feature, tabId, viewId]) => {
+        const hidden = !activePopulationProfile.views[feature];
+        const tab = document.getElementById(tabId);
+        if (tab) tab.classList.toggle('hidden', hidden);
+        const view = document.getElementById(viewId);
+        if (view && hidden) view.classList.add('hidden');
       });
     }
