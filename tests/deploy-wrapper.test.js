@@ -116,8 +116,15 @@ if (command === 'list') {
 } else if (command === 'deployments') {
   const target = targetForCwd();
   const currentDeployment = target && (state.deployments[target] || [])[0];
-  const productionVersion = currentDeployment &&
+  let productionVersion = currentDeployment &&
   (currentDeployment.activeVersion || currentDeployment.version);
+  if (target === state.settings.staleDeploymentReadsTarget &&
+      currentDeployment && currentDeployment.activeVersion &&
+      state.settings.staleDeploymentReads > 0) {
+    productionVersion = currentDeployment.version;
+    state.settings.staleDeploymentReads--;
+    saveState();
+  }
   record(target, { version: productionVersion || null });
   if (!target) {
   process.exitCode = 33;
@@ -579,6 +586,26 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
       assert.equal(releaseCommands[5].version, '8');
       assertScratchCleaned(events);
       assert.doesNotMatch(outputOf(result), /FAKE_(?:SCRIPT|DEPLOY|HEAD)_/);
+    } finally {
+      sandbox.cleanup();
+    }
+  });
+
+  runCase('waits for the redeployed production version to become visible', () => {
+    const sandbox = createSandbox({
+      staleDeploymentReadsTarget: 'NCE',
+      staleDeploymentReads: 2
+    });
+    try {
+      const result = invokeWrapper(sandbox, 'NCE', { confirmation: 'DEPLOY NCE' });
+      assert.equal(result.status, 0, outputOf(result));
+      const deploymentReads = sandbox.readEvents().filter(event =>
+        event.command === 'deployments' && event.target === 'NCE'
+      );
+      assert.equal(deploymentReads.length, 4,
+        'deployment verification should retry two stale reads before observing the new version');
+      assert.equal(sandbox.readState().deployments.NCE[0].activeVersion, '8');
+      assertScratchCleaned(sandbox.readEvents());
     } finally {
       sandbox.cleanup();
     }

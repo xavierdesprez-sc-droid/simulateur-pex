@@ -353,6 +353,30 @@ function Get-DeploymentRecord {
   return $versioned[0]
 }
 
+function Wait-ForDeploymentVersion {
+  param(
+    [Parameter(Mandatory = $true)][string]$ProjectPath,
+    [Parameter(Mandatory = $true)][string]$SelectedTarget,
+    [Parameter(Mandatory = $true)][string]$DeploymentId,
+    [Parameter(Mandatory = $true)][string]$Version
+  )
+
+  $deadline = [DateTime]::UtcNow.AddSeconds(60)
+  do {
+    $deployment = Get-DeploymentRecord -ProjectPath $ProjectPath -SelectedTarget $SelectedTarget
+    if ($deployment.DeploymentId -cne $DeploymentId) {
+      throw "$SelectedTarget production deployment ID changed during redeploy."
+    }
+    if ($deployment.Version -ceq $Version) {
+      return $deployment
+    }
+    if ([DateTime]::UtcNow -ge $deadline) {
+      throw "$SelectedTarget production deployment did not move to the new version within 60 seconds."
+    }
+    Start-Sleep -Seconds 1
+  } while ($true)
+}
+
 function Assert-BackendProfile {
   param(
     [Parameter(Mandatory = $true)][string]$BackendPath,
@@ -653,14 +677,9 @@ try {
       'PEX automated deployment'
     ) -WorkingDirectory $preparedProject.ProjectPath | Out-Null
     $script:DeployedTargets.Add($preparedProject.Target)
-    $updatedDeployment = Get-DeploymentRecord -ProjectPath $preparedProject.ProjectPath `
-      -SelectedTarget $preparedProject.Target
-    if ($updatedDeployment.DeploymentId -cne $preparedProject.DeploymentId) {
-      throw "$($preparedProject.Target) production deployment ID changed during redeploy."
-    }
-    if ($updatedDeployment.Version -cne $newVersion) {
-      throw "$($preparedProject.Target) production deployment did not move to the new version."
-    }
+    Wait-ForDeploymentVersion -ProjectPath $preparedProject.ProjectPath `
+      -SelectedTarget $preparedProject.Target -DeploymentId $preparedProject.DeploymentId `
+      -Version $newVersion | Out-Null
 
     $verifyPath = Join-Path (Join-Path $script:ScratchRoot 'verify') $preparedProject.Target
     New-Item -ItemType Directory -Path $verifyPath -Force -ErrorAction Stop | Out-Null
