@@ -76,8 +76,7 @@
     .simulator-ui button {
       min-height: 2.25rem;
     }
-    .simulator-ui [id^="tab-"],
-    .simulator-ui .preset-btn {
+    .simulator-ui [id^="tab-"] {
       flex-shrink: 0;
       min-height: 2.5rem;
       white-space: nowrap;
@@ -101,7 +100,17 @@
     /* Custom Slider Styles */
     input[type=range] {
       -webkit-appearance: none;
-      background: #64748b;
+      background: transparent;
+      border-radius: 9999px;
+      height: 2.5rem;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      background: #e2e8f0;
+      border-radius: 9999px;
+      height: 8px;
+    }
+    input[type=range]::-moz-range-track {
+      background: #e2e8f0;
       border-radius: 9999px;
       height: 8px;
     }
@@ -116,6 +125,9 @@
       border: 2px solid #ffffff;
       transition: transform 0.1s ease;
     }
+    input[type=range]:not(.dual-range)::-webkit-slider-thumb {
+      margin-top: -6px;
+    }
     input[type=range]::-webkit-slider-thumb:hover {
       transform: scale(1.15);
     }
@@ -124,6 +136,10 @@
       background: transparent;
       height: 24px;
       pointer-events: none;
+    }
+    input[type=range].dual-range::-webkit-slider-runnable-track,
+    input[type=range].dual-range::-moz-range-track {
+      background: transparent;
     }
     input[type=range].dual-range::-webkit-slider-thumb {
       pointer-events: auto;

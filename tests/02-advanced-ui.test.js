@@ -86,15 +86,8 @@ module.exports = function suite(__h) {
 
   // ===== Preset syncs both sliders =====
   state.targetIncrease = 0;
-  document.getElementById('preset-initial');
-  document.getElementById('preset-targetGroup');
-  document.getElementById('preset-highIncentive');
   applyPreset('targetGroup');
   check('preset targetGroup → sliders at 30', parseFloat(els['adv-target-increase'].value) === 30 && parseFloat(els['slider-target-increase'].value) === 30);
-  check('preset selection exposes exactly the chosen pressed state',
-    els['preset-targetGroup'].ariaPressed === 'true' &&
-    els['preset-initial'].ariaPressed === 'false' &&
-    els['preset-highIncentive'].ariaPressed === 'false');
   check('preset targetGroup → matrix slider synced', els['matrix-target-increase'].value == state.targetIncrease && els['matrix-val-target-increase'].innerText.indexOf('+30.0%') > -1);
   state.targetIncrease = 0;
 

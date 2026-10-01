@@ -76,8 +76,7 @@
     .simulator-ui button {
       min-height: 2.25rem;
     }
-    .simulator-ui [id^="tab-"],
-    .simulator-ui .preset-btn {
+    .simulator-ui [id^="tab-"] {
       flex-shrink: 0;
       min-height: 2.5rem;
       white-space: nowrap;
@@ -101,7 +100,17 @@
     /* Custom Slider Styles */
     input[type=range] {
       -webkit-appearance: none;
-      background: #64748b;
+      background: transparent;
+      border-radius: 9999px;
+      height: 2.5rem;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      background: #e2e8f0;
+      border-radius: 9999px;
+      height: 8px;
+    }
+    input[type=range]::-moz-range-track {
+      background: #e2e8f0;
       border-radius: 9999px;
       height: 8px;
     }
@@ -116,6 +125,9 @@
       border: 2px solid #ffffff;
       transition: transform 0.1s ease;
     }
+    input[type=range]:not(.dual-range)::-webkit-slider-thumb {
+      margin-top: -6px;
+    }
     input[type=range]::-webkit-slider-thumb:hover {
       transform: scale(1.15);
     }
@@ -124,6 +136,10 @@
       background: transparent;
       height: 24px;
       pointer-events: none;
+    }
+    input[type=range].dual-range::-webkit-slider-runnable-track,
+    input[type=range].dual-range::-moz-range-track {
+      background: transparent;
     }
     input[type=range].dual-range::-webkit-slider-thumb {
       pointer-events: auto;
@@ -159,7 +175,7 @@
       </div>
 
       <!-- View Tabs -->
-      <div class="flex min-w-0 flex-col gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
+      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div role="group" aria-label="Simulation views" class="flex w-full min-w-0 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
           <button id="tab-standard" onclick="setView('standard')" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg bg-white text-indigo-600 shadow-sm">
             Standard Scenario
@@ -173,22 +189,9 @@
             Matrix
           </button>
         </div>
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <div role="group" aria-label="Scenario presets" class="flex w-full min-w-0 flex-1 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
-            <button onclick="applyPreset('initial')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
-              Current Situation (110% avg)
-            </button>
-            <button onclick="applyPreset('targetGroup')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-targetGroup">
-              Group Target (80% avg)
-            </button>
-            <button onclick="applyPreset('highIncentive')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-highIncentive">
-              Optimized Scenario (+2% overperf)
-            </button>
-          </div>
-          <button onclick="resetDefaults()" class="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" aria-label="Reset parameters" title="Reset parameters">
-            <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
-          </button>
-        </div>
+        <button onclick="resetDefaults()" class="shrink-0 self-end p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all sm:self-auto" aria-label="Reset parameters" title="Reset parameters">
+          <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   </header>
@@ -3165,19 +3168,6 @@ const BUILD_PROFILE = "NCE";
       });
     }
 
-    const PRESET_BUTTONS = [
-      ['initial', 'preset-initial'],
-      ['targetGroup', 'preset-targetGroup'],
-      ['highIncentive', 'preset-highIncentive']
-    ];
-
-    function syncPresetButtonStates(presetKey) {
-      PRESET_BUTTONS.forEach(([key, id]) => {
-        const button = document.getElementById(id);
-        if (button) button.ariaPressed = String(key === presetKey);
-      });
-    }
-
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
@@ -3229,31 +3219,22 @@ const BUILD_PROFILE = "NCE";
 
     // Presets
     function applyPreset(presetKey) {
-      syncPresetButtonStates(presetKey);
-      document.querySelectorAll('.preset-btn').forEach(b => {
-        b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
-        b.classList.add('text-slate-600');
-      });
-
       if (presetKey === 'initial') {
         state.targetIncrease = 0;
         state.overperf = 0;
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-initial').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'targetGroup') {
         // Absolute pp: mu = 110, targetIncrease = +30pp → new mu = 110 - 30 = 80%
         state.targetIncrease = 30;
         state.overperf = 0;
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-targetGroup').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'highIncentive') {
         state.targetIncrease = 30;
         state.overperf = 2; // +2 pp induced overperformance
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-highIncentive').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       }
 
       syncInputsFromState();
@@ -3525,7 +3506,6 @@ const BUILD_PROFILE = "NCE";
       appInitialized = true;
       applyProfileUi();
       syncViewButtonStates('standard');
-      syncPresetButtonStates(null);
       lucide.createIcons();
       renderBreakpointsTable();
       initChart();

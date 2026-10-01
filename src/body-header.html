@@ -13,7 +13,7 @@
       </div>
 
       <!-- View Tabs -->
-      <div class="flex min-w-0 flex-col gap-2 2xl:flex-row 2xl:items-center 2xl:justify-between">
+      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div role="group" aria-label="Simulation views" class="flex w-full min-w-0 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
           <button id="tab-standard" onclick="setView('standard')" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg bg-white text-indigo-600 shadow-sm">
             Standard Scenario
@@ -27,22 +27,9 @@
             Matrix
           </button>
         </div>
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <div role="group" aria-label="Scenario presets" class="flex w-full min-w-0 flex-1 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
-            <button onclick="applyPreset('initial')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
-              Current Situation (110% avg)
-            </button>
-            <button onclick="applyPreset('targetGroup')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-targetGroup">
-              Group Target (80% avg)
-            </button>
-            <button onclick="applyPreset('highIncentive')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-highIncentive">
-              Optimized Scenario (+2% overperf)
-            </button>
-          </div>
-          <button onclick="resetDefaults()" class="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" aria-label="Reset parameters" title="Reset parameters">
-            <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
-          </button>
-        </div>
+        <button onclick="resetDefaults()" class="shrink-0 self-end p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all sm:self-auto" aria-label="Reset parameters" title="Reset parameters">
+          <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   </header>

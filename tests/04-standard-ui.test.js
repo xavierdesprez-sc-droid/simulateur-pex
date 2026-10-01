@@ -56,6 +56,10 @@ module.exports = function suite(__h) {
   check('reset → mu 110', state.muInit === 110);
   check('reset → PEX 2.5', state.currentPEX === 2.5);
   check('reset → sigma 60 and corridor rate 10', state.sigmaInit === 60 && state.marginRate === 10);
+  check('reset → target increase and overperformance sliders',
+    state.targetIncrease === 0 && state.overperf === 0 &&
+    Number(els['slider-target-increase'].value) === 0 &&
+    Number(els['slider-overperf'].value) === 0);
   check('standard inputs start at sigma 60 and corridor rate 10', els['input-sigma-init'].value === 60 && els['input-margin-rate'].value === 10);
   check('reset → default breakpoints', state.breakpoints.length === 4 && state.breakpoints[1].achievement === 40 && state.breakpoints[1].payout === 0);
   updateDashboard();

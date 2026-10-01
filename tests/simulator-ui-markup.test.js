@@ -10,14 +10,18 @@ module.exports = function suite(h) {
       return script && !/\b(?:integrity|crossorigin)\s*=/.test(script);
     }));
 
-  const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
-  h.check('simulator header contains all presets in a labeled group',
-    /role="group" aria-label="Scenario presets"/.test(header) &&
-    ['preset-initial', 'preset-targetGroup', 'preset-highIncentive']
-      .every(id => header.includes(`id="${id}"`)));
+  const nceHtml = h.buildString('NCE');
+  h.check('scenario preset shortcuts are absent from every app header',
+    [html, nceHtml, salesRepHtml].every(page => {
+      const pageHeader = page.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
+      return !/Scenario presets|preset-(?:initial|targetGroup|highIncentive)/.test(pageHeader);
+    }));
 
-  h.check('reset icon button has an accessible name',
-    /<button[^>]*aria-label="Reset parameters"[^>]*>[\s\S]*?<i[^>]*aria-hidden="true"/.test(header));
+  h.check('reset icon button remains accessible in cluster profile headers',
+    [html, nceHtml].every(page => {
+      const pageHeader = page.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
+      return /<button[^>]*aria-label="Reset parameters"[^>]*>[\s\S]*?<i[^>]*aria-hidden="true"/.test(pageHeader);
+    }));
 
   h.check('simulator typography and keyboard focus styles are upgraded',
     html.includes('[class~="text-[10px]"]') &&

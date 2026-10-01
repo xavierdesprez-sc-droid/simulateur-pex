@@ -112,3 +112,79 @@ for (const profile of profiles) {
     });
   }
 }
+
+test('range controls keep a transparent input background and full-size touch target', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  await openSimulator(page, 'index.html');
+  const control = await page.locator('#slider-target-increase').evaluate(element => ({
+    background: getComputedStyle(element).backgroundColor,
+    height: getComputedStyle(element).height
+  }));
+  expect(control).toEqual({
+    background: 'rgba(0, 0, 0, 0)',
+    height: '40px'
+  });
+});
+
+test('header removes scenario presets and retains reset controls', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  await openSimulator(page, 'index.html');
+  await expect(page.locator('[aria-label="Scenario presets"], .preset-btn, [id^="preset-"]')).toHaveCount(0);
+  await page.locator('#slider-target-increase').evaluate(element => {
+    element.value = '30';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.locator('#slider-overperf').evaluate(element => {
+    element.value = '2';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.getByRole('button', { name: 'Reset parameters' }).click();
+  await expect(page.locator('#slider-target-increase')).toHaveValue('0');
+  await expect(page.locator('#slider-overperf')).toHaveValue('0');
+});
+
+test('range thumbs are vertically centered on their tracks', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  await openSimulator(page, 'index.html');
+  const slider = page.locator('#slider-target-increase');
+  const touchHeight = await slider.evaluate(element => element.getBoundingClientRect().height);
+  expect(touchHeight).toBe(40);
+
+  const screenshot = await slider.screenshot();
+  const alignment = await page.evaluate(async base64 => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
+    const trackRows = [];
+    const thumbRows = [];
+
+    for (let y = 0; y < height; y++) {
+      let trackPixels = 0;
+      let thumbPixels = 0;
+      for (let x = 0; x < width; x++) {
+        const offset = (y * width + x) * 4;
+        const [red, green, blue] = data.slice(offset, offset + 3);
+        if (Math.abs(red - 226) <= 2 && Math.abs(green - 232) <= 2 && Math.abs(blue - 240) <= 2) {
+          trackPixels++;
+        }
+        if (red >= 60 && red <= 100 && green >= 50 && green <= 90 && blue >= 210) {
+          thumbPixels++;
+        }
+      }
+      if (trackPixels > width * 0.1) trackRows.push(y);
+      if (thumbPixels >= 6) thumbRows.push(y);
+    }
+
+    return {
+      trackCenter: (trackRows[0] + trackRows[trackRows.length - 1]) / 2,
+      thumbCenter: (thumbRows[0] + thumbRows[thumbRows.length - 1]) / 2
+    };
+  }, screenshot.toString('base64'));
+  expect(Math.abs(alignment.thumbCenter - alignment.trackCenter)).toBeLessThanOrEqual(1);
+});
