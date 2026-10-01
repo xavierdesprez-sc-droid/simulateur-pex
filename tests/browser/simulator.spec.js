@@ -188,3 +188,39 @@ test('range thumbs are vertically centered on their tracks', async ({ page }) =>
   }, screenshot.toString('base64'));
   expect(Math.abs(alignment.thumbCenter - alignment.trackCenter)).toBeLessThanOrEqual(1);
 });
+
+test('reset button sits beside the simulation tabs', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  await openSimulator(page, 'index.html');
+  const spacing = await page.locator('header').evaluate(header => {
+    const tabs = header.querySelector('[aria-label="Simulation views"]').getBoundingClientRect();
+    const reset = header.querySelector('[aria-label="Reset parameters"]').getBoundingClientRect();
+    return {
+      sameRow: Math.abs(tabs.top + tabs.height / 2 - reset.top - reset.height / 2) <= 1,
+      gap: reset.left - tabs.right
+    };
+  });
+  expect(spacing.sameRow).toBe(true);
+  expect(spacing.gap).toBeGreaterThanOrEqual(0);
+  expect(spacing.gap).toBeLessThanOrEqual(12);
+});
+
+test('dual range handles align with the visible track and keep a 40px target', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  await openSimulator(page, 'index.html');
+  await page.locator('#tab-advanced').click();
+  await expect(page.locator('#view-advanced')).toBeVisible();
+  const alignment = await page.locator('.dual-range').evaluateAll(inputs => inputs.map(input => {
+    const inputRect = input.getBoundingClientRect();
+    const railRect = input.parentElement.children[0].getBoundingClientRect();
+    return {
+      height: inputRect.height,
+      offset: Math.abs(inputRect.top + inputRect.height / 2 - railRect.top - railRect.height / 2)
+    };
+  }));
+  expect(alignment).toHaveLength(2);
+  for (const slider of alignment) {
+    expect(slider.height).toBe(40);
+    expect(slider.offset).toBeLessThanOrEqual(1);
+  }
+});
