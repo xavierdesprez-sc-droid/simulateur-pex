@@ -502,13 +502,22 @@ function Assert-PulledVersion {
   Copy-Item -LiteralPath $projectConfigPath -Destination $verifyConfigPath -Force
   Invoke-Clasp -Arguments @('pull', '--versionNumber', $Version) -WorkingDirectory $VerifyPath | Out-Null
 
+  $verifyBackendName = $PreparedProject.BackendName
+  $verifyExpectedFiles = @($PreparedProject.ExpectedFiles)
+  if ($PreparedProject.Target -eq 'SWE') {
+    # clasp pull normalizes Apps Script SERVER_JS files to a .js extension.
+    $verifyBackendName = 'Code.js'
+    $verifyExpectedFiles = @($verifyExpectedFiles | ForEach-Object {
+      if ($_ -ceq $PreparedProject.BackendName) { $verifyBackendName } else { $_ }
+    })
+  }
   Assert-LocalInventory -ProjectPath $VerifyPath -SelectedTarget $PreparedProject.Target `
-    -ExpectedFiles $PreparedProject.ExpectedFiles
+    -ExpectedFiles $verifyExpectedFiles
   if (-not (Test-Base64FilesEqual -FirstPath $PreparedProject.BuildPath `
       -SecondPath (Join-Path $VerifyPath 'index.html'))) {
     throw "$($PreparedProject.Target) immutable deployed version HTML did not match the intended build."
   }
-  if ((Get-Base64File -Path (Join-Path $VerifyPath $PreparedProject.BackendName)) -cne
+  if ((Get-Base64File -Path (Join-Path $VerifyPath $verifyBackendName)) -cne
       $PreparedProject.BackendBase64 -or
       (Get-Base64File -Path (Join-Path $VerifyPath 'appsscript.json')) -cne
       $PreparedProject.ManifestBase64) {

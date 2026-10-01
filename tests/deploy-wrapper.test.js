@@ -180,7 +180,11 @@ if (command === 'list') {
   if (!snapshot) {
     process.exitCode = 37;
   } else {
-    writeFiles(snapshot);
+    const pulledFiles = target === 'SWE'
+      ? Object.fromEntries(Object.entries(snapshot).map(([name, contents]) =>
+        [name === 'Code.gs' ? 'Code.js' : name, contents]))
+      : snapshot;
+    writeFiles(pulledFiles);
     process.stdout.write('Pulled immutable version.\n');
   }
 } else {
@@ -575,6 +579,28 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
       assert.equal(releaseCommands[5].version, '8');
       assertScratchCleaned(events);
       assert.doesNotMatch(outputOf(result), /FAKE_(?:SCRIPT|DEPLOY|HEAD)_/);
+    } finally {
+      sandbox.cleanup();
+    }
+  });
+
+  runCase('verifies SWE versions when clasp normalizes the backend extension', () => {
+    const sandbox = createSandbox();
+    try {
+      const result = invokeWrapper(sandbox, 'SWE', { confirmation: 'DEPLOY SWE' });
+      assert.equal(result.status, 0, outputOf(result));
+      assert.match(outputOf(result), /SWE deployed and verified\./);
+      const state = sandbox.readState();
+      assert.equal(state.deployments.SWE[0].activeVersion, '8');
+      assert.equal(
+        decode(state.versions.SWE['8']['Code.gs']),
+        fs.readFileSync(path.join(root, 'Code.gs'), 'utf8')
+      );
+      const pull = sandbox.readEvents().find(event =>
+        event.command === 'pull' && event.target === 'SWE'
+      );
+      assert.equal(pull.version, '8');
+      assertScratchCleaned(sandbox.readEvents());
     } finally {
       sandbox.cleanup();
     }
