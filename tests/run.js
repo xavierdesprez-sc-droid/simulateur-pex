@@ -24,7 +24,7 @@ execFileSync(process.execPath, [path.join(__dirname, 'auth.test.js')], { stdio: 
 
 const suites = fs.readdirSync(__dirname)
   .filter(f => f.endsWith('.test.js') &&
-    !['auth.test.js', 'build-target.test.js', '07-sales-rep.test.js'].includes(f))
+    !['auth.test.js', 'build-target.test.js', '07-sales-rep.test.js', 'deploy-wrapper.test.js'].includes(f))
   .sort();
 for (const f of suites) {
   console.log(f);
@@ -35,6 +35,11 @@ runSuite(path.join(__dirname, '07-sales-rep.test.js'), 'sales-rep');
 
 console.log('build-target.test.js');
 execFileSync(process.execPath, [path.join(__dirname, 'build-target.test.js')], { stdio: 'inherit' });
+
+if (process.env.PEX_DEPLOY_WRAPPER_CHECK !== '1') {
+  console.log('deploy-wrapper.test.js');
+  execFileSync(process.execPath, [path.join(__dirname, 'deploy-wrapper.test.js')], { stdio: 'inherit' });
+}
 
 console.log('-------------------------------------------');
 console.log(`TOTAL: ${results.pass} pass / ${results.fail} fail`);

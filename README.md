@@ -176,45 +176,50 @@ columns G/H. NCE reads `Job Profile`, `Country`, `Annual Base Pay 2026 Revised`,
 Both profiles expose only `Country` and `Job Profile` filters on the first page and calculate
 Current PEX Paid, headcount, and Avg. Current Var. Share from the filtered Sheet data.
 
-### Deploying the SWE project with clasp
+### Deploying SWE, NCE, or Sales Rep
 
-The repository's `.clasp.json` targets the SWE Apps Script project. `.claspignore` limits
-uploads to `Code.gs`, the generated root `index.html`, and `appsscript.json`; do not remove
-this allowlist because the browser source fragments and tests are not Apps Script files.
-The manifest preserves the existing web app settings (execute as deployer, domain access).
+From the repository root in PowerShell, name the target explicitly:
 
-From the repository root, verify the bundle and tests before deployment:
-
-```text
-npm ci
-npm run lint
-node build.js --check
-node tests/run.js
-clasp status --json
-clasp push
-clasp deployments
-clasp redeploy <production-deployment-id> --description "Describe the change"
+```powershell
+.\scripts\deploy.ps1 -Target SWE -DryRun
+.\scripts\deploy.ps1 -Target SWE
+.\scripts\deploy.ps1 -Target NCE
+.\scripts\deploy.ps1 -Target SalesRep
+.\scripts\deploy.ps1 -Target All
 ```
 
-Check that `filesToPush` in the status output contains exactly `appsscript.json`,
-`Code.gs`, and `index.html` before pushing. `clasp push` replaces the remote project's
-file set but does not publish a new web-app version. `clasp redeploy` creates a version
-and updates the existing deployment ID (listed by `clasp deployments`), preserving its
-URL. Verify the web app in a browser signed in to an allowed organization account; an
-unauthenticated HTTP request redirects to Google sign-in. NCE uses a separate Apps Script
-project and must not be deployed through this SWE configuration.
-### Sales Rep calculator deployment
+The script requires Node.js, the `clasp` CLI, and an authenticated Apps Script
+account. It runs the bundle freshness check, lint, and tests, then preflights **all**
+selected projects before any remote write. Projects are matched by their unique exact
+names. It verifies the intended bundle, Apps Script file inventory, backend profile,
+and exactly one existing versioned production deployment. `-DryRun` performs those
+checks without pushing or redeploying. A real run asks for an exact typed confirmation
+(for example, `DEPLOY All` is not accepted; use `DEPLOY ALL`). Redirected/noninteractive
+runs are refused.
 
-Build the separate Sales Rep bundle with:
+SWE is repository-managed: `.clasp.json` selects SWE, `Code.gs` fixes the server profile,
+and `.claspignore` allows only `Code.gs`, `appsscript.json`, and root `index.html`.
+NCE and Sales Rep use separate remote projects. The script clones each into a unique
+temporary directory outside the repository, keeps its remote `Code.js` and
+`appsscript.json` unchanged, and stages only the generated `index.html`. This is why
+the backends differ: the SWE backend is maintained in this repository, NCE has a
+profile-fixed copy, and Sales Rep has a smaller calculator-specific access gate.
 
-```text
-node build.js --app=sales-rep
-```
+After confirmation, each selected project is pushed without force, given a new immutable
+version, and redeployed through its existing production deployment ID to preserve its
+URL. The script then pulls that version and verifies its HTML and backend/manifest
+against the staged files. Deployment is sequential and non-atomic: on failure it stops
+and reports which targets were redeployed and which were pushed but not redeployed;
+it does not attempt the remaining targets.
+Temporary files created by that invocation are cleaned up. Verify access and rendering
+in an authenticated browser after deployment; an unauthenticated request redirects to
+Google sign-in.
 
-The output is `dist/sales-rep/index.html`. Copy that file into a separate Google Apps
-Script project as an HTML file named `index`, and configure that project's `Code.gs` using
-the existing deployment and per-person access-gate instructions above. Deploy the project
-as a distinct Web App with its own URL; do not replace the existing simulator deployment.
+Creating or testing the script does not deploy anything. Production changes happen
+only when an operator explicitly runs the script without `-DryRun` and confirms.
+
+The Sales Rep bundle can also be built separately with `node build.js --app=sales-rep`;
+the output is `dist/sales-rep/index.html`.
 
 The Sales Rep calculator runs entirely in the browser. It does not load population data,
 persist scenarios, or send scenario inputs to a server.
