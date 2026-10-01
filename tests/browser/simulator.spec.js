@@ -205,60 +205,74 @@ test('reset button sits beside the simulation tabs', async ({ page }) => {
   expect(spacing.gap).toBeLessThanOrEqual(12);
 });
 
-test('dual range handles align with the visible track and keep a 40px target', async ({ page }) => {
-  await page.setViewportSize({ width: 1366, height: 800 });
+test('dual range renders a gold interval between visible aligned handles', async ({ page }) => {
+  await page.setViewportSize({ width: 470, height: 800 });
   await openSimulator(page, 'index.html');
   await page.locator('#tab-advanced').click();
   await expect(page.locator('#view-advanced')).toBeVisible();
-  const inputs = await page.locator('.dual-range').evaluateAll(elements =>
-    elements.map(element => element.getBoundingClientRect().height));
-  expect(inputs).toEqual([40, 40]);
+  for (const width of [470, 1366]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.locator('#adv-dual-t2').evaluate(input => {
+      input.value = '115';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.locator('#adv-dual-t2')).toHaveValue('115');
+    const inputs = await page.locator('.dual-range').evaluateAll(elements =>
+      elements.map(element => element.getBoundingClientRect().height));
+    expect(inputs).toEqual([40, 40]);
 
-  const screenshot = await page.locator('#adv-dual-t1').locator('..').screenshot();
-  const alignment = await page.evaluate(async base64 => {
-    const image = new Image();
-    image.src = `data:image/png;base64,${base64}`;
-    await image.decode();
-    const canvas = document.createElement('canvas');
-    canvas.width = image.naturalWidth;
-    canvas.height = image.naturalHeight;
-    const context = canvas.getContext('2d');
-    context.drawImage(image, 0, 0);
-    const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
-    const rows = { track: [], amber: [], orange: [] };
+    const screenshot = await page.locator('#adv-dual-t1').locator('..').screenshot();
+    const alignment = await page.evaluate(async base64 => {
+      const image = new Image();
+      image.src = `data:image/png;base64,${base64}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(image, 0, 0);
+      const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = { track: [], amber: [], orange: [], gold: [] };
 
-    for (let y = 0; y < height; y++) {
-      let trackPixels = 0;
-      let amberPixels = 0;
-      let orangePixels = 0;
-      for (let x = 0; x < width; x++) {
-        const offset = (y * width + x) * 4;
-        const [red, green, blue] = data.slice(offset, offset + 3);
-        if (Math.abs(red - 226) <= 2 && Math.abs(green - 232) <= 2 && Math.abs(blue - 240) <= 2) {
-          trackPixels++;
+      for (let y = 0; y < height; y++) {
+        let trackPixels = 0;
+        for (let x = 0; x < width; x++) {
+          const offset = (y * width + x) * 4;
+          const [red, green, blue] = data.slice(offset, offset + 3);
+          if (Math.abs(red - 226) <= 2 && Math.abs(green - 232) <= 2 && Math.abs(blue - 240) <= 2) {
+            trackPixels++;
+          }
+          if (red === 217 && green === 119 && blue === 6) pixels.amber.push({ x, y });
+          if (red === 234 && green === 88 && blue === 12) pixels.orange.push({ x, y });
+          if (red === 251 && green === 191 && blue === 36) pixels.gold.push({ x, y });
         }
-        if (red === 217 && green === 119 && blue === 6) amberPixels++;
-        if (red === 234 && green === 88 && blue === 12) orangePixels++;
+        if (trackPixels > width * 0.4) pixels.track.push(y);
       }
-      if (trackPixels > width * 0.4) rows.track.push(y);
-      if (amberPixels >= 4) rows.amber.push(y);
-      if (orangePixels >= 4) rows.orange.push(y);
-    }
 
-    const center = values => values.length
-      ? (values[0] + values[values.length - 1]) / 2
-      : null;
-    return {
-      track: center(rows.track),
-      amber: center(rows.amber),
-      orange: center(rows.orange)
-    };
-  }, screenshot.toString('base64'));
-  expect(alignment.track).not.toBeNull();
-  expect(alignment.amber).not.toBeNull();
-  expect(alignment.orange).not.toBeNull();
-  expect(Math.abs(alignment.amber - alignment.track)).toBeLessThanOrEqual(1);
-  expect(Math.abs(alignment.orange - alignment.track)).toBeLessThanOrEqual(1);
+      const bounds = points => points.length ? {
+        minX: Math.min(...points.map(point => point.x)),
+        maxX: Math.max(...points.map(point => point.x)),
+        minY: Math.min(...points.map(point => point.y)),
+        maxY: Math.max(...points.map(point => point.y))
+      } : null;
+      return {
+        trackY: pixels.track.length
+          ? (pixels.track[0] + pixels.track[pixels.track.length - 1]) / 2
+          : null,
+        amber: bounds(pixels.amber),
+        orange: bounds(pixels.orange),
+        gold: bounds(pixels.gold)
+      };
+    }, screenshot.toString('base64'));
+    expect(alignment.trackY, `track at ${width}px`).not.toBeNull();
+    expect(alignment.amber, `amber handle at ${width}px`).not.toBeNull();
+    expect(alignment.orange, `orange handle at ${width}px`).not.toBeNull();
+    expect(alignment.gold, `gold interval at ${width}px`).not.toBeNull();
+    expect(Math.abs((alignment.amber.minY + alignment.amber.maxY) / 2 - alignment.trackY)).toBeLessThanOrEqual(1);
+    expect(Math.abs((alignment.orange.minY + alignment.orange.maxY) / 2 - alignment.trackY)).toBeLessThanOrEqual(1);
+    expect(alignment.gold.minX, `gold after amber handle at ${width}px`).toBeGreaterThan(alignment.amber.maxX);
+    expect(alignment.gold.maxX, `gold before orange handle at ${width}px`).toBeLessThan(alignment.orange.minX);
+  }
 });
 
 test('breakpoint explanation is removed from the standard view', async ({ page }) => {

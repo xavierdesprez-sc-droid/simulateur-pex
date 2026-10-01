@@ -137,8 +137,11 @@
       height: 24px;
       pointer-events: none;
     }
-    input[type=range].dual-range::-webkit-slider-runnable-track,
-    input[type=range].dual-range::-moz-range-track {
+    input[type=range].dual-range::-webkit-slider-runnable-track {
+      background: transparent;
+    }
+    input[type=range].dual-range::-moz-range-track,
+    input[type=range].dual-range::-moz-range-progress {
       background: transparent;
     }
     input[type=range].dual-range::-webkit-slider-thumb {
