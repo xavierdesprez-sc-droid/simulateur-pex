@@ -308,6 +308,7 @@ function invokeWrapper(sandbox, target, options = {}) {
   const wrapperPath = wrapper.replace(/'/g, "''");
   const targetArg = target ? ` -Target '${target}'` : '';
   const dryRunArg = options.dryRun ? ' -DryRun' : '';
+  const confirmRemoteChangesArg = options.confirmRemoteChanges ? ' -ConfirmRemoteChanges' : '';
   if (options.realNpm) fs.unlinkSync(path.join(sandbox.bin, 'npm.ps1'));
   const env = {
     ...process.env,
@@ -322,7 +323,8 @@ function invokeWrapper(sandbox, target, options = {}) {
     return spawnSync(powershell, [
       '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
       '-File', wrapper, ...(target ? ['-Target', target] : []),
-      ...(options.dryRun ? ['-DryRun'] : [])
+      ...(options.dryRun ? ['-DryRun'] : []),
+      ...(options.confirmRemoteChanges ? ['-ConfirmRemoteChanges'] : [])
     ], {
       cwd: root,
       encoding: 'utf8',
@@ -338,7 +340,7 @@ function invokeWrapper(sandbox, target, options = {}) {
     const confirmation = String(options.confirmation).replace(/'/g, "''");
     promptFunction = `function Read-Host { param([string]$Prompt); return '${confirmation}' }; `;
   }
-  const command = `${promptFunction}& '${wrapperPath}'${targetArg}${dryRunArg}`;
+  const command = `${promptFunction}& '${wrapperPath}'${targetArg}${dryRunArg}${confirmRemoteChangesArg}`;
   return spawnSync(powershell, [
     '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command
   ], {
@@ -458,6 +460,39 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
       assertNoWrites(events);
       assertScratchCleaned(events);
       assert.match(outputOf(result), /confirm|interactive|confirmation/i);
+    } finally {
+      sandbox.cleanup();
+    }
+  });
+
+  runCase('allows explicitly confirmed noninteractive All deployment after preflight', () => {
+    const sandbox = createSandbox();
+    try {
+      const result = invokeWrapper(sandbox, 'All', {
+        nativeFile: true,
+        confirmRemoteChanges: true
+      });
+      assert.equal(result.status, 0, outputOf(result));
+      const events = sandbox.readEvents();
+      const firstPush = events.findIndex(event => event.command === 'push');
+      assert.ok(firstPush >= 0);
+      for (const target of ['SWE', 'NCE', 'SalesRep']) {
+        assert.ok(events.slice(0, firstPush).some(event =>
+          event.command === 'status' && event.target === target),
+        `${target} must pass preflight before any push`);
+        assert.ok(events.slice(0, firstPush).some(event =>
+          event.command === 'deployments' && event.target === target),
+        `${target} production deployment must be checked before any push`);
+      }
+      assert.deepEqual(
+        events.filter(event => event.command === 'push').map(event => event.target),
+        ['SWE', 'NCE', 'SalesRep']
+      );
+      assert.deepEqual(
+        events.filter(event => event.command === 'redeploy').map(event => event.target),
+        ['SWE', 'NCE', 'SalesRep']
+      );
+      assertScratchCleaned(events);
     } finally {
       sandbox.cleanup();
     }

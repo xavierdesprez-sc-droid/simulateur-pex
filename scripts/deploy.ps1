@@ -1,6 +1,7 @@
 param(
   [string]$Target,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$ConfirmRemoteChanges
 )
 
 $ErrorActionPreference = 'Stop'
@@ -644,18 +645,22 @@ try {
     exit 0
   }
 
-  if ($Target -eq 'All') {
-    $confirmationPhrase = 'DEPLOY ALL'
+  if ($ConfirmRemoteChanges) {
+    Write-Host 'Remote changes explicitly confirmed with -ConfirmRemoteChanges.'
   } else {
-    $confirmationPhrase = 'DEPLOY ' + $Target
-  }
-  try {
-    $confirmation = Read-Host "Type '$confirmationPhrase' to continue"
-  } catch {
-    throw 'Interactive confirmation is unavailable; no remote changes were made.'
-  }
-  if ([string]$confirmation -cne $confirmationPhrase) {
-    throw 'Confirmation did not match; no remote changes were made.'
+    if ($Target -eq 'All') {
+      $confirmationPhrase = 'DEPLOY ALL'
+    } else {
+      $confirmationPhrase = 'DEPLOY ' + $Target
+    }
+    try {
+      $confirmation = Read-Host "Type '$confirmationPhrase' to continue"
+    } catch {
+      throw 'Interactive confirmation is unavailable; no remote changes were made.'
+    }
+    if ([string]$confirmation -cne $confirmationPhrase) {
+      throw 'Confirmation did not match; no remote changes were made.'
+    }
   }
 
   foreach ($preparedProject in $preparedProjects) {

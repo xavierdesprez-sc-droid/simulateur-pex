@@ -193,9 +193,11 @@ account. It runs the bundle freshness check, lint, and tests, then preflights **
 selected projects before any remote write. Projects are matched by their unique exact
 names. It verifies the intended bundle, Apps Script file inventory, backend profile,
 and exactly one existing versioned production deployment. `-DryRun` performs those
-checks without pushing or redeploying. A real run asks for an exact typed confirmation
-(for example, `DEPLOY All` is not accepted; use `DEPLOY ALL`). Redirected/noninteractive
-runs are refused.
+checks without pushing or redeploying. An interactive run asks for an exact typed
+confirmation (for example, `DEPLOY All` is not accepted; use `DEPLOY ALL`). For an
+explicitly authorized noninteractive deployment, pass `-ConfirmRemoteChanges`, e.g.
+`.\scripts\deploy.ps1 -Target All -ConfirmRemoteChanges`. All preflight checks still run
+before any remote write; without the switch, redirected/noninteractive runs are refused.
 
 SWE is repository-managed: `.clasp.json` selects SWE, `Code.gs` fixes the server profile,
 and `.claspignore` allows only `Code.gs`, `appsscript.json`, and root `index.html`.
