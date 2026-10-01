@@ -125,7 +125,7 @@
       border: 2px solid #ffffff;
       transition: transform 0.1s ease;
     }
-    input[type=range]:not(.dual-range)::-webkit-slider-thumb {
+    input[type=range]::-webkit-slider-thumb {
       margin-top: -6px;
     }
     input[type=range]::-webkit-slider-thumb:hover {
@@ -452,16 +452,14 @@
             </button>
           </div>
 
-          <p class="text-xs text-slate-500">Breakpoints: flat 0 up to <strong>40%</strong> achievement, linear 0 &rarr; 100% payout between 40% and 100%, then <strong>100% &rarr; 200% payout</strong> between 100% and 200%.</p>
-
           <!-- Table of Breakpoints -->
-          <div role="region" aria-label="Curve breakpoint table" tabindex="0" class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
-            <table class="w-full min-w-[24rem] text-xs text-left">
+          <div role="region" aria-label="Curve breakpoint table" class="overflow-hidden border border-slate-200 rounded-xl">
+            <table class="w-full table-fixed text-xs text-left">
               <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th class="py-2 px-3">Achievement (%)</th>
-                  <th class="py-2 px-3">Payout (%)</th>
-                  <th class="py-2 px-2 text-right">Action</th>
+                  <th class="w-[42%] py-2 px-2 whitespace-normal break-words leading-tight">Achievement (%)</th>
+                  <th class="w-[38%] py-2 px-2 whitespace-normal break-words leading-tight">Payout (%)</th>
+                  <th class="w-[20%] py-2 px-1 text-right whitespace-normal break-words leading-tight">Action</th>
                 </tr>
               </thead>
               <tbody id="breakpoints-table-body" class="divide-y divide-slate-100 font-mono">
@@ -2032,13 +2030,13 @@ const BUILD_PROFILE = "SWE";
       state.breakpoints.forEach((bp, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td class="py-1.5 px-3">
-            <input type="number" value="${bp.achievement}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'achievement', this.value)" class="w-20 px-2 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
+          <td class="py-1.5 px-2 whitespace-nowrap">
+            <input type="number" value="${bp.achievement}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'achievement', this.value)" class="w-14 px-1.5 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
           </td>
-          <td class="py-1.5 px-3">
-            <input type="number" value="${bp.payout}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'payout', this.value)" class="w-20 px-2 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
+          <td class="py-1.5 px-2 whitespace-nowrap">
+            <input type="number" value="${bp.payout}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'payout', this.value)" class="w-14 px-1.5 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
           </td>
-          <td class="py-1.5 px-2 text-right">
+          <td class="py-1.5 px-1 text-right">
             ${state.breakpoints.length > 2 ? `
               <button onclick="removeBreakpointRow(${index})" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-all" title="Delete this breakpoint">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>

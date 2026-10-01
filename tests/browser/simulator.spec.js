@@ -210,17 +210,78 @@ test('dual range handles align with the visible track and keep a 40px target', a
   await openSimulator(page, 'index.html');
   await page.locator('#tab-advanced').click();
   await expect(page.locator('#view-advanced')).toBeVisible();
-  const alignment = await page.locator('.dual-range').evaluateAll(inputs => inputs.map(input => {
-    const inputRect = input.getBoundingClientRect();
-    const railRect = input.parentElement.children[0].getBoundingClientRect();
+  const inputs = await page.locator('.dual-range').evaluateAll(elements =>
+    elements.map(element => element.getBoundingClientRect().height));
+  expect(inputs).toEqual([40, 40]);
+
+  const screenshot = await page.locator('#adv-dual-t1').locator('..').screenshot();
+  const alignment = await page.evaluate(async base64 => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0);
+    const { data, width, height } = context.getImageData(0, 0, canvas.width, canvas.height);
+    const rows = { track: [], amber: [], orange: [] };
+
+    for (let y = 0; y < height; y++) {
+      let trackPixels = 0;
+      let amberPixels = 0;
+      let orangePixels = 0;
+      for (let x = 0; x < width; x++) {
+        const offset = (y * width + x) * 4;
+        const [red, green, blue] = data.slice(offset, offset + 3);
+        if (Math.abs(red - 226) <= 2 && Math.abs(green - 232) <= 2 && Math.abs(blue - 240) <= 2) {
+          trackPixels++;
+        }
+        if (red === 217 && green === 119 && blue === 6) amberPixels++;
+        if (red === 234 && green === 88 && blue === 12) orangePixels++;
+      }
+      if (trackPixels > width * 0.4) rows.track.push(y);
+      if (amberPixels >= 4) rows.amber.push(y);
+      if (orangePixels >= 4) rows.orange.push(y);
+    }
+
+    const center = values => values.length
+      ? (values[0] + values[values.length - 1]) / 2
+      : null;
     return {
-      height: inputRect.height,
-      offset: Math.abs(inputRect.top + inputRect.height / 2 - railRect.top - railRect.height / 2)
+      track: center(rows.track),
+      amber: center(rows.amber),
+      orange: center(rows.orange)
     };
-  }));
-  expect(alignment).toHaveLength(2);
-  for (const slider of alignment) {
-    expect(slider.height).toBe(40);
-    expect(slider.offset).toBeLessThanOrEqual(1);
+  }, screenshot.toString('base64'));
+  expect(alignment.track).not.toBeNull();
+  expect(alignment.amber).not.toBeNull();
+  expect(alignment.orange).not.toBeNull();
+  expect(Math.abs(alignment.amber - alignment.track)).toBeLessThanOrEqual(1);
+  expect(Math.abs(alignment.orange - alignment.track)).toBeLessThanOrEqual(1);
+});
+
+test('breakpoint explanation is removed from the standard view', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  await openSimulator(page, 'index.html');
+  await expect(page.getByText(/^Breakpoints: flat 0 up to/)).toHaveCount(0);
+});
+
+test('breakpoint table fits narrow screens without horizontal scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 455, height: 900 });
+  await openSimulator(page, 'index.html');
+  for (const width of [375, 455]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await page.locator('[aria-label="Curve breakpoint table"]').evaluate(wrapper => {
+      const table = wrapper.querySelector('table');
+      return {
+        wrapperWidth: wrapper.clientWidth,
+        wrapperScrollWidth: wrapper.scrollWidth,
+        tableWidth: table.clientWidth,
+        tableScrollWidth: table.scrollWidth
+      };
+    });
+    expect(layout.wrapperScrollWidth, `wrapper at ${width}px`).toBeLessThanOrEqual(layout.wrapperWidth + 1);
+    expect(layout.tableScrollWidth, `table at ${width}px`).toBeLessThanOrEqual(layout.tableWidth + 1);
   }
 });

@@ -43,8 +43,8 @@ module.exports = function suite(h) {
     /role="region"[^>]*aria-label="Scrollable salary and performance matrix"[^>]*tabindex="0"[^>]*class="[^"]*overflow-x-auto/.test(html) &&
     /id="matrix-grid"[^>]*class="[^"]*min-w-\[/.test(html));
 
-  h.check('breakpoint data table can scroll horizontally on narrow screens',
-    /class="overflow-x-auto[^"]*rounded-xl"[^>]*>\s*<table class="w-full min-w-\[/.test(html));
+  h.check('breakpoint table retains its accessible region label',
+    /role="region" aria-label="Curve breakpoint table"/.test(html));
 
   h.check('all Sales Rep KPI charts have role, title, and text alternative',
     ['c2p-total', 'c2p-price', 'dev', 'churn'].every(key => {

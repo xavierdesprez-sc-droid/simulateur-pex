@@ -253,16 +253,14 @@
             </button>
           </div>
 
-          <p class="text-xs text-slate-500">Breakpoints: flat 0 up to <strong>40%</strong> achievement, linear 0 &rarr; 100% payout between 40% and 100%, then <strong>100% &rarr; 200% payout</strong> between 100% and 200%.</p>
-
           <!-- Table of Breakpoints -->
-          <div role="region" aria-label="Curve breakpoint table" tabindex="0" class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
-            <table class="w-full min-w-[24rem] text-xs text-left">
+          <div role="region" aria-label="Curve breakpoint table" class="overflow-hidden border border-slate-200 rounded-xl">
+            <table class="w-full table-fixed text-xs text-left">
               <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th class="py-2 px-3">Achievement (%)</th>
-                  <th class="py-2 px-3">Payout (%)</th>
-                  <th class="py-2 px-2 text-right">Action</th>
+                  <th class="w-[42%] py-2 px-2 whitespace-normal break-words leading-tight">Achievement (%)</th>
+                  <th class="w-[38%] py-2 px-2 whitespace-normal break-words leading-tight">Payout (%)</th>
+                  <th class="w-[20%] py-2 px-1 text-right whitespace-normal break-words leading-tight">Action</th>
                 </tr>
               </thead>
               <tbody id="breakpoints-table-body" class="divide-y divide-slate-100 font-mono">
