@@ -107,9 +107,16 @@ module.exports = function suite(__h) {
     check('Sales Rep charts use restrained axes and gridlines',
       __chartInstances.every(chart => {
         const { x, y } = chart.options.scales;
-        return x.grid?.display === false && x.ticks?.maxTicksLimit === 5 &&
+        return x.grid?.display === false && x.ticks?.stepSize === 50 &&
           y.grid?.color === 'rgba(148, 163, 184, 0.16)' && y.border?.display === false &&
           y.beginAtZero === true;
+      }));
+    check('achievement axes use regular 50% ticks and larger labels',
+      __chartInstances.every(chart => {
+        const { x, y } = chart.options.scales;
+        return x.min === 0 && x.max === 200 && x.ticks.stepSize === 50 &&
+          x.ticks.font.size === 12 && y.ticks.font.size === 12 &&
+          x.title.font.size === 12 && y.title.font.size === 12;
       }));
     check('responsive KPI charts stay inside fixed-height containers',
       ['c2p-total', 'c2p-price', 'dev', 'churn'].every(id =>

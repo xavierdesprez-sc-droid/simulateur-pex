@@ -183,17 +183,19 @@ function salesRepRefreshCharts(result) {
             plugins: { legend: { display: false }, tooltip: { displayColors: false } },
             scales: {
               x: {
-                title: { display: true, text: 'Achievement (%)', color: '#64748b', font: { size: 10 } },
+                min: 0,
+                max: 200,
+                title: { display: true, text: 'Achievement (%)', color: '#64748b', font: { size: 12 } },
                 grid: { display: false },
                 border: { display: false },
-                ticks: { color: '#94a3b8', maxTicksLimit: 5, font: { size: 10 }, padding: 6 }
+                ticks: { color: '#94a3b8', stepSize: 50, font: { size: 12 }, padding: 6 }
               },
               y: {
-                title: { display: true, text: 'Payout (€)', color: '#64748b', font: { size: 10 } },
+                title: { display: true, text: 'Payout (€)', color: '#64748b', font: { size: 12 } },
                 beginAtZero: true,
                 grid: { color: 'rgba(148, 163, 184, 0.16)', drawTicks: false },
                 border: { display: false },
-                ticks: { color: '#94a3b8', maxTicksLimit: 4, padding: 8, font: { size: 10 } }
+                ticks: { color: '#94a3b8', maxTicksLimit: 4, padding: 8, font: { size: 12 } }
               }
             }
           }
