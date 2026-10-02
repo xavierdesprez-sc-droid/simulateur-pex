@@ -6,6 +6,7 @@ const SALES_REP_KPIS = [
   { key: 'dev', label: 'Dev', weight: 0.2 },
   { key: 'churn', label: 'Churn', weight: 0.1 }
 ];
+const SALES_REP_PERFORMANCE_THRESHOLD = 40;
 
 const salesRepState = {
   fixedSalary: 40000,
@@ -48,7 +49,7 @@ function salesRepBuildCurveContext(inputs = salesRepState) {
     20,
     minNominalE,
     0,
-    0,
+    SALES_REP_PERFORMANCE_THRESHOLD,
     80,
     100,
     200
@@ -152,11 +153,50 @@ function salesRepRefreshCharts(result) {
           data: {
             labels,
             datasets: [
-              { label: kpi.label + ' weighted payout', data: curve, borderColor: '#4f46e5', tension: 0.15 },
-              { label: 'Current achievement', data: point, borderColor: '#dc2626', backgroundColor: '#dc2626', pointRadius: 4, showLine: false }
+              {
+                label: kpi.label + ' weighted payout',
+                data: curve,
+                borderColor: '#4f46e5',
+                borderWidth: 2,
+                tension: 0.2,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                fill: false
+              },
+              {
+                label: 'Current achievement',
+                data: point,
+                borderColor: '#dc2626',
+                backgroundColor: '#dc2626',
+                pointRadius: 3.5,
+                pointHoverRadius: 5,
+                pointBorderWidth: 2,
+                pointBorderColor: '#ffffff',
+                showLine: false
+              }
             ]
           },
-          options: { responsive: true, maintainAspectRatio: false, scales: { x: { title: { display: true, text: 'Achievement (%)' } }, y: { title: { display: true, text: 'Payout (€)' } } } }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'nearest', intersect: false },
+            plugins: { legend: { display: false }, tooltip: { displayColors: false } },
+            scales: {
+              x: {
+                title: { display: true, text: 'Achievement (%)', color: '#64748b', font: { size: 10 } },
+                grid: { display: false },
+                border: { display: false },
+                ticks: { color: '#94a3b8', maxTicksLimit: 5, font: { size: 10 }, padding: 6 }
+              },
+              y: {
+                title: { display: true, text: 'Payout (€)', color: '#64748b', font: { size: 10 } },
+                beginAtZero: true,
+                grid: { color: 'rgba(148, 163, 184, 0.16)', drawTicks: false },
+                border: { display: false },
+                ticks: { color: '#94a3b8', maxTicksLimit: 4, padding: 8, font: { size: 10 } }
+              }
+            }
+          }
         });
       } catch (error) {
         salesRepShowMessage('sr-chart-status', 'Charts could not be initialized: ' + error.message);

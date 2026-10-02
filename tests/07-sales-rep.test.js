@@ -37,6 +37,18 @@ module.exports = function suite(__h) {
   assertClose('100% reaches the new nominal', Engine.hybridE(100, result.context), 8000);
   assertClose('110% follows the new curve above T2', Engine.hybridE(110, result.context), 8800);
   assertClose('200% reaches twice the new nominal', Engine.hybridE(200, result.context), 16000);
+  const belowThreshold = calculateSalesRepPayout({
+    ...rep,
+    achievements: { c2pTotal: 39, c2pPrice: 39, dev: 39, churn: 39 }
+  });
+  check('all performance KPI payouts are zero below 40% achievement',
+    belowThreshold.kpiPayouts.every(item => item.curvePayout === 0 && item.weightedPayout === 0));
+  const atThreshold = calculateSalesRepPayout({
+    ...rep,
+    achievements: { c2pTotal: 40, c2pPrice: 40, dev: 40, churn: 40 }
+  });
+  check('all performance KPI curves resume at 40% achievement',
+    atThreshold.kpiPayouts.every(item => item.curvePayout === Engine.hybridE(40, atThreshold.context)));
   assertClose('weighted KPI results sum to €8,000 at 100%', result.performanceSubtotal, 8000);
   assertClose('all qualifiers at 100% preserve the subtotal', result.finalPayout, 8000);
 
@@ -80,6 +92,25 @@ module.exports = function suite(__h) {
   if (uiReady) {
     __domReadyHandler();
     check('four KPI charts initialize independently', __chartInstances.length === 4);
+    check('Sales Rep payout curves use a fine, smoothed line without point clutter',
+      __chartInstances.every(chart => {
+        const curve = chart.data.datasets[0];
+        return curve.borderWidth === 2 && curve.tension === 0.2 &&
+          curve.pointRadius === 0 && curve.pointHoverRadius === 4 && curve.fill === false;
+      }));
+    check('current achievement markers stay distinct but subtle',
+      __chartInstances.every(chart => {
+        const marker = chart.data.datasets[1];
+        return marker.pointRadius === 3.5 && marker.pointBorderWidth === 2 &&
+          marker.pointBorderColor === '#ffffff';
+      }));
+    check('Sales Rep charts use restrained axes and gridlines',
+      __chartInstances.every(chart => {
+        const { x, y } = chart.options.scales;
+        return x.grid?.display === false && x.ticks?.maxTicksLimit === 5 &&
+          y.grid?.color === 'rgba(148, 163, 184, 0.16)' && y.border?.display === false &&
+          y.beginAtZero === true;
+      }));
     check('responsive KPI charts stay inside fixed-height containers',
       ['c2p-total', 'c2p-price', 'dev', 'churn'].every(id =>
         new RegExp(`<div class="mt-3 relative h-48">\\s*<canvas id="sr-chart-${id}" class="w-full h-full"><\\/canvas>\\s*<\\/div>`).test(salesRepHtml)));
@@ -102,6 +133,8 @@ module.exports = function suite(__h) {
         new RegExp(`type="range" id="sr-qualifier-${key}" min="0" max="100"`).test(h.htmlSrc)));
     assertClose('C2P Total chart plots its weighted €4,000 at 100%',
       __chartInstances[0].data.datasets[0].data[100], 4000);
+    check('all KPI charts plot zero payout below the 40% threshold',
+      __chartInstances.every(chart => chart.data.datasets[0].data.slice(0, 40).every(value => value === 0)));
 
     h.input('sr-fixed-salary', '50000');
     h.input('sr-old-nominal-percent', '15');
