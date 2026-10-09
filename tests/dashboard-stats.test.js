@@ -62,6 +62,8 @@ test('pearson and spearman, ties and minimum pairs', () => {
   assert.ok(Math.abs(api.spearman([1, 2, 3, 4], [10, 30, 20, 40]) - 0.8) < 1e-9);
   assert.ok(Math.abs(api.spearman([1, 1, 2], [1, 2, 3]) - Math.sqrt(3) / 2) < 1e-9);
   assert.equal(api.pearson([1, 2], [2, 4]), null);
+  assert.equal(api.pearson([1, 2, NaN], [2, 4, 6]), null);
+  assert.equal(api.spearman([1, 2, NaN], [2, 4, 6]), null);
 });
 
 test('linear fit', () => {
@@ -121,6 +123,26 @@ test('In/Out is trimmed; zero salary is invalid', () => {
   const parsed = api.parseSwe2025Csv(fixture + kept + '\n' + zeroSalary + '\n');
   assert.equal(parsed.rows.length, 10);
   assert.equal(parsed.counts.invalid, 2);
+});
+
+test('aggregate excludes undefined and NaN achievements from counts and correlations', () => {
+  const rows = [
+    { country: 'A', market: 'M', category: 'C', fixed: 40000, nominal: 4000, achievement: 80, rating: 'P2', seniority: 2, age: 30 },
+    { country: 'B', market: 'M', category: 'C', fixed: 50000, nominal: 5000, achievement: 100, rating: 'P3', seniority: 4, age: 35 },
+    { country: 'C', market: 'M', category: 'C', fixed: 60000, nominal: 6000, achievement: 120, rating: 'P4', seniority: 6, age: 40 },
+    { country: 'D', market: 'M', category: 'C', fixed: 70000, nominal: 7000, achievement: undefined, rating: 'P5', seniority: 8, age: 45 },
+    { country: 'E', market: 'M', category: 'C', fixed: 80000, nominal: 8000, achievement: NaN, rating: 'P1', seniority: 10, age: 50 }
+  ];
+  const model = api.aggregateDashboard(rows, NO_FILTER);
+  assert.equal(model.rowCount, 5);
+  assert.equal(model.achievementCount, 3);
+  assert.equal(model.meanAchievement, 100);
+  assert.equal(model.scatter.length, 3);
+  for (const row of model.correlations) {
+    assert.equal(row.n, 3);
+    assert.ok(Number.isFinite(row.pearson), `${row.variable} Pearson must be finite`);
+    assert.ok(Number.isFinite(row.spearman), `${row.variable} Spearman must be finite`);
+  }
 });
 
 if (failures) {

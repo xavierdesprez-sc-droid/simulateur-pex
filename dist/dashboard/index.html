@@ -342,7 +342,7 @@ function mean(values) {
 
 function pearson(xs, ys) {
   const n = xs.length;
-  if (n < 3 || ys.length !== n) return null;
+  if (n < 3 || ys.length !== n || !xs.every(Number.isFinite) || !ys.every(Number.isFinite)) return null;
   const mx = mean(xs);
   const my = mean(ys);
   let sxy = 0;
@@ -374,7 +374,7 @@ function averageRanks(values) {
 }
 
 function spearman(xs, ys) {
-  if (xs.length < 3 || ys.length !== xs.length) return null;
+  if (xs.length < 3 || ys.length !== xs.length || !xs.every(Number.isFinite) || !ys.every(Number.isFinite)) return null;
   return pearson(averageRanks(xs), averageRanks(ys));
 }
 
@@ -427,7 +427,7 @@ function aggregateDashboard(rows, filters) {
     (!wanted('country') || row.country === wanted('country')) &&
     (!wanted('market') || row.market === wanted('market')) &&
     (!wanted('category') || row.category === wanted('category')));
-  const withAchievement = filtered.filter(row => row.achievement !== null);
+  const withAchievement = filtered.filter(row => Number.isFinite(row.achievement));
   const achievements = withAchievement.map(row => row.achievement);
   const xs = withAchievement.map(row => row.fixed);
   const scatter = withAchievement.map(row => ({ x: row.fixed, y: row.achievement }));
