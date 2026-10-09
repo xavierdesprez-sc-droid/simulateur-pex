@@ -5,19 +5,19 @@ module.exports = function suite(__h) {
   const { check, els, mock } = __h;
   const fixtureText = __h.readRepoFile('population_test_swe2025.csv');
 
-  check('SWE profile defaults the population source to swe2025', activePopulationSourceKey === 'swe2025');
+  check('SWE profile defaults the population source to legacy', activePopulationSourceKey === 'legacy');
 
   mock.sheetError = null;
   mock.sheetReps = [];
   loadPopulationFromSheet();
-  check('Apps Script load requests the swe2025 source', mock.lastPopulationKey === 'swe2025');
-
-  onPopulationSourceChange('legacy');
-  check('switching to legacy reloads with the legacy key',
-    mock.lastPopulationKey === 'legacy' && activePopulationSourceKey === 'legacy');
+  check('Apps Script load requests the legacy source by default', mock.lastPopulationKey === 'legacy');
 
   onPopulationSourceChange('swe2025');
-  check('switching back to swe2025 reloads with that key', mock.lastPopulationKey === 'swe2025');
+  check('switching to swe2025 reloads with the new-source key',
+    mock.lastPopulationKey === 'swe2025' && activePopulationSourceKey === 'swe2025');
+
+  onPopulationSourceChange('legacy');
+  check('switching back to legacy reloads with that key', mock.lastPopulationKey === 'legacy');
 
   const named = parsePopulationCsv(fixtureText, 'named');
   check('named CSV parse: 9 reps and 3 ignored', named.reps.length === 9 && named.ignored === 3);
