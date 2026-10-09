@@ -33,12 +33,16 @@ const JS_PARTS = [
   '07-personae.js',
 ];
 const CSV_FIXTURES = {
-  SWE: 'population_test.csv',
-  NCE: 'population_test_nce.csv'
+  SWE: ['population_test.csv', 'population_test_swe2025.csv'],
+  NCE: ['population_test_nce.csv']
 };
 const SALES_REP_JS_PARTS = [
   '01-engine.js',
   'sales-rep.js',
+];
+const DASHBOARD_JS_PARTS = [
+  'stats.js',
+  'app.js',
 ];
 
 function readOrFail(p) {
@@ -100,15 +104,30 @@ function buildSalesRepString() {
     '\n\n  <!-- Application Logic JS -->\n  <script>\n' + js + '\n  </script>\n</body>\n</html>\n';
 }
 
+function concatDashboardJs() {
+  return DASHBOARD_JS_PARTS
+    .map(f => stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', 'dashboard', 'js', f))))
+    .join('\n');
+}
+
+function buildDashboardString() {
+  const head = stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', 'head.html')))
+    .replace(/<title>[\s\S]*?<\/title>/, '<title>SWE 2025 Achievement Dashboard</title>');
+  const body = stripTrailingNewlines(readOrFail(path.join(ROOT, 'src', 'dashboard', 'body.html')));
+  return head + '\n' + body +
+    '\n\n  <!-- Application Logic JS -->\n  <script>\n' + concatDashboardJs() + '\n  </script>\n</body>\n</html>\n';
+}
+
 const OUT_PATH = path.join(ROOT, 'index.html');
 const SALES_REP_OUT_PATH = path.join(ROOT, 'dist', 'sales-rep', 'index.html');
+const DASHBOARD_OUT_PATH = path.join(ROOT, 'dist', 'dashboard', 'index.html');
 
 function main() {
   const check = process.argv.includes('--check');
   const appArg = process.argv.find(arg => arg.startsWith('--app='));
   const app = appArg ? appArg.slice('--app='.length) : 'default';
-  if (app !== 'default' && app !== 'sales-rep') {
-    console.error('build.js: unknown app "' + app + '" (expected default or sales-rep)');
+  if (app !== 'default' && app !== 'sales-rep' && app !== 'dashboard') {
+    console.error('build.js: unknown app "' + app + '" (expected default, sales-rep or dashboard)');
     process.exit(1);
   }
   const profileArg = process.argv.find(arg => arg.startsWith('--profile='));
@@ -116,8 +135,10 @@ function main() {
   const outArg = process.argv.find(arg => arg.startsWith('--out='));
   const outPath = outArg
     ? path.resolve(ROOT, outArg.slice('--out='.length))
-    : (app === 'sales-rep' ? SALES_REP_OUT_PATH : OUT_PATH);
-  const out = app === 'sales-rep' ? buildSalesRepString() : buildString(profile);
+    : (app === 'sales-rep' ? SALES_REP_OUT_PATH : app === 'dashboard' ? DASHBOARD_OUT_PATH : OUT_PATH);
+  const out = app === 'sales-rep' ? buildSalesRepString()
+    : app === 'dashboard' ? buildDashboardString()
+      : buildString(profile);
   if (check) {
     const current = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf8') : '';
     if (current !== out) {
@@ -129,8 +150,7 @@ function main() {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, out, 'utf8');
     if (app === 'default') {
-      const fixture = CSV_FIXTURES[String(profile).toUpperCase()];
-      if (fixture) {
+      for (const fixture of CSV_FIXTURES[String(profile).toUpperCase()] || []) {
         const fixturePath = path.join(ROOT, fixture);
         if (fs.existsSync(fixturePath)) {
           fs.copyFileSync(fixturePath, path.join(path.dirname(outPath), fixture));
@@ -138,6 +158,10 @@ function main() {
       }
       console.log('build.js: ' + path.relative(ROOT, outPath) + ' régénéré (' + profile + ')');
     } else {
+      if (app === 'dashboard') {
+        fs.copyFileSync(path.join(ROOT, 'population_test_swe2025.csv'),
+          path.join(path.dirname(outPath), 'population_test_swe2025.csv'));
+      }
       console.log('build.js: ' + path.relative(ROOT, outPath) + ' régénéré (' + app + ')');
     }
   }
@@ -146,6 +170,6 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
-  ROOT, HTML_PARTS, JS_PARTS, SALES_REP_JS_PARTS, CSV_FIXTURES,
-  buildString, buildSalesRepString, concatJs, concatSalesRepJs, readOrFail
+  ROOT, HTML_PARTS, JS_PARTS, SALES_REP_JS_PARTS, DASHBOARD_JS_PARTS, CSV_FIXTURES,
+  buildString, buildSalesRepString, buildDashboardString, concatJs, concatSalesRepJs, concatDashboardJs, readOrFail
 };

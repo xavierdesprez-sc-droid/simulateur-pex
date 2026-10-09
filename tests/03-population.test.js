@@ -499,6 +499,7 @@ module.exports = function suite(__h) {
   const SavedFR = globalThis.FileReader;
   globalThis.FileReader = function () {};
   globalThis.FileReader.prototype.readAsText = function (_file) { globalThis.__lastFR = this; };
+  activePopulationSourceKey = 'legacy'; // the picker reads the selected source's layout; this block covers the legacy layout
   loadPopulationCsvFile({ name: 'my_pop.csv' });
   globalThis.__lastFR.result = 'Orga,Position,Country,ID,,,Base Salary,Amount\nFR,AE,France,F1,,,45000,7000\n';
   globalThis.__lastFR.onload();
@@ -506,6 +507,7 @@ module.exports = function suite(__h) {
   check('FileReader: status names the chosen file', els['pop-status'].innerText.indexOf('1 rep(s) loaded from my_pop.csv') > -1);
   delete globalThis.__lastFR;
   globalThis.FileReader = SavedFR;
+  activePopulationSourceKey = 'swe2025';
 
   // ===== Reset → average model =====
   advPopulation = [];

@@ -26,7 +26,7 @@ module.exports = [
     }
   },
   {
-    files: ['Code.gs'],
+    files: ['Code.gs', 'dashboard/Code.gs'],
     languageOptions: {
       sourceType: 'script',
       globals: {
@@ -40,7 +40,7 @@ module.exports = [
     }
   },
   {
-    files: ['src/js/*.js'],
+    files: ['src/js/*.js', 'src/dashboard/js/*.js'],
     languageOptions: {
       sourceType: 'script',
       globals: {

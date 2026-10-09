@@ -36,6 +36,21 @@ try {
   ], { stdio: 'pipe' });
   assert.equal(fs.readFileSync(indexPath, 'utf8'), originalIndex,
     'Sales Rep target must not modify root index.html');
+
+  const { buildDashboardString } = require(buildPath);
+  const dashboardHtml = buildDashboardString();
+  assert.match(dashboardHtml, /<title>SWE 2025 Achievement Dashboard<\/title>/);
+  for (const id of [
+    'dashboard-app', 'dash-status', 'dash-csv-input', 'dash-filter-country', 'dash-filter-market',
+    'dash-filter-category', 'dash-counts', 'dash-scatter', 'dash-rating', 'dash-seniority', 'dash-age',
+    'dash-correlations-body'
+  ]) {
+    assert.match(dashboardHtml, new RegExp(`id="${id}"`), `dashboard markup must contain id ${id}`);
+  }
+  assert.doesNotMatch(dashboardHtml, /id="view-(standard|advanced|matrix)"/);
+  assert.doesNotMatch(dashboardHtml, /getPopulation/, 'dashboard must not call the simulator population endpoint');
+  execFileSync(process.execPath, [buildPath, '--app=dashboard', '--check'], { stdio: 'pipe' });
+  console.log('build-target.test.js: dashboard target is separate and current');
   console.log('build-target.test.js: Sales Rep output remains separate');
 } finally {
   if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);

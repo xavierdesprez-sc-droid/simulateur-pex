@@ -1,0 +1,13 @@
+Country,Business Line,Business Title,Market,Category,In/Out,seniority years,Age,FTE %,Annualized Base Pay,Nominal %,Nominal,Achievement 2025,Rating - Most Recent
+France,Sales,Account Executive,France,Sales,In,3,34,100%,52000,13%,6760,104%,P4 - Excellent performance
+France,Sales,Senior Account Executive,France,Sales,In,8,45,100%,68000,15%,10200,92%,P3 - Good/Solid Performance
+Germany,Sales,Account Executive,DACH,Sales,In,2,29,100%,48000,12%,5760,118%,P5 - Outstanding performance
+Spain,Sales,Inside Sales,Iberia,Inside,In,1,26,100%,31000,10%,3100,77%,P2 - Performance Needing improvement
+Italy,Sales,Account Executive,South,Sales,In,11,51,100%,61000,14%,8540,100%,P3 - Good/Solid Performance
+France,Sales,Account Executive,France,Sales,Out,4,38,100%,50000,12%,6000,60%,P2 - Performance Needing improvement
+Germany,Sales,Inside Sales,DACH,Inside,out,5,40,100%,36000,10%,3600,85%,P3 - Good/Solid Performance
+UK,Sales,Account Executive,UK,Sales,In,6,42,100%,57000,13%,7410,,P4 - Excellent performance
+UK,Sales,Account Executive,UK,Sales,In,6,42,100%,57000,13%,7410,n/a,P4 - Excellent performance
+Spain,Sales,Account Executive,Iberia,Sales,In,7,39,100%,50000,12%,6000,95%,
+Italy,Sales,Senior Account Executive,South,Sales,In,9,47,100%,70000,0%,0,110%,P1 - Below expectations
+France,Sales,Account Executive,France,Sales,In,3,33,100%,abc,13%,6760,99%,P3 - Good/Solid Performance

@@ -18,18 +18,26 @@ if (fs.existsSync(path.join(__dirname, '..', 'src', 'js'))) {
 // Backend Apps Script syntax check
 new Function(fs.readFileSync(path.join(__dirname, '..', 'Code.gs'), 'utf8'));
 console.log('Code.gs: syntax OK');
+new Function(fs.readFileSync(path.join(__dirname, '..', 'dashboard', 'Code.gs'), 'utf8'));
+console.log('dashboard/Code.gs: syntax OK');
 
 console.log('auth.test.js');
 execFileSync(process.execPath, [path.join(__dirname, 'auth.test.js')], { stdio: 'inherit' });
 
 const suites = fs.readdirSync(__dirname)
   .filter(f => f.endsWith('.test.js') &&
-    !['auth.test.js', 'build-target.test.js', '07-sales-rep.test.js', 'deploy-wrapper.test.js'].includes(f))
+    !['auth.test.js', 'build-target.test.js', '07-sales-rep.test.js', 'deploy-wrapper.test.js', 'dashboard-stats.test.js', 'backend-swe-2025.test.js'].includes(f))
   .sort();
 for (const f of suites) {
   console.log(f);
   runSuite(path.join(__dirname, f));
 }
+console.log('dashboard-stats.test.js');
+execFileSync(process.execPath, [path.join(__dirname, 'dashboard-stats.test.js')], { stdio: 'inherit' });
+
+console.log('backend-swe-2025.test.js');
+execFileSync(process.execPath, [path.join(__dirname, 'backend-swe-2025.test.js')], { stdio: 'inherit' });
+
 console.log('07-sales-rep.test.js');
 runSuite(path.join(__dirname, '07-sales-rep.test.js'), 'sales-rep');
 

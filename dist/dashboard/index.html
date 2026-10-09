@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SWE 2025 Achievement Dashboard</title>
+  <!-- Tailwind Play CDN omits CORS headers; SRI/crossorigin would block the stylesheet. -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
+    integrity="sha384-XcdcwHqIPULERb2yDEM4R0XaQKU3YnDsrTmjACBZyfdVVqjh6xQ4/DCMd7XLcA6Y"
+    crossorigin="anonymous"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@1.49.0/dist/umd/lucide.min.js"
+    integrity="sha384-7mWwAGEOOlxvEBR+Mpy0eVhGL+9abGHkZtVoTs+dvrWkI5g00lyMaAxRIK+rqXGt"
+    crossorigin="anonymous"></script>
+  <!-- KaTeX CSS & JS with auto-render for robust native math typography -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
+    integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn"
+    crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"
+    integrity="sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx"
+    crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"
+    onload="window.renderMathInElement && window.renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\[', right: '\\]', display: true}, {left: '\\(', right: '\\)', display: false}, {left: '$', right: '$', display: false}], throwOnError: false })"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .simulator-ui .text-xs {
+      font-size: 0.8125rem;
+      line-height: 1.2rem;
+    }
+    .simulator-ui [class~="text-[10px]"],
+    .simulator-ui [class~="text-[11px]"] {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    .simulator-ui [class~="rounded-2xl"][class~="border"] {
+      border-color: #dbe3ef;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.035);
+      transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+    .simulator-ui input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+    .simulator-ui select,
+    .simulator-ui textarea {
+      min-height: 2.5rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+    .simulator-ui button {
+      min-height: 2.25rem;
+    }
+    .simulator-ui [id^="tab-"] {
+      flex-shrink: 0;
+      min-height: 2.5rem;
+      white-space: nowrap;
+    }
+    .simulator-ui input[type="range"] {
+      min-height: 2.5rem;
+      touch-action: pan-y;
+    }
+    .simulator-ui :focus-visible {
+      outline: 3px solid #818cf8;
+      outline-offset: 2px;
+    }
+    .simulator-ui input[type="range"]:focus-visible {
+      outline-offset: 4px;
+    }
+    .simulator-ui th,
+    .simulator-ui td {
+      white-space: nowrap;
+    }
+
+    /* Custom Slider Styles */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: transparent;
+      border-radius: 9999px;
+      height: 2.5rem;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      background: #e2e8f0;
+      border-radius: 9999px;
+      height: 8px;
+    }
+    input[type=range]::-moz-range-track {
+      background: #e2e8f0;
+      border-radius: 9999px;
+      height: 8px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: #4f46e5;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+      border: 2px solid #ffffff;
+      transition: transform 0.1s ease;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      margin-top: -6px;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    /* Dual-range slider (two overlapping handles) */
+    input[type=range].dual-range {
+      background: transparent;
+      height: 24px;
+      pointer-events: none;
+    }
+    input[type=range].dual-range::-webkit-slider-runnable-track {
+      background: transparent;
+    }
+    input[type=range].dual-range::-moz-range-track,
+    input[type=range].dual-range::-moz-range-progress {
+      background: transparent;
+    }
+    input[type=range].dual-range::-webkit-slider-thumb {
+      pointer-events: auto;
+    }
+    input[type=range].dual-range.dual-t1::-webkit-slider-thumb {
+      background: #d97706;
+    }
+    input[type=range].dual-range.dual-t2::-webkit-slider-thumb {
+      background: #ea580c;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="font-sans text-slate-800 antialiased min-h-screen bg-slate-50">
+  <main id="dashboard-app" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+    <header class="space-y-1">
+      <h1 class="text-lg font-bold text-slate-900">SWE 2025 Achievement Dashboard</h1>
+      <p class="text-xs text-slate-500">Achievement 2025 against annualized base pay, nominal, seniority, age and performance rating. Rows marked Out are excluded.</p>
+    </header>
+
+    <section class="bg-white rounded-2xl border border-slate-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <label class="space-y-1">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Country</span>
+        <select id="dash-filter-country" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+      <label class="space-y-1">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Market</span>
+        <select id="dash-filter-market" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+      <label class="space-y-1">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Category</span>
+        <select id="dash-filter-category" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+    </section>
+
+    <p id="dash-counts" class="text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-2"></p>
+    <p id="dash-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
+    <input type="file" id="dash-csv-input" accept=".csv,text/csv" class="hidden" />
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Achievement 2025 against annualized base pay</h2>
+        <div class="h-72"><canvas id="dash-scatter"></canvas></div>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by rating</h2>
+        <div class="h-72"><canvas id="dash-rating"></canvas></div>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by seniority (years)</h2>
+        <div class="h-72"><canvas id="dash-seniority"></canvas></div>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by age</h2>
+        <div class="h-72"><canvas id="dash-age"></canvas></div>
+      </section>
+    </div>
+
+    <section class="bg-white rounded-2xl border border-slate-200 p-4 overflow-x-auto">
+      <h2 class="font-bold text-slate-900 text-sm mb-2">Correlation with Achievement 2025</h2>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-slate-500">
+            <th class="py-1 pr-4 font-semibold">Variable</th>
+            <th class="py-1 pr-4 font-semibold">Pearson r</th>
+            <th class="py-1 pr-4 font-semibold">Spearman ρ</th>
+            <th class="py-1 font-semibold">n</th>
+          </tr>
+        </thead>
+        <tbody id="dash-correlations-body" class="font-mono"></tbody>
+      </table>
+      <p class="text-[10px] text-slate-400 mt-2">Correlation shows association, not cause. Ratings are ordinal, so Spearman is the relevant value for them.</p>
+    </section>
+  </main>
+</body>
+
+  <!-- Application Logic JS -->
+  <script>
+// Dashboard statistics: DOM-free. Shared by the dashboard bundle and tests/dashboard-stats.test.js.
+// Row shape: { country, market, category, jobProfile, fixed, nominal, achievement, rating, seniority, age }
+const RATING_LEVELS = ['P1', 'P2', 'P3', 'P4', 'P5', 'Unclassified'];
+const DASHBOARD_REQUIRED_HEADERS = [
+  'Country', 'Business Title', 'In/Out', 'Annualized Base Pay', 'Nominal',
+  'Achievement 2025', 'Rating - Most Recent', 'Market', 'Category', 'seniority years', 'Age'
+];
+
+function parseAchievementPercent(text) {
+  const cleaned = String(text == null ? '' : text)
+    .replace(/[\s\u00a0]/g, '')
+    .replace(/%$/, '')
+    .replace(',', '.');
+  if (cleaned === '') return null;
+  const value = Number(cleaned);
+  return Number.isFinite(value) ? value : null;
+}
+
+function ratingLevel(label) {
+  const match = /P([1-5])/i.exec(String(label || ''));
+  return match ? 'P' + match[1] : 'Unclassified';
+}
+
+function binLabel(value, width = 5) {
+  if (value === null || !Number.isFinite(value)) return null;
+  const low = Math.floor(value / width) * width;
+  return low + '-' + (low + width - 1);
+}
+
+function parseNumberOrNull(text) {
+  const trimmed = String(text == null ? '' : text).trim();
+  if (trimmed === '') return null;
+  const value = Number(trimmed);
+  return Number.isFinite(value) ? value : null;
+}
+
+// Splits one CSV line: commas separate cells, double quotes group a cell, "" is a literal quote.
+function splitCsvLine(line) {
+  const cells = [];
+  let current = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (quoted) {
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        quoted = false;
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"') {
+      quoted = true;
+    } else if (ch === ',') {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseSwe2025Csv(text) {
+  const lines = String(text || '').split(/\r?\n/).filter(line => line.replace(/[\s,"]/g, '') !== '');
+  if (lines.length === 0) throw new Error('Missing header row');
+  const headerCells = splitCsvLine(lines[0]);
+  const columnOf = {};
+  headerCells.forEach((name, index) => { columnOf[name.toLowerCase()] = index; });
+  DASHBOARD_REQUIRED_HEADERS.forEach(name => {
+    if (columnOf[name.toLowerCase()] === undefined) throw new Error('Missing column: ' + name);
+  });
+  const counts = { total: 0, notIn: 0, invalid: 0, achievementMissing: 0 };
+  const rows = [];
+  lines.slice(1).forEach(line => {
+    counts.total++;
+    const cells = splitCsvLine(line);
+    if (cells.length > headerCells.length) {
+      counts.invalid++;
+      return;
+    }
+    while (cells.length < headerCells.length) cells.push('');
+    const cell = name => cells[columnOf[name.toLowerCase()]] || '';
+    if (cell('In/Out').toLowerCase() !== 'in') { counts.notIn++; return; }
+    const fixed = parseNumberOrNull(cell('Annualized Base Pay'));
+    const nominal = parseNumberOrNull(cell('Nominal'));
+    const country = cell('Country');
+    const jobProfile = cell('Business Title');
+    if (!country || !jobProfile || fixed === null || !(fixed > 0) || nominal === null || nominal < 0) {
+      counts.invalid++;
+      return;
+    }
+    const achievement = parseAchievementPercent(cell('Achievement 2025'));
+    if (achievement === null) counts.achievementMissing++;
+    rows.push({
+      country, jobProfile, fixed, nominal, achievement,
+      market: cell('Market'),
+      category: cell('Category'),
+      rating: cell('Rating - Most Recent'),
+      seniority: parseNumberOrNull(cell('seniority years')),
+      age: parseNumberOrNull(cell('Age'))
+    });
+  });
+  return { rows, counts };
+}
+
+function mean(values) {
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function pearson(xs, ys) {
+  const n = xs.length;
+  if (n < 3 || ys.length !== n) return null;
+  const mx = mean(xs);
+  const my = mean(ys);
+  let sxy = 0;
+  let sxx = 0;
+  let syy = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx;
+    const dy = ys[i] - my;
+    sxy += dx * dy;
+    sxx += dx * dx;
+    syy += dy * dy;
+  }
+  if (sxx === 0 || syy === 0) return null;
+  return sxy / Math.sqrt(sxx * syy);
+}
+
+function averageRanks(values) {
+  const order = values.map((_, index) => index).sort((a, b) => values[a] - values[b]);
+  const ranks = new Array(values.length);
+  let start = 0;
+  while (start < order.length) {
+    let end = start;
+    while (end + 1 < order.length && values[order[end + 1]] === values[order[start]]) end++;
+    const averageRank = (start + end) / 2 + 1;
+    for (let k = start; k <= end; k++) ranks[order[k]] = averageRank;
+    start = end + 1;
+  }
+  return ranks;
+}
+
+function spearman(xs, ys) {
+  if (xs.length < 3 || ys.length !== xs.length) return null;
+  return pearson(averageRanks(xs), averageRanks(ys));
+}
+
+function linearFit(xs, ys) {
+  const n = xs.length;
+  if (n < 2 || ys.length !== n) return null;
+  const mx = mean(xs);
+  const my = mean(ys);
+  let sxy = 0;
+  let sxx = 0;
+  for (let i = 0; i < n; i++) {
+    sxy += (xs[i] - mx) * (ys[i] - my);
+    sxx += (xs[i] - mx) * (xs[i] - mx);
+  }
+  if (sxx === 0) return null;
+  const slope = sxy / sxx;
+  return { slope, intercept: my - slope * mx };
+}
+
+function binnedMeans(items, binOf) {
+  const groups = {};
+  items.forEach(item => {
+    const bin = binOf(item);
+    if (bin === null) return;
+    (groups[bin] = groups[bin] || []).push(item.achievement);
+  });
+  return Object.keys(groups)
+    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+    .map(bin => ({ bin, mean: mean(groups[bin]), n: groups[bin].length }));
+}
+
+const CORRELATION_VARIABLES = [
+  { name: 'Annualized base pay', value: row => row.fixed },
+  { name: 'Nominal', value: row => row.nominal },
+  { name: 'Seniority', value: row => row.seniority },
+  { name: 'Age', value: row => row.age },
+  {
+    name: 'Rating level',
+    value: row => {
+      const level = ratingLevel(row.rating);
+      return level === 'Unclassified' ? null : Number(level.slice(1));
+    }
+  }
+];
+
+function aggregateDashboard(rows, filters) {
+  const f = filters || {};
+  const wanted = key => String(f[key] || '').trim();
+  const filtered = rows.filter(row =>
+    (!wanted('country') || row.country === wanted('country')) &&
+    (!wanted('market') || row.market === wanted('market')) &&
+    (!wanted('category') || row.category === wanted('category')));
+  const withAchievement = filtered.filter(row => row.achievement !== null);
+  const achievements = withAchievement.map(row => row.achievement);
+  const xs = withAchievement.map(row => row.fixed);
+  const scatter = withAchievement.map(row => ({ x: row.fixed, y: row.achievement }));
+  return {
+    rowCount: filtered.length,
+    achievementCount: withAchievement.length,
+    meanAchievement: achievements.length ? mean(achievements) : null,
+    scatter,
+    trend: scatter.length >= 3 ? (() => {
+      const fit = linearFit(xs, achievements);
+      return fit ? { slope: fit.slope, intercept: fit.intercept, x0: Math.min(...xs), x1: Math.max(...xs) } : null;
+    })() : null,
+    byRating: RATING_LEVELS.map(level => {
+      const items = withAchievement.filter(row => ratingLevel(row.rating) === level);
+      return {
+        level,
+        mean: items.length ? mean(items.map(row => row.achievement)) : null,
+        n: items.length
+      };
+    }),
+    bySeniority: binnedMeans(withAchievement, row => binLabel(row.seniority)),
+    byAge: binnedMeans(withAchievement, row => binLabel(row.age)),
+    correlations: CORRELATION_VARIABLES.map(variable => {
+      const pairs = withAchievement
+        .map(row => [variable.value(row), row.achievement])
+        .filter(pair => Number.isFinite(pair[0]));
+      const px = pairs.map(pair => pair[0]);
+      const py = pairs.map(pair => pair[1]);
+      return {
+        variable: variable.name,
+        pearson: pearson(px, py),
+        spearman: spearman(px, py),
+        n: pairs.length
+      };
+    })
+  };
+}
+// Dashboard UI: loads rows, applies filters, renders charts and the correlation table.
+// Statistics come from stats.js (parseSwe2025Csv, aggregateDashboard); nothing is recomputed here.
+let dashRows = [];
+let dashCounts = null;
+const dashCharts = {};
+
+function dashEscape(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[character]);
+}
+
+function dashSetStatus(text) {
+  const el = document.getElementById('dash-status');
+  el.innerText = text;
+  el.classList.remove('hidden');
+}
+
+function dashClearStatus() {
+  document.getElementById('dash-status').classList.add('hidden');
+}
+
+function dashFilters() {
+  return {
+    country: document.getElementById('dash-filter-country').value,
+    market: document.getElementById('dash-filter-market').value,
+    category: document.getElementById('dash-filter-category').value
+  };
+}
+
+function dashDistinct(key) {
+  return [...new Set(dashRows.map(row => row[key]).filter(Boolean))].sort();
+}
+
+function dashFillSelect(id, values) {
+  const select = document.getElementById(id);
+  const current = select.value;
+  select.innerHTML = '<option value="">All</option>' +
+    values.map(value => '<option value="' + dashEscape(value) + '">' + dashEscape(value) + '</option>').join('');
+  select.value = values.includes(current) ? current : '';
+}
+
+function dashSetChart(id, config) {
+  if (dashCharts[id]) dashCharts[id].destroy();
+  dashCharts[id] = new Chart(document.getElementById(id), config);
+}
+
+function dashDrawScatter(model) {
+  const datasets = [{
+    label: 'Employees',
+    data: model.scatter,
+    backgroundColor: 'rgba(234, 88, 12, 0.6)',
+    pointRadius: 4
+  }];
+  if (model.trend) {
+    const { slope, intercept, x0, x1 } = model.trend;
+    datasets.push({
+      label: 'Trend',
+      type: 'line',
+      data: [{ x: x0, y: slope * x0 + intercept }, { x: x1, y: slope * x1 + intercept }],
+      borderColor: '#334155',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false
+    });
+  }
+  dashSetChart('dash-scatter', {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Annualized base pay (€)' } },
+        y: { title: { display: true, text: 'Achievement 2025 (%)' } }
+      }
+    }
+  });
+}
+
+function dashDrawBars(id, entries, labelOf) {
+  dashSetChart(id, {
+    type: 'bar',
+    data: {
+      labels: entries.map(labelOf),
+      datasets: [{
+        label: 'Mean achievement (%)',
+        data: entries.map(entry => entry.mean),
+        backgroundColor: 'rgba(51, 65, 85, 0.7)'
+      }]
+    },
+    options: {
+      animation: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { title: { display: true, text: 'Mean achievement 2025 (%)' } } }
+    }
+  });
+}
+
+function dashRenderCorrelations(model) {
+  const format = value => (value === null || value === undefined ? 'n/a' : value.toFixed(2));
+  document.getElementById('dash-correlations-body').innerHTML = model.correlations.map(row =>
+    '<tr><td class="py-1 pr-4 font-sans">' + dashEscape(row.variable) + '</td>' +
+    '<td class="py-1 pr-4">' + format(row.pearson) + '</td>' +
+    '<td class="py-1 pr-4">' + format(row.spearman) + '</td>' +
+    '<td class="py-1">' + row.n + '</td></tr>'
+  ).join('');
+}
+
+function dashRender() {
+  const model = aggregateDashboard(dashRows, dashFilters());
+  document.getElementById('dash-counts').innerText =
+    dashRows.length + ' rows used · ' + (dashCounts.notIn + dashCounts.invalid) + ' ignored (' +
+    dashCounts.notIn + ' not In, ' + dashCounts.invalid + ' invalid) · ' +
+    dashCounts.achievementMissing + ' without achievement · ' + model.rowCount + ' in current filters';
+  if (model.achievementCount < 3) {
+    dashSetStatus('Not enough data for these filters (fewer than 3 achievements).');
+  } else {
+    dashClearStatus();
+  }
+  dashDrawScatter(model);
+  dashDrawBars('dash-rating', model.byRating, entry => entry.level + ' (n ' + entry.n + ')');
+  dashDrawBars('dash-seniority', model.bySeniority, entry => entry.bin + ' (n ' + entry.n + ')');
+  dashDrawBars('dash-age', model.byAge, entry => entry.bin + ' (n ' + entry.n + ')');
+  dashRenderCorrelations(model);
+}
+
+function dashApplyResult(result) {
+  dashRows = result.rows;
+  dashCounts = result.counts;
+  dashFillSelect('dash-filter-country', dashDistinct('country'));
+  dashFillSelect('dash-filter-market', dashDistinct('market'));
+  dashFillSelect('dash-filter-category', dashDistinct('category'));
+  dashRender();
+}
+
+function dashErrorText(error) {
+  return error && error.message ? error.message : String(error);
+}
+
+function dashLoadFile(file) {
+  dashSetStatus('Loading ' + file.name + '…');
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      dashApplyResult(parseSwe2025Csv(reader.result));
+      dashClearStatus();
+    } catch (error) {
+      dashSetStatus('Reading error: ' + file.name + ' (' + dashErrorText(error) + ')');
+    }
+  };
+  reader.onerror = () => dashSetStatus('Reading error: ' + file.name);
+  reader.readAsText(file);
+}
+
+function dashShowPicker() {
+  dashSetStatus('Automatic CSV loading blocked by the browser: choose the CSV file…');
+  document.getElementById('dash-csv-input').click();
+}
+
+function dashLoad() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    dashSetStatus('Loading from the Sheet…');
+    google.script.run
+      .withSuccessHandler(result => {
+        dashApplyResult(result);
+        dashClearStatus();
+      })
+      .withFailureHandler(error => dashSetStatus('Loading error: ' + dashErrorText(error)))
+      .getDashboardData();
+    return;
+  }
+  dashSetStatus('Loading population_test_swe2025.csv…');
+  fetch('population_test_swe2025.csv')
+    .then(async response => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      dashApplyResult(parseSwe2025Csv(await response.text()));
+      dashClearStatus();
+    })
+    .catch(error => {
+      if (error instanceof TypeError || /^HTTP/.test(String(error && error.message))) dashShowPicker();
+      else dashSetStatus('Loading error: ' + dashErrorText(error));
+    });
+}
+
+['dash-filter-country', 'dash-filter-market', 'dash-filter-category'].forEach(id => {
+  document.getElementById(id).addEventListener('change', dashRender);
+});
+document.getElementById('dash-csv-input').addEventListener('change', event => {
+  const file = event.target.files[0];
+  if (file) dashLoadFile(file);
+});
+dashLoad();
+  </script>
+</body>
+</html>

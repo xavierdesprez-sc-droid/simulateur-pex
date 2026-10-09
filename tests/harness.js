@@ -105,7 +105,8 @@ function runSuite(suiteFile, app = 'default') {
   global.google.script.run = (() => {
     const obj = {};
     const api = {
-      getPopulation() {
+      getPopulation(sourceKey) {
+        mocks.lastPopulationKey = sourceKey;
         if (mocks.sheetError) { if (obj.fail) obj.fail({ message: mocks.sheetError }); }
         else if (obj.ok) obj.ok(mocks.sheetReps);
         return api;
@@ -132,6 +133,7 @@ function runSuite(suiteFile, app = 'default') {
     check: record,
     htmlSrc: app === 'sales-rep' ? buildSalesRepString() : defaultHtmlSrc,
     defaultHtmlSrc,
+    readRepoFile: relPath => fs.readFileSync(path.join(__dirname, '..', relPath), 'utf8'),
     buildString,
     buildSalesRepString,
     input(id, value) {

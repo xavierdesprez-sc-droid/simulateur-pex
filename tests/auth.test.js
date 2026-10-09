@@ -162,7 +162,7 @@ test('allowlisted user can load the app and population', () => {
   assert.equal(backend.getSpreadsheet, undefined);
   assert.equal(backend.getDataSheet, undefined);
   assert.equal(backend.doGet().html, 'index');
-  const result = backend.getPopulation();
+  const result = backend.getPopulation('legacy');
   assert.equal(result.reps.length, 1);
   assert.equal(result.reps[0].jobProfile, 'AE');
   assert.equal(getDataReads(), 1);
@@ -182,7 +182,7 @@ test('unlisted user sees the request-access message and cannot read population',
   const page = backend.doGet();
   assert.match(page.html, /contact/i);
   assert.match(page.html, /pex-owner@example\.com/);
-  assert.throws(() => backend.getPopulation(), /access/i);
+  assert.throws(() => backend.getPopulation('legacy'), /access/i);
   assert.equal(getDataReads(), 0);
 });
 
@@ -195,7 +195,7 @@ test('unavailable user email fails closed and shows the contact email', () => {
 
   const page = backend.doGet();
   assert.match(page.html, /pex-owner@example\.com/);
-  assert.throws(() => backend.getPopulation(), /access/i);
+  assert.throws(() => backend.getPopulation('legacy'), /access/i);
   assert.equal(getDataReads(), 0);
 });
 
@@ -205,7 +205,7 @@ test('full-access-list user receives table visibility permission', () => {
     fullAccessEmails: ['alice@example.com']
   });
 
-  assert.equal(backend.getPopulation().canViewIndividualTables, true);
+  assert.equal(backend.getPopulation('legacy').canViewIndividualTables, true);
 });
 
 test('restricted-list user can access aggregates without table visibility', () => {
@@ -214,8 +214,8 @@ test('restricted-list user can access aggregates without table visibility', () =
     restrictedEmails: ['alice@example.com']
   });
 
-  assert.equal(backend.getPopulation().reps.length, 1);
-  assert.equal(backend.getPopulation().canViewIndividualTables, false);
+  assert.equal(backend.getPopulation('legacy').reps.length, 1);
+  assert.equal(backend.getPopulation('legacy').canViewIndividualTables, false);
 });
 
 test('restricted list wins if an email appears in both columns', () => {
@@ -225,7 +225,7 @@ test('restricted list wins if an email appears in both columns', () => {
     restrictedEmails: ['alice@example.com']
   });
 
-  assert.equal(backend.getPopulation().canViewIndividualTables, false);
+  assert.equal(backend.getPopulation('legacy').canViewIndividualTables, false);
 });
 
 test('NCE deployment uses the shared Access sheet and the NCE population sheet', () => {
@@ -235,7 +235,7 @@ test('NCE deployment uses the shared Access sheet and the NCE population sheet',
     profile: 'NCE'
   });
 
-  assert.equal(backend.getPopulation().reps.length, 1);
+  assert.equal(backend.getPopulation('legacy').reps.length, 1);
   assert.deepEqual(openedSpreadsheetIds, [
     ACCESS_SPREADSHEET_ID,
     POPULATION_SPREADSHEET_IDS.NCE
