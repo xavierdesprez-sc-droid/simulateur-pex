@@ -141,7 +141,8 @@ function main() {
       : buildString(profile);
   if (check) {
     const current = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf8') : '';
-    if (current !== out) {
+    const lf = text => text.replace(/\r\n/g, '\n');
+    if (lf(current) !== lf(out)) {
       console.error('build.js --check: bundle périmé — relance node build.js');
       process.exit(1);
     }
