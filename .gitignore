@@ -7,3 +7,4 @@
 
 # Generated standalone Sales Rep deployment bundle.
 /dist/sales-rep/
+.superpowers/
