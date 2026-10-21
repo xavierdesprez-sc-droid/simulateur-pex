@@ -268,6 +268,57 @@ module.exports = function suite(__h) {
     check('changing a KPI input updates the final payout percentage',
       finalPayoutPercent() === '150.0%');
 
+    const clickTab = p => els[`sr-tab-${p}`].__handlers.click({ target: els[`sr-tab-${p}`] });
+    clickTab('q1');
+    h.input('sr-achievement-dev', '80');
+    clickTab('q2');
+    check('switching to Q2 shows Q2 defaults and does not leak Q1 values',
+      els['sr-achievement-dev'].value === '100' && salesRepState.periods.q2.achievements.dev === 100);
+    check('Q2 shows its label and is marked selected',
+      els['sr-period-label'].innerText === 'Q2 results' && els['sr-tab-q2']['aria-selected'] === 'true' &&
+      els['sr-tab-q1']['aria-selected'] === 'false');
+    check('an untouched quarter shows Not entered and no payment',
+      els['sr-recap-q2-status'].innerText === 'Not entered' && els['sr-recap-q2-payment'].innerText === '—');
+    h.input('sr-achievement-c2p-total', '120');
+    check('changing a value marks the active quarter as entered',
+      salesRepState.periods.q2.entered === true && els['sr-recap-q2-status'].innerText === 'Entered' &&
+      els['sr-recap-q2-payment'].innerText !== '—');
+    clickTab('q1');
+    check('returning to Q1 restores its own values',
+      els['sr-achievement-dev'].value === '80' && salesRepState.periods.q1.achievements.dev === 80);
+    clickTab('fy');
+    h.input('sr-qualifier-portfolio', '0');
+    h.input('sr-qualifier-visits', '0');
+    check('Q1-Q3 payments are paid before Q4 is computed', salesRepPaidBeforeQ4() > 0);
+    check('Q4 payment is floored at zero when the full-year payout is below the amount paid',
+      salesRepQ4Payment() === 0 && els['sr-q4-payment'].innerText === '€0');
+    check('the Q4 block reports the amount already paid',
+      els['sr-q4-already-paid'].innerText === salesRepFormatE(salesRepPaidBeforeQ4()));
+    clickTab('q2');
+    els['sr-reset-period'].__handlers.click({ target: els['sr-reset-period'] });
+    check('reset returns the active quarter to defaults and not entered',
+      salesRepState.periods.q2.entered === false && salesRepState.periods.q2.achievements.c2pTotal === 100 &&
+      els['sr-recap-q2-status'].innerText === 'Not entered');
+    h.input('sr-achievement-churn', '90');
+    clickTab('q3');
+    h.input('sr-achievement-churn', '70');
+    const stored = JSON.parse(__h.storage.__data['sales-rep-quarterly-v1']);
+    check('each change is autosaved to the versioned storage key',
+      stored.version === 1 && stored.periods.q3.entered === true && stored.periods.q3.achievements.churn === 70);
+    salesRepState.periods.q3.entered = false;
+    initializeSalesRepCalculator();
+    check('a reload restores saved entries from storage',
+      salesRepState.periods.q3.entered === true && salesRepState.periods.q3.achievements.churn === 70);
+    __h.storage.__fail = true;
+    h.input('sr-achievement-dev', '50');
+    check('blocked storage shows a message while the calculator keeps working',
+      els['sr-storage-status'].innerText.length > 0 && els['sr-final-payout'].innerText !== '');
+    __h.storage.__fail = false;
+    h.input('sr-achievement-dev', '51');
+    check('the storage message clears after a successful save',
+      els['sr-storage-status'].innerText === '');
+    clickTab('q1');
+
     h.input('sr-fixed-salary', '0');
     h.input('sr-old-nominal-fixed', '0');
     h.input('sr-min-nominal', '0');

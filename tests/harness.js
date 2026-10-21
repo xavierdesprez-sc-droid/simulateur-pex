@@ -16,6 +16,7 @@ function makeEl() {
     innerText: '', innerHTML: '',
     __handlers: {},
     addEventListener(event, handler) { this.__handlers[event] = handler; },
+    setAttribute(name, value) { element[name] = value; },
     getContext: () => ({}), appendChild: () => ({}), removeChild: () => ({})
   };
   element.classList = {

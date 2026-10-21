@@ -324,25 +324,86 @@ function salesRepRefreshCharts(result) {
   }
 }
 
+let salesRepActivePeriod = 'q1';
+
+const SALES_REP_PERIOD_LABELS = {
+  q1: 'Q1 results',
+  q2: 'Q2 results',
+  q3: 'Q3 results',
+  fy: 'Full-year results (Q4 catch-up)'
+};
+
+function salesRepActive() {
+  return salesRepState.periods[salesRepActivePeriod];
+}
+
+function salesRepStorageOrNull() {
+  try {
+    return window.localStorage || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function salesRepPersist() {
+  const storage = salesRepStorageOrNull();
+  if (storage !== null && salesRepSaveState(storage, salesRepState)) {
+    salesRepHideMessage('sr-storage-status');
+  } else {
+    salesRepShowMessage('sr-storage-status', 'Changes are not saved in this browser.');
+  }
+}
+
+function salesRepMarkEntered() {
+  salesRepActive().entered = true;
+}
+
+function updateSalesRepRecap() {
+  const quarterKeys = ['q1', 'q2', 'q3'];
+  quarterKeys.forEach(key => {
+    const period = salesRepState.periods[key];
+    salesRepSetOutput('sr-recap-' + key + '-status', period.entered ? 'Entered' : 'Not entered');
+    salesRepSetOutput('sr-recap-' + key + '-payment',
+      period.entered ? salesRepFormatE(salesRepQuarterPayment(period)) : '—');
+  });
+  const fy = salesRepState.periods.fy;
+  const paid = salesRepPaidBeforeQ4();
+  const q4 = salesRepQ4Payment();
+  salesRepSetOutput('sr-recap-q4-status', fy.entered ? 'Entered' : 'Not entered');
+  salesRepSetOutput('sr-recap-q4-payment', fy.entered ? salesRepFormatE(q4) : '—');
+  salesRepSetOutput('sr-recap-total', salesRepFormatE(paid + q4));
+  salesRepSetOutput('sr-q4-annual-payout',
+    fy.entered ? salesRepFormatE(salesRepAnnualPayout(fy)) : '—');
+  salesRepSetOutput('sr-q4-already-paid', salesRepFormatE(paid));
+  salesRepSetOutput('sr-q4-payment', fy.entered ? salesRepFormatE(q4) : '—');
+  salesRepSetOutput('sr-year-total', salesRepFormatE(paid + q4));
+}
+
 function updateSalesRepCalculator() {
-  const result = calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 });
+  const period = salesRepActive();
+  const isFullYear = salesRepActivePeriod === 'fy';
+  const divisor = isFullYear ? 1 : 4;
+  const result = calculateSalesRepPayout({ ...salesRepState, ...period });
+  const money = value => period.entered ? salesRepFormatE(value / divisor) : '—';
   result.kpiPayouts.forEach(item => {
     const key = item.key.replace(/([A-Z])/g, '-$1').toLowerCase();
-    salesRepSetOutput('sr-payout-' + key, salesRepFormatE(item.weightedPayout));
-    salesRepSetOutput('sr-summary-' + key, salesRepFormatE(item.weightedPayout));
+    salesRepSetOutput('sr-payout-' + key, money(item.weightedPayout));
+    salesRepSetOutput('sr-summary-' + key, money(item.weightedPayout));
     salesRepSetOutput('sr-achievement-' + key + '-value', item.achievement.toFixed(0) + '%');
   });
-  salesRepSetOutput('sr-performance-subtotal', salesRepFormatE(result.performanceSubtotal));
+  salesRepSetOutput('sr-performance-subtotal', money(result.performanceSubtotal));
   salesRepSetOutput('sr-qualifier-multiplier', (result.qualifierMultiplier * 100).toFixed(0) + '%');
-  salesRepSetOutput('sr-final-payout', salesRepFormatE(result.finalPayout));
+  const payment = isFullYear ? salesRepQ4Payment() : result.finalPayout / divisor;
+  salesRepSetOutput('sr-final-payout', period.entered ? salesRepFormatE(payment) : '—');
   salesRepSetOutput(
     'sr-final-payout-percent',
-    result.context.newNomE === 0
+    result.context.newNomE === 0 || !period.entered
       ? '—'
       : ((result.finalPayout / result.context.newNomE) * 100).toFixed(1) + '%'
   );
-  salesRepSetOutput('sr-qualifier-portfolio-value', Math.min(salesRepState.periods.q1.qualifiers.portfolio, 100).toFixed(0) + '%');
-  salesRepSetOutput('sr-qualifier-visits-value', Math.min(salesRepState.periods.q1.qualifiers.visits, 100).toFixed(0) + '%');
+  salesRepSetOutput('sr-qualifier-portfolio-value', Math.min(period.qualifiers.portfolio, 100).toFixed(0) + '%');
+  salesRepSetOutput('sr-qualifier-visits-value', Math.min(period.qualifiers.visits, 100).toFixed(0) + '%');
+  updateSalesRepRecap();
   salesRepRefreshCharts(result);
   return result;
 }
@@ -362,6 +423,7 @@ function salesRepBindNumber(id, stateKey) {
     salesRepUpdateValidationMessage();
     salesRepState[stateKey] = value;
     updateSalesRepCalculator();
+    salesRepPersist();
   };
   el.addEventListener('input', update);
   el.addEventListener('change', update);
@@ -373,29 +435,61 @@ function salesRepBindSlider(id, target, key, max) {
     const value = Number(event.target.value);
     if (!Number.isFinite(value)) return;
     const bounded = Math.max(0, Math.min(max, value));
-    salesRepState.periods.q1[target][key] = bounded;
+    salesRepActive()[target][key] = bounded;
     event.target.value = String(bounded);
+    salesRepMarkEntered();
     updateSalesRepCalculator();
+    salesRepPersist();
   };
   el.addEventListener('input', update);
   el.addEventListener('change', update);
 }
 
+function salesRepApplyPeriodToControls() {
+  const period = salesRepActive();
+  const values = {
+    'sr-achievement-c2p-total': period.achievements.c2pTotal,
+    'sr-achievement-c2p-price': period.achievements.c2pPrice,
+    'sr-achievement-dev': period.achievements.dev,
+    'sr-achievement-churn': period.achievements.churn,
+    'sr-qualifier-portfolio': period.qualifiers.portfolio,
+    'sr-qualifier-visits': period.qualifiers.visits
+  };
+  Object.keys(values).forEach(id => { document.getElementById(id).value = String(values[id]); });
+}
+
+function salesRepSelectPeriod(key) {
+  salesRepActivePeriod = key;
+  SALES_REP_PERIODS.forEach(periodKey => {
+    document.getElementById('sr-tab-' + periodKey).setAttribute('aria-selected', String(periodKey === key));
+  });
+  salesRepSetOutput('sr-period-label', SALES_REP_PERIOD_LABELS[key]);
+  salesRepApplyPeriodToControls();
+  updateSalesRepCalculator();
+}
+
+function salesRepResetPeriod() {
+  salesRepState.periods[salesRepActivePeriod] = salesRepDefaultPeriod();
+  salesRepSelectPeriod(salesRepActivePeriod);
+  salesRepPersist();
+}
+
 function initializeSalesRepCalculator() {
   const app = document.getElementById('sales-rep-app');
   if (!app) return;
+  const storage = salesRepStorageOrNull();
+  if (storage === null) {
+    salesRepShowMessage('sr-storage-status', 'Changes are not saved in this browser.');
+  } else {
+    const loaded = salesRepLoadState(storage);
+    if (loaded) Object.assign(salesRepState, loaded);
+  }
   const defaults = {
     'sr-fixed-salary': salesRepState.fixedSalary,
     'sr-old-nominal-mode': salesRepState.oldNominalMode,
     'sr-old-nominal-fixed': salesRepState.oldNominalFixedE,
     'sr-old-nominal-percent': salesRepState.oldNominalPercent,
-    'sr-min-nominal': salesRepState.minNominalE,
-    'sr-achievement-c2p-total': salesRepState.periods.q1.achievements.c2pTotal,
-    'sr-achievement-c2p-price': salesRepState.periods.q1.achievements.c2pPrice,
-    'sr-achievement-dev': salesRepState.periods.q1.achievements.dev,
-    'sr-achievement-churn': salesRepState.periods.q1.achievements.churn,
-    'sr-qualifier-portfolio': salesRepState.periods.q1.qualifiers.portfolio,
-    'sr-qualifier-visits': salesRepState.periods.q1.qualifiers.visits
+    'sr-min-nominal': salesRepState.minNominalE
   };
   Object.keys(defaults).forEach(id => { document.getElementById(id).value = String(defaults[id]); });
   salesRepBindNumber('sr-fixed-salary', 'fixedSalary');
@@ -406,6 +500,7 @@ function initializeSalesRepCalculator() {
   mode.addEventListener('change', event => {
     salesRepState.oldNominalMode = event.target.value === 'percent' ? 'percent' : 'fixed';
     updateSalesRepCalculator();
+    salesRepPersist();
   });
   salesRepBindSlider('sr-achievement-c2p-total', 'achievements', 'c2pTotal', 200);
   salesRepBindSlider('sr-achievement-c2p-price', 'achievements', 'c2pPrice', 200);
@@ -413,7 +508,11 @@ function initializeSalesRepCalculator() {
   salesRepBindSlider('sr-achievement-churn', 'achievements', 'churn', 200);
   salesRepBindSlider('sr-qualifier-portfolio', 'qualifiers', 'portfolio', 100);
   salesRepBindSlider('sr-qualifier-visits', 'qualifiers', 'visits', 100);
-  updateSalesRepCalculator();
+  SALES_REP_PERIODS.forEach(key => {
+    document.getElementById('sr-tab-' + key).addEventListener('click', () => salesRepSelectPeriod(key));
+  });
+  document.getElementById('sr-reset-period').addEventListener('click', salesRepResetPeriod);
+  salesRepSelectPeriod('q1');
 }
 
 window.addEventListener('DOMContentLoaded', initializeSalesRepCalculator);
