@@ -127,7 +127,15 @@ function runSuite(suiteFile, app = 'default') {
     else { results.fail++; results.failures.push({ suite: suiteName, name }); console.log('  FAIL:', name); }
   };
   const defaultHtmlSrc = fs.readFileSync(HTML_PATH, 'utf8');
+  const storage = {
+    __fail: false, __data: {},
+    getItem(k) { if (this.__fail) throw new Error('storage blocked'); return k in this.__data ? this.__data[k] : null; },
+    setItem(k, v) { if (this.__fail) throw new Error('storage blocked'); this.__data[k] = String(v); },
+    removeItem(k) { delete this.__data[k]; }
+  };
+  global.window.localStorage = storage;
   const h = {
+    storage,
     els,
     mock: mocks,
     check: record,

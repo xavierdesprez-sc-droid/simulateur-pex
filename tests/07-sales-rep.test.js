@@ -116,6 +116,27 @@ module.exports = function suite(__h) {
   assertClose('Q4 pays 0 when FY is untouched',
     salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), off, off, off)), 0);
 
+  const stored = salesRepSerialize({ ...salesRepState });
+  check('serialized state carries version 1 and the storage key is versioned',
+    JSON.parse(stored).version === 1 && SALES_REP_STORAGE_KEY === 'sales-rep-quarterly-v1');
+  check('round-trip restores periods, entry flags and compensation inputs',
+    (() => {
+      const back = salesRepDeserialize(stored);
+      return back && back.fixedSalary === salesRepState.fixedSalary &&
+        back.periods.q1.entered === false &&
+        back.periods.fy.achievements.c2pTotal === 100;
+    })());
+  check('corrupt JSON loads as null without throwing', salesRepDeserialize('{not json') === null);
+  check('wrong version loads as null', salesRepDeserialize(JSON.stringify({ version: 2, periods: {} })) === null);
+  check('out-of-range achievements are clamped to 0–200',
+    salesRepDeserialize(JSON.stringify({ version: 1, periods: { q1: { entered: true, achievements: { c2pTotal: 999 }, qualifiers: { portfolio: 500 } } } })).periods.q1.achievements.c2pTotal === 200);
+  check('a non-boolean entered flag becomes false',
+    salesRepDeserialize(JSON.stringify({ version: 1, periods: { q1: { entered: 'yes' } } })).periods.q1.entered === false);
+  check('a save that throws returns false instead of crashing',
+    (() => { __h.storage.__fail = true; const ok = salesRepSaveState(__h.storage); __h.storage.__fail = false; return ok === false; })());
+  check('a load that throws returns null instead of crashing',
+    (() => { __h.storage.__fail = true; const v = salesRepLoadState(__h.storage); __h.storage.__fail = false; return v === null; })());
+
   const uiReady = typeof __domReadyHandler === 'function';
   check('Sales Rep app registers DOM initialization', uiReady);
 

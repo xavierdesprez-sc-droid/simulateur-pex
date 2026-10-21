@@ -37,6 +37,86 @@ function salesRepNonNegative(value, fallback) {
   return Number.isFinite(number) && number >= 0 ? number : fallback;
 }
 
+const SALES_REP_STORAGE_KEY = 'sales-rep-quarterly-v1';
+
+function salesRepSerialize(state = salesRepState) {
+  const periods = {};
+  SALES_REP_PERIODS.forEach(key => {
+    const period = (state.periods && state.periods[key]) || salesRepDefaultPeriod();
+    periods[key] = {
+      entered: period.entered,
+      achievements: { ...period.achievements },
+      qualifiers: { ...period.qualifiers }
+    };
+  });
+  return JSON.stringify({
+    version: 1,
+    fixedSalary: state.fixedSalary,
+    oldNominalMode: state.oldNominalMode,
+    oldNominalFixedE: state.oldNominalFixedE,
+    oldNominalPercent: state.oldNominalPercent,
+    minNominalE: state.minNominalE,
+    periods
+  });
+}
+
+function salesRepSanitizePeriod(raw) {
+  const period = salesRepDefaultPeriod();
+  if (!raw || typeof raw !== 'object') return period;
+  period.entered = raw.entered === true;
+  const achievements = raw.achievements || {};
+  SALES_REP_KPIS.forEach(kpi => {
+    period.achievements[kpi.key] = Math.min(
+      salesRepNonNegative(achievements[kpi.key], period.achievements[kpi.key]), 200);
+  });
+  const qualifiers = raw.qualifiers || {};
+  Object.keys(period.qualifiers).forEach(key => {
+    period.qualifiers[key] = Math.min(
+      salesRepNonNegative(qualifiers[key], period.qualifiers[key]), 100);
+  });
+  return period;
+}
+
+function salesRepDeserialize(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (error) {
+    return null;
+  }
+  if (!data || typeof data !== 'object' || data.version !== 1 ||
+      !data.periods || typeof data.periods !== 'object') return null;
+  const state = {
+    fixedSalary: salesRepNonNegative(data.fixedSalary, 40000),
+    oldNominalMode: data.oldNominalMode === 'percent' ? 'percent' : 'fixed',
+    oldNominalFixedE: salesRepNonNegative(data.oldNominalFixedE, 6000),
+    oldNominalPercent: salesRepNonNegative(data.oldNominalPercent, 15),
+    minNominalE: salesRepNonNegative(data.minNominalE, 8000),
+    periods: {}
+  };
+  SALES_REP_PERIODS.forEach(key => {
+    state.periods[key] = salesRepSanitizePeriod(data.periods[key]);
+  });
+  return state;
+}
+
+function salesRepSaveState(storage, state = salesRepState) {
+  try {
+    storage.setItem(SALES_REP_STORAGE_KEY, salesRepSerialize(state));
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function salesRepLoadState(storage) {
+  try {
+    return salesRepDeserialize(storage.getItem(SALES_REP_STORAGE_KEY));
+  } catch (error) {
+    return null;
+  }
+}
+
 function salesRepOldNominalE(inputs = salesRepState) {
   const fixedSalary = salesRepNonNegative(inputs.fixedSalary, salesRepState.fixedSalary);
   if (inputs.oldNominalMode === 'percent') {
