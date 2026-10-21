@@ -39,7 +39,7 @@ function targetForCwd() {
     if (target) return target;
   }
   const segments = cwd.split(path.sep);
-  return ['SWE', 'NCE', 'SalesRep'].find(target => segments.includes(target));
+  return ['SWE', 'NCE', 'SalesRep', 'Dashboard'].find(target => segments.includes(target));
 }
 
 function record(target, extra = {}) {
@@ -73,7 +73,8 @@ if (command === 'list') {
   const projects = [
     { title: 'Simulateur Remuneration Variable', scriptId: state.scriptIds.SWE },
     { title: 'Simulateur Remuneration Variable NCE', scriptId: state.scriptIds.NCE },
-    { title: 'Sales Rep Variable Compensation Calculator', scriptId: state.scriptIds.SalesRep }
+    { title: 'Sales Rep Variable Compensation Calculator', scriptId: state.scriptIds.SalesRep },
+    { title: 'SWE 2025 Achievement Dashboard', scriptId: state.scriptIds.Dashboard }
   ];
   if (state.settings.missingProjectTarget) {
     const index = projects.findIndex(project =>
@@ -217,12 +218,14 @@ function createSandbox(settings = {}) {
   const scriptIds = {
     SWE: rootConfig.scriptId,
     NCE: 'FAKE_SCRIPT_SECRET_NCE',
-    SalesRep: 'FAKE_SCRIPT_SECRET_SALESREP'
+    SalesRep: 'FAKE_SCRIPT_SECRET_SALESREP',
+    Dashboard: 'FAKE_SCRIPT_SECRET_DASHBOARD'
   };
   const fileNames = {
     SWE: ['Code.gs', 'appsscript.json', 'index.html'],
     NCE: ['Code.js', 'appsscript.json', 'index.html'],
-    SalesRep: ['Code.js', 'appsscript.json', 'index.html']
+    SalesRep: ['Code.js', 'appsscript.json', 'index.html'],
+    Dashboard: ['Code.js', 'appsscript.json', 'index.html']
   };
   const remoteFiles = {
     SWE: {
@@ -246,6 +249,11 @@ function createSandbox(settings = {}) {
       'index.html': encode('previous Sales Rep bundle\n')
     }
   };
+  remoteFiles.Dashboard = {
+    'Code.js': encode(fs.readFileSync(path.join(root, 'dashboard', 'Code.gs'))),
+    'appsscript.json': encode('{"timeZone":"Europe/Paris"}\n'),
+    'index.html': encode('previous dashboard bundle\n')
+  };
   if (settings.invalidBackendTarget) {
     remoteFiles[settings.invalidBackendTarget]['Code.js'] = encode(
       decode(remoteFiles[settings.invalidBackendTarget]['Code.js']) + 'function invalid( {\n'
@@ -255,11 +263,12 @@ function createSandbox(settings = {}) {
     scriptIds,
     fileNames,
     remoteFiles,
-    versions: { SWE: {}, NCE: {}, SalesRep: {} },
+    versions: { SWE: {}, NCE: {}, SalesRep: {}, Dashboard: {} },
     deployments: {
       SWE: [{ id: 'FAKE_DEPLOY_SWE', version: '4' }],
       NCE: [{ id: 'FAKE_DEPLOY_NCE', version: '4' }],
-      SalesRep: [{ id: 'FAKE_DEPLOY_SALESREP', version: '4' }]
+      SalesRep: [{ id: 'FAKE_DEPLOY_SALESREP', version: '4' }],
+      Dashboard: [{ id: 'FAKE_DEPLOY_DASHBOARD', version: '4' }]
     },
     nextVersion: 8,
     settings
@@ -435,6 +444,37 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
     } finally {
       sandbox.cleanup();
     }
+  });
+
+  runCase('Dashboard dry run stages only the dashboard without remote writes', () => {
+    const sandbox = createSandbox();
+    try {
+      const result = invokeWrapper(sandbox, 'Dashboard', { dryRun: true });
+      assert.equal(result.status, 0, outputOf(result));
+      const events = sandbox.readEvents();
+      assert.ok(events.some(event => event.command === 'clone' && event.target === 'Dashboard'));
+      assert.ok(events.some(event => event.command === 'status' && event.target === 'Dashboard'));
+      assertNoWrites(events);
+      assertScratchCleaned(events);
+    } finally { sandbox.cleanup(); }
+  });
+
+  runCase('Dashboard deployment preserves its backend and verifies the new immutable bundle', () => {
+    const sandbox = createSandbox();
+    const before = sandbox.readState().remoteFiles.Dashboard;
+    try {
+      const result = invokeWrapper(sandbox, 'Dashboard', { confirmRemoteChanges: true });
+      assert.equal(result.status, 0, outputOf(result));
+      const events = sandbox.readEvents();
+      assert.deepEqual(events.filter(event => event.command === 'push').map(event => event.target), ['Dashboard']);
+      const state = sandbox.readState();
+      assert.equal(state.remoteFiles.Dashboard['Code.js'], before['Code.js']);
+      assert.equal(state.remoteFiles.Dashboard['appsscript.json'], before['appsscript.json']);
+      assert.equal(decode(state.remoteFiles.Dashboard['index.html']), require('../build').buildDashboardString());
+      assert.ok(events.some(event => event.command === 'pull' && event.target === 'Dashboard' && event.version === '8'));
+      assert.match(outputOf(result), /https:\/\/script.google.com\/macros\/s\/FAKE_DEPLOY_DASHBOARD\/exec/);
+      assertScratchCleaned(events);
+    } finally { sandbox.cleanup(); }
   });
 
   runCase('wrapper test command does not recursively run itself', () => {

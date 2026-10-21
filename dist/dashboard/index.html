@@ -164,24 +164,30 @@
   </style>
 </head>
 <body class="font-sans text-slate-800 antialiased min-h-screen bg-slate-50">
-  <main id="dashboard-app" class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-    <header class="space-y-1">
-      <h1 class="text-lg font-bold text-slate-900">SWE 2025 Achievement Dashboard</h1>
-      <p class="text-xs text-slate-500">Achievement 2025 against annualized base pay, nominal, seniority, age and performance rating. Rows marked Out are excluded.</p>
+  <main id="dashboard-app" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+    <header class="rounded-2xl bg-slate-900 px-6 py-5 text-white space-y-2">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300">SWE · 2025 performance</p>
+      <h1 class="text-xl font-bold">Achievement Dashboard</h1>
+      <p class="text-xs text-slate-300">Country distributions and Spearman correlations with achievement. Rows marked Out are excluded.</p>
     </header>
 
-    <section class="bg-white rounded-2xl border border-slate-200 p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-      <label class="space-y-1">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Country</span>
-        <select id="dash-filter-country" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
-      </label>
+    <nav class="flex gap-1 bg-slate-200/60 rounded-xl p-1 w-fit" role="tablist" aria-label="Dashboard views">
+      <button id="dash-tab-overview" type="button" role="tab" aria-selected="true" aria-controls="dash-view-overview" class="px-4 py-2 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-sm">Dashboard</button>
+      <button id="dash-tab-detail" type="button" role="tab" aria-selected="false" aria-controls="dash-view-detail" tabindex="-1" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500">Detailed analysis</button>
+    </nav>
+
+    <section aria-label="Population filters" class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-wrap gap-4">
       <label class="space-y-1">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Market</span>
-        <select id="dash-filter-market" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        <select id="dash-filter-market" class="w-full min-w-40 text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700"><option value="">All</option></select>
       </label>
-      <label class="space-y-1">
+      <label id="dash-country-control" class="space-y-1 hidden">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Country</span>
+        <select id="dash-filter-country" class="w-full min-w-40 text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+      <label id="dash-category-control" class="space-y-1">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Category</span>
-        <select id="dash-filter-category" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700"><option value="">All</option></select>
+        <select id="dash-filter-category" class="w-full min-w-40 text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700"><option value="">All</option></select>
       </label>
     </section>
 
@@ -189,10 +195,47 @@
     <p id="dash-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
     <input type="file" id="dash-csv-input" accept=".csv,text/csv" class="hidden" />
 
+    <div id="dash-view-overview" role="tabpanel" aria-labelledby="dash-tab-overview" class="space-y-5">
+      <section aria-label="Achievement distributions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">France</h2><span id="dash-hist-count-0" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-0" role="img" aria-label="France achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-0" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">Spain</h2><span id="dash-hist-count-1" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-1" role="img" aria-label="Spain achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-1" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">Italy</h2><span id="dash-hist-count-2" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-2" role="img" aria-label="Italy achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-2" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">Portugal</h2><span id="dash-hist-count-3" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-3" role="img" aria-label="Portugal achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-3" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="mb-4 space-y-1"><h2 class="font-bold text-slate-900 text-sm">Spearman correlations by country</h2><p class="text-xs text-slate-400">Association with Achievement 2025 · Hover over a value for the number of valid pairs.</p></div>
+        <div class="overflow-x-auto"><table class="w-full table-fixed text-xs border-separate border-spacing-2">
+          <colgroup><col style="width:22%"><col style="width:19.5%"><col style="width:19.5%"><col style="width:19.5%"><col style="width:19.5%"></colgroup>
+          <thead><tr class="text-slate-500"><th class="text-left px-2 py-2">Country / Variable</th><th class="px-2 py-2">Annualized base pay</th><th class="px-2 py-2">Nominal</th><th class="px-2 py-2">Seniority</th><th class="px-2 py-2">Rating level</th></tr></thead>
+          <tbody id="dash-country-correlations"></tbody>
+        </table></div>
+        <div id="dash-overview-legend" class="mt-4 border-t border-slate-100 pt-4"></div>
+        <p class="text-[10px] text-slate-400 mt-3">Correlation shows association, not cause. n/a: fewer than 3 valid pairs or no variation.</p>
+      </section>
+    </div>
+
+    <div id="dash-view-detail" role="tabpanel" aria-labelledby="dash-tab-detail" class="hidden space-y-4">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+      <section class="bg-white rounded-2xl border border-slate-200 p-5 lg:col-span-2">
         <h2 class="font-bold text-slate-900 text-sm mb-2">Achievement 2025 against annualized base pay</h2>
-        <div class="h-72"><canvas id="dash-scatter"></canvas></div>
+        <div id="dash-scatter-legend" class="flex flex-wrap items-center gap-x-6 gap-y-2 pb-3 text-xs"></div>
+        <div class="h-[440px] sm:h-[520px]"><canvas id="dash-scatter"></canvas></div>
       </section>
       <section class="bg-white rounded-2xl border border-slate-200 p-4">
         <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by rating</h2>
@@ -214,15 +257,16 @@
         <thead>
           <tr class="text-left text-slate-500">
             <th class="py-1 pr-4 font-semibold">Variable</th>
-            <th class="py-1 pr-4 font-semibold">Pearson r</th>
             <th class="py-1 pr-4 font-semibold">Spearman ρ</th>
             <th class="py-1 font-semibold">n</th>
           </tr>
         </thead>
         <tbody id="dash-correlations-body" class="font-mono"></tbody>
       </table>
+      <div id="dash-detail-legend" class="mt-4 border-t border-slate-100 pt-4"></div>
       <p class="text-[10px] text-slate-400 mt-2">Correlation shows association, not cause. Ratings are ordinal, so Spearman is the relevant value for them.</p>
     </section>
+    </div>
   </main>
 </body>
 
@@ -422,15 +466,13 @@ const CORRELATION_VARIABLES = [
 
 function aggregateDashboard(rows, filters) {
   const f = filters || {};
-  const wanted = key => String(f[key] || '').trim();
-  const filtered = rows.filter(row =>
-    (!wanted('country') || row.country === wanted('country')) &&
-    (!wanted('market') || row.market === wanted('market')) &&
-    (!wanted('category') || row.category === wanted('category')));
+  const filtered = filterDashboardRows(rows, f);
   const withAchievement = filtered.filter(row => Number.isFinite(row.achievement));
   const achievements = withAchievement.map(row => row.achievement);
   const xs = withAchievement.map(row => row.fixed);
-  const scatter = withAchievement.map(row => ({ x: row.fixed, y: row.achievement }));
+  const scatter = withAchievement.map(row => ({
+    x: row.fixed, y: row.achievement, jobProfile: row.jobProfile, nominal: row.nominal, country: row.country
+  }));
   return {
     rowCount: filtered.length,
     achievementCount: withAchievement.length,
@@ -440,7 +482,7 @@ function aggregateDashboard(rows, filters) {
       const fit = linearFit(xs, achievements);
       return fit ? { slope: fit.slope, intercept: fit.intercept, x0: Math.min(...xs), x1: Math.max(...xs) } : null;
     })() : null,
-    byRating: RATING_LEVELS.map(level => {
+    byRating: ['Unclassified', 'P2', 'P3', 'P4', 'P5'].map(level => {
       const items = withAchievement.filter(row => ratingLevel(row.rating) === level);
       return {
         level,
@@ -458,18 +500,72 @@ function aggregateDashboard(rows, filters) {
       const py = pairs.map(pair => pair[1]);
       return {
         variable: variable.name,
-        pearson: pearson(px, py),
         spearman: spearman(px, py),
         n: pairs.length
       };
     })
   };
 }
+
+const DASHBOARD_COUNTRIES = ['France', 'Spain', 'Italy', 'Portugal'];
+const DASHBOARD_EMPTY_FILTER = '__EMPTY__';
+
+function filterDashboardRows(rows, filters = {}) {
+  return rows.filter(row => ['country', 'market', 'category', 'jobProfile'].every(key => {
+    const wanted = String(filters[key] || '').trim();
+    if (!wanted) return true;
+    const value = String(row[key] || '').trim();
+    return wanted === DASHBOARD_EMPTY_FILTER ? value === '' : value === wanted;
+  }));
+}
+
+function aggregateCountryDashboard(rows, filters = {}) {
+  const countryRows = rows.filter(row => DASHBOARD_COUNTRIES.includes(row.country));
+  const width = 10;
+  const bins = Array.from({ length: 20 }, (_, i) => ({
+    low: i * width, high: (i + 1) * width
+  }));
+  const filtered = filterDashboardRows(countryRows, { ...filters, country: '' });
+  const countries = DASHBOARD_COUNTRIES.map(country => {
+    const items = filtered.filter(row => row.country === country);
+    const model = aggregateDashboard(items);
+    const histogram = bins.map(() => 0);
+    let belowRange = 0;
+    let aboveRange = 0;
+    items.forEach(row => {
+      const value = row.achievement;
+      if (!Number.isFinite(value)) return;
+      if (value < 0) belowRange++;
+      else if (value > 200) aboveRange++;
+      else histogram[Math.min(19, Math.floor(value / width))]++;
+    });
+    return {
+      country, rowCount: model.rowCount, achievementCount: model.achievementCount,
+      meanAchievement: model.meanAchievement,
+      stdAchievement: model.achievementCount ? Math.sqrt(mean(items
+        .filter(row => Number.isFinite(row.achievement))
+        .map(row => (row.achievement - model.meanAchievement) ** 2))) : null,
+      histogram, belowRange, aboveRange,
+      correlations: model.correlations.filter(row => row.variable !== 'Age')
+    };
+  });
+  return { bins, countries, maxFrequency: Math.max(1, ...countries.flatMap(country => country.histogram)) };
+}
+
+function correlationStrength(value) {
+  if (!Number.isFinite(value)) return null;
+  const magnitude = Math.abs(value);
+  if (magnitude < 0.15) return 'negligible';
+  if (magnitude < 0.30) return 'weak';
+  if (magnitude < 0.50) return 'moderate';
+  return 'strong';
+}
 // Dashboard UI: loads rows, applies filters, renders charts and the correlation table.
 // Statistics come from stats.js (parseSwe2025Csv, aggregateDashboard); nothing is recomputed here.
 let dashRows = [];
 let dashCounts = null;
 const dashCharts = {};
+let dashView = 'overview';
 
 function dashEscape(value) {
   return String(value).replace(/[&<>"']/g, character => ({
@@ -489,7 +585,8 @@ function dashClearStatus() {
 
 function dashFilters() {
   return {
-    country: document.getElementById('dash-filter-country').value,
+    country: dashView === 'detail' ? document.getElementById('dash-filter-country').value : '',
+    jobProfile: '',
     market: document.getElementById('dash-filter-market').value,
     category: document.getElementById('dash-filter-category').value
   };
@@ -503,8 +600,9 @@ function dashFillSelect(id, values) {
   const select = document.getElementById(id);
   const current = select.value;
   select.innerHTML = '<option value="">All</option>' +
+    '<option value="' + DASHBOARD_EMPTY_FILTER + '">None</option>' +
     values.map(value => '<option value="' + dashEscape(value) + '">' + dashEscape(value) + '</option>').join('');
-  select.value = values.includes(current) ? current : '';
+  select.value = values.includes(current) || current === DASHBOARD_EMPTY_FILTER ? current : '';
 }
 
 function dashSetChart(id, config) {
@@ -513,12 +611,16 @@ function dashSetChart(id, config) {
 }
 
 function dashDrawScatter(model) {
-  const datasets = [{
-    label: 'Employees',
-    data: model.scatter,
-    backgroundColor: 'rgba(234, 88, 12, 0.6)',
-    pointRadius: 4
-  }];
+  const countryColors = {
+    France: '#0072B2', Spain: '#D55E00', Italy: '#009E73', Portugal: '#CC79A7'
+  };
+  const datasets = DASHBOARD_COUNTRIES.map(country => ({
+    label: country,
+    data: model.scatter.filter(point => point.country === country),
+    backgroundColor: countryColors[country],
+    pointRadius: 5,
+    pointHoverRadius: 7
+  }));
   if (model.trend) {
     const { slope, intercept, x0, x1 } = model.trend;
     datasets.push({
@@ -531,12 +633,40 @@ function dashDrawScatter(model) {
       fill: false
     });
   }
+  const legend = datasets.filter(dataset => DASHBOARD_COUNTRIES.includes(dataset.label)).map(dataset =>
+    '<span data-country-legend="' + dataset.label + '" class="inline-flex items-center gap-2 text-slate-600">' +
+    '<span data-legend-swatch class="h-3 w-3 rounded-full" style="background:' + dataset.backgroundColor + '"></span>' +
+    dataset.label + '</span>'
+  );
+  if (model.trend) {
+    legend.push('<span class="inline-flex items-center gap-2 text-slate-600">' +
+      '<span class="h-0 w-6 border-t-2 border-slate-700"></span>' +
+      'Distribution trend</span>');
+  }
+  document.getElementById('dash-scatter-legend').innerHTML = legend.join('');
   dashSetChart('dash-scatter', {
     type: 'scatter',
     data: { datasets },
     options: {
       animation: false,
-      plugins: { legend: { display: false } },
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: context => {
+            const point = context.raw;
+            if (context.dataset.label === 'Trend') return 'Trend: ' + point.y.toFixed(1) + '%';
+            return [
+              'Achievement: ' + point.y.toFixed(1) + '%',
+              'Annualized base pay: ' + dashMoney(point.x),
+              'Job title: ' + (point.jobProfile || 'None'),
+              'Nominal: ' + dashMoney(point.nominal),
+              'Country: ' + (point.country || 'None')
+            ];
+          }
+        } }
+      },
       scales: {
         x: { title: { display: true, text: 'Annualized base pay (€)' } },
         y: { title: { display: true, text: 'Achievement 2025 (%)' } }
@@ -558,6 +688,8 @@ function dashDrawBars(id, entries, labelOf) {
     },
     options: {
       animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: { y: { title: { display: true, text: 'Mean achievement 2025 (%)' } } }
     }
@@ -565,25 +697,132 @@ function dashDrawBars(id, entries, labelOf) {
 }
 
 function dashRenderCorrelations(model) {
-  const format = value => (value === null || value === undefined ? 'n/a' : value.toFixed(2));
   document.getElementById('dash-correlations-body').innerHTML = model.correlations.map(row =>
     '<tr><td class="py-1 pr-4 font-sans">' + dashEscape(row.variable) + '</td>' +
-    '<td class="py-1 pr-4">' + format(row.pearson) + '</td>' +
-    '<td class="py-1 pr-4">' + format(row.spearman) + '</td>' +
+    dashCorrelationCell(row) +
     '<td class="py-1">' + row.n + '</td></tr>'
   ).join('');
 }
 
+function dashMoney(value) {
+  return Number.isFinite(value) ? new Intl.NumberFormat('en-GB', {
+    style: 'currency', currency: 'EUR', maximumFractionDigits: 0
+  }).format(value) : 'n/a';
+}
+
+function dashCorrelationCell(row) {
+  const value = row.spearman;
+  const strength = correlationStrength(value);
+  const valid = strength !== null;
+  const labels = { negligible: 'Very weak / near zero', weak: 'Weak', moderate: 'Moderate', strong: 'Strong' };
+  const opacity = { weak: 0.1, moderate: 0.23, strong: 0.4 };
+  const colored = valid && strength !== 'negligible';
+  const background = colored ? (value < 0
+    ? 'rgba(249,115,22,' + opacity[strength] + ')'
+    : 'rgba(79,70,229,' + opacity[strength] + ')') : '#e5e7eb';
+  const color = colored ? (value < 0 ? '#9a3412' : '#3730a3') : valid ? '#64748b' : '#94a3b8';
+  return '<td class="px-4 py-3 rounded-lg text-center font-mono font-semibold" style="background:' +
+    background + ';color:' + color + '" title="' + dashEscape(row.variable) +
+    ': ' + row.n + ' valid pairs · ' + (valid ? labels[strength] +
+      (value < 0 ? ' · Negative' : value > 0 ? ' · Positive' : '') : 'Insufficient data or no variation') + '">' +
+    (valid ? value.toFixed(2) : 'n/a') + '</td>';
+}
+
+function dashRenderCorrelationLegends() {
+  const bands = [
+    ['#e5e7eb', 'Very weak / near zero', '|ρ| < 0.15'],
+    ['rgba(79,70,229,0.1)', 'Weak', '0.15 ≤ |ρ| < 0.30'],
+    ['rgba(79,70,229,0.23)', 'Moderate', '0.30 ≤ |ρ| < 0.50'],
+    ['rgba(79,70,229,0.4)', 'Strong', '|ρ| ≥ 0.50']
+  ];
+  const html = '<div class="flex flex-wrap gap-x-5 gap-y-2 text-[10px] text-slate-500">' +
+    bands.map(([color, label, range]) => '<span class="flex items-center gap-2"><span class="h-3 w-3 rounded" style="background:' +
+      color + '"></span><span>' + label + ' <span class="text-slate-400">(' + range + ')</span></span></span>').join('') +
+    '</div><p class="text-[10px] text-slate-400 mt-2">Orange: negative · Indigo: positive · Strength uses |ρ|. ' +
+    'These are descriptive guidelines, not significance thresholds; reliability depends on sample size. ' +
+    'Near-zero Spearman does not rule out a non-monotonic relationship.</p>';
+  ['dash-overview-legend', 'dash-detail-legend'].forEach(id => {
+    document.getElementById(id).innerHTML = html;
+  });
+}
+
+function dashDrawOverview(overview) {
+  const colors = ['#6366f1', '#0d9488', '#0284c7', '#a855f7'];
+  overview.countries.forEach((country, index) => {
+    document.getElementById('dash-hist-count-' + index).innerText = country.achievementCount
+      ? 'n = ' + country.achievementCount : 'No achievement data';
+    const percent = value => Number.isFinite(value) ? value.toFixed(1) + '%' : 'n/a';
+    document.getElementById('dash-hist-stats-' + index).innerText =
+      'Mean ' + percent(country.meanAchievement) + ' · Std ' + percent(country.stdAchievement) +
+      (country.belowRange || country.aboveRange
+        ? ' · Outside chart: ' + country.belowRange + ' below 0%, ' + country.aboveRange + ' above 200%' : '');
+    dashSetChart('dash-hist-' + index, {
+      type: 'bar',
+      data: {
+        datasets: [{ label: 'Employees', data: country.histogram.map((count, binIndex) => ({
+          x: overview.bins[binIndex].low + 5, y: count
+        })), backgroundColor: colors[index], borderRadius: 4,
+        barPercentage: 0.85, categoryPercentage: 0.9 }]
+      },
+      options: {
+        animation: false, responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          title: contexts => {
+            const bin = overview.bins[contexts[0].dataIndex];
+            return bin.low + '% ≤ achievement ' + (bin.high === 200 ? '≤ ' : '< ') + bin.high + '%';
+          },
+          label: context => 'Employees: ' + context.raw.y
+        } } },
+        scales: {
+          x: { type: 'linear', min: 0, max: 200, offset: false,
+            title: { display: true, text: 'Achievement 2025 (%)' }, grid: { display: false },
+            ticks: { stepSize: 20, maxRotation: 0, callback: value => value + '%' } },
+          y: { beginAtZero: true, max: overview.maxFrequency + 1, ticks: { precision: 0 },
+            grid: { color: '#f1f5f9' }, border: { display: false },
+            title: { display: true, text: 'Employees' } }
+        }
+      }
+    });
+  });
+  document.getElementById('dash-country-correlations').innerHTML = overview.countries.map(country =>
+    '<tr><th scope="row" class="text-left px-2 py-3 text-slate-700 font-semibold">' +
+    dashEscape(country.country) + '</th>' + country.correlations.map(dashCorrelationCell).join('') + '</tr>'
+  ).join('');
+}
+
+function dashSetView(view) {
+  dashView = view;
+  ['overview', 'detail'].forEach(name => {
+    const active = name === view;
+    document.getElementById('dash-view-' + name).classList.toggle('hidden', !active);
+    const button = document.getElementById('dash-tab-' + name);
+    button.setAttribute('aria-selected', String(active));
+    button.tabIndex = active ? 0 : -1;
+    button.className = 'px-4 py-2 rounded-lg text-xs font-bold ' +
+      (active ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500');
+  });
+  document.getElementById('dash-country-control').classList.toggle('hidden', view !== 'detail');
+  if (dashCounts) dashRender();
+}
+
 function dashRender() {
+  if (!dashCounts) return;
   const model = aggregateDashboard(dashRows, dashFilters());
+  const overview = dashView === 'overview' ? aggregateCountryDashboard(dashRows, dashFilters()) : null;
+  const rowCount = overview ? overview.countries.reduce((sum, country) => sum + country.rowCount, 0) : model.rowCount;
+  const achievementCount = overview ? overview.countries.reduce((sum, country) => sum + country.achievementCount, 0) : model.achievementCount;
   document.getElementById('dash-counts').innerText =
     dashRows.length + ' rows used · ' + (dashCounts.notIn + dashCounts.invalid) + ' ignored (' +
     dashCounts.notIn + ' not In, ' + dashCounts.invalid + ' invalid) · ' +
-    dashCounts.achievementMissing + ' without achievement · ' + model.rowCount + ' in current filters';
-  if (model.achievementCount < 3) {
+    dashCounts.achievementMissing + ' without achievement · ' + rowCount + ' in current filters';
+  if (achievementCount < 3) {
     dashSetStatus('Not enough data for these filters (fewer than 3 achievements).');
   } else {
     dashClearStatus();
+  }
+  if (overview) {
+    dashDrawOverview(overview);
+    return;
   }
   dashDrawScatter(model);
   dashDrawBars('dash-rating', model.byRating, entry => entry.level + ' (n ' + entry.n + ')');
@@ -611,7 +850,6 @@ function dashLoadFile(file) {
   reader.onload = () => {
     try {
       dashApplyResult(parseSwe2025Csv(reader.result));
-      dashClearStatus();
     } catch (error) {
       dashSetStatus('Reading error: ' + file.name + ' (' + dashErrorText(error) + ')');
     }
@@ -631,7 +869,6 @@ function dashLoad() {
     google.script.run
       .withSuccessHandler(result => {
         dashApplyResult(result);
-        dashClearStatus();
       })
       .withFailureHandler(error => dashSetStatus('Loading error: ' + dashErrorText(error)))
       .getDashboardData();
@@ -642,7 +879,6 @@ function dashLoad() {
     .then(async response => {
       if (!response.ok) throw new Error('HTTP ' + response.status);
       dashApplyResult(parseSwe2025Csv(await response.text()));
-      dashClearStatus();
     })
     .catch(error => {
       if (error instanceof TypeError || /^HTTP/.test(String(error && error.message))) dashShowPicker();
@@ -653,10 +889,23 @@ function dashLoad() {
 ['dash-filter-country', 'dash-filter-market', 'dash-filter-category'].forEach(id => {
   document.getElementById(id).addEventListener('change', dashRender);
 });
+['overview', 'detail'].forEach(view => {
+  const tab = document.getElementById('dash-tab-' + view);
+  tab.addEventListener('click', () => dashSetView(view));
+  tab.addEventListener('keydown', event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const next = event.key === 'Home' ? 'overview' : event.key === 'End' ? 'detail' :
+      view === 'overview' ? 'detail' : 'overview';
+    dashSetView(next);
+    document.getElementById('dash-tab-' + next).focus();
+  });
+});
 document.getElementById('dash-csv-input').addEventListener('change', event => {
   const file = event.target.files[0];
   if (file) dashLoadFile(file);
 });
+dashRenderCorrelationLegends();
 dashLoad();
   </script>
 </body>

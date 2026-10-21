@@ -31,7 +31,7 @@ module.exports = function suite(h) {
   const describedCharts = [
     ['mainChart', 'Distribution, payout, and nominal-weighted curves'],
     ['advChart', 'Hybrid, old, and all-new payout curves'],
-    ['personae-chart', 'Comparaison des courbes de rémunération des personas']
+    ['personae-chart', 'Comparison of persona pay curves']
   ];
   h.check('primary simulator charts expose accessible descriptions',
     describedCharts.every(([id, description]) => {

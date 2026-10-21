@@ -13,8 +13,8 @@
         populationSourceSwitch: true,
         defaultPopulationSource: 'legacy',
         populationSources: {
-          swe2025: { label: 'Nouvelle source (Copie de Liste Sales)', csvFile: 'population_test_swe2025.csv', format: 'named' },
-          legacy: { label: 'Ancienne source (Data dynamic distributions)', csvFile: 'population_test.csv', format: 'indexed' }
+          swe2025: { label: 'New source (Copie de Liste Sales)', csvFile: 'population_test_swe2025.csv', format: 'named' },
+          legacy: { label: 'Legacy source (Data dynamic distributions)', csvFile: 'population_test.csv', format: 'indexed' }
         },
         defaultBreakpoints: [
           { achievement: 0, payout: 0 },

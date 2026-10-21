@@ -163,7 +163,7 @@
     function normalizePersonaeResponse(response) {
       if (!response || !Array.isArray(response.personae) ||
           !Number.isInteger(response.ignored) || response.ignored < 0) {
-        throw new Error('Réponse Personae invalide.');
+        throw new Error('Invalid Personae response.');
       }
       return response.personae.map((row, index) => {
         const normalized = {
@@ -182,7 +182,7 @@
             !Number.isFinite(normalized.fixedSalary) || normalized.fixedSalary <= 0 ||
             !Number.isFinite(normalized.oldNominal) || normalized.oldNominal < 0 ||
             !Number.isFinite(normalized.oldNominalPct) || normalized.oldNominalPct < 0) {
-          throw new Error('Données invalides pour la persona en ligne ' + (index + 3) + '.');
+          throw new Error('Invalid data for persona on row ' + (index + 3) + '.');
         }
         return normalized;
       });
@@ -192,11 +192,11 @@
       const status = document.getElementById('personae-status');
       if (personaeLoading) return;
       if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        status.innerText = 'Erreur : ouvrez la version Apps Script pour charger les données Personae.';
+        status.innerText = 'Error: open the Apps Script version to load Personae data.';
         return;
       }
       personaeLoading = true;
-      status.innerText = 'Chargement des personas…';
+      status.innerText = 'Loading personas…';
       google.script.run
         .withSuccessHandler(response => {
           personaeLoading = false;
@@ -212,20 +212,20 @@
                 : true)
               .map(getPersonaeRowKey));
             updatePersonaeFilterOptions();
-            status.innerText = personaeData.length + ' persona(s) chargée(s), ' +
-              response.ignored + ' ligne(s) ignorée(s).';
+            status.innerText = personaeData.length + ' persona(s) loaded, ' +
+              response.ignored + ' row(s) ignored.';
             renderPersonaeView();
           } catch (error) {
             personaeData = [];
             personaeLoaded = false;
             personaeIncluded.clear();
-            status.innerText = 'Erreur : ' + error.message;
+            status.innerText = 'Error: ' + error.message;
             renderPersonaeView();
           }
         })
         .withFailureHandler(error => {
           personaeLoading = false;
-          status.innerText = 'Erreur : ' + (error && error.message ? error.message : String(error));
+          status.innerText = 'Error: ' + (error && error.message ? error.message : String(error));
         })
         .getPersonae();
     }
@@ -249,7 +249,7 @@
       const select = document.getElementById('personae-filter-seniority');
       const options = Array.from(new Set(personaeData.map(row => row.seniority))).sort((a, b) => a.localeCompare(b));
       if (personaeFilters.seniority && !options.includes(personaeFilters.seniority)) personaeFilters.seniority = '';
-      select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
+      select.innerHTML = '<option value="">All</option>' + options.map(value =>
         '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
       ).join('');
       select.value = personaeFilters.seniority;
@@ -272,11 +272,11 @@
     }
 
     function formatPersonaeNumber(value, maximumFractionDigits = 0) {
-      return new Intl.NumberFormat('fr-FR', { maximumFractionDigits }).format(value);
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value);
     }
 
     function formatPersonaeEuros(value) {
-      return new Intl.NumberFormat('fr-FR', {
+      return new Intl.NumberFormat('en-US', {
         style: 'currency', currency: 'EUR', maximumFractionDigits: 0
       }).format(value);
     }
@@ -291,7 +291,7 @@
         const label = escapePersonaeHtml(getPersonaeDisplayName(row));
         return '<tr>' +
           '<td class="px-3 py-2"><input type="checkbox" data-key="' + escapePersonaeHtml(key) + '"' + checked +
-            ' aria-label="Inclure ' + label + '" class="accent-violet-600"></td>' +
+            ' aria-label="Include ' + label + '" class="accent-violet-600"></td>' +
           '<td class="px-3 py-2">' + escapePersonaeHtml(row.country) + '</td>' +
           '<td class="px-3 py-2">' + escapePersonaeHtml(row.seniority) + '</td>' +
           '<td class="px-3 py-2 font-medium">' + segment + '</td>' +
@@ -323,8 +323,8 @@
       basisInput.checked = mode === 'euros' && personaeAchievementBasis === 'after';
       const note = document.getElementById('personae-mode-note');
       note.innerText = mode === 'percent'
-        ? 'Pas de hausse d’objectif appliquée en mode %/%. Ancienne courbe commune y = x; les courbes hybrides sont exprimées en % de leur nouveau nominal.'
-        : 'En mode %/€, la nouvelle courbe tient compte de la hausse d’objectif.';
+        ? 'No objective increase applied in %/% mode. The old common curve is y = x; hybrid curves are expressed as a percentage of their new nominal.'
+        : 'In %/€ mode, the new curve accounts for the objective increase.';
       renderPersonaeView();
     }
 
@@ -349,8 +349,8 @@
                     : formatPersonaeEuros(point.y);
                   const headcount = context.dataset.personaeHeadcount;
                   const headcountInfo = Number.isFinite(headcount)
-                    ? ' · Effectif : ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
-                      (headcount === 1 ? ' personne' : ' personnes')
+                    ? ' · Headcount: ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
+                      (headcount === 1 ? ' person' : ' people')
                     : '';
                   return context.dataset.label + ': ' + value + headcountInfo;
                 }
@@ -362,15 +362,15 @@
               type: 'linear',
               min: 0,
               max: 150,
-              title: { display: true, text: 'Atteinte avant hausse d’objectif (%)' },
+              title: { display: true, text: 'Achievement before objective increase (%)' },
               ticks: { callback: value => value + '%' }
             },
             y: {
               beginAtZero: true,
-              title: { display: true, text: 'Rémunération variable (€)' },
+              title: { display: true, text: 'Variable pay (€)' },
               ticks: { callback: value => personaeMode === 'percent'
                 ? value + '%'
-                : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(value) + ' €' }
+                : new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value) + ' €' }
             }
           }
         }
@@ -380,7 +380,7 @@
     function renderPersonaeCrossings(rows) {
       const container = document.getElementById('personae-crossings');
       if (personaeMode === 'percent') {
-        container.innerHTML = '<p class="sm:col-span-2 lg:col-span-3 text-slate-500">Sans hausse d’objectif, les courbes hybrides rejoignent la référence y = x à 100 %; aucun dépassement n’est appliqué dans ce mode.</p>';
+        container.innerHTML = '<p class="sm:col-span-2 lg:col-span-3 text-slate-500">Without an objective increase, hybrid curves meet the y = x reference at 100%; there is no crossover in this mode.</p>';
         return;
       }
       const maxAxisAchievement = personaeAchievementBasis === 'after'
@@ -398,8 +398,8 @@
           ? null
           : getPersonaeAxisValue(crossing, personaeAchievementBasis, personaeObjectiveIncrease);
         const summary = crossing === null
-          ? 'Aucun dépassement jusqu’à ' + maxAxisAchievement + ' %'
-          : 'Dépassement dès ' + formatPersonaeNumber(axisCrossing, 1) + ' %';
+          ? 'No crossover up to ' + maxAxisAchievement + '%'
+          : 'Crossover from ' + formatPersonaeNumber(axisCrossing, 1) + '%';
         return '<div class="rounded-lg border border-slate-100 px-3 py-2"><span class="mr-2 inline-block h-2 w-2 rounded-full" style="background-color:' +
           color + '"></span><span class="font-semibold">' + escapePersonaeHtml(getPersonaeDisplayName(row)) +
           '</span><span class="mt-1 block text-slate-500">' + summary + '</span></div>';
@@ -425,7 +425,7 @@
       const datasets = [];
       if (personaeMode === 'percent') {
         datasets.push({
-          label: 'Ancienne courbe commune (y = x)',
+           label: 'Common old curve (y = x)',
           data: points.map(x => ({ x, y: x })),
           borderColor: '#475569',
           borderDash: [7, 5],
@@ -439,7 +439,7 @@
         const color = PERSONAE_COLORS[index % PERSONAE_COLORS.length];
         if (personaeMode === 'euros') {
           datasets.push({
-            label: getPersonaeDisplayName(row) + ' — ancienne',
+             label: getPersonaeDisplayName(row) + ' — old',
             personaeHeadcount: row.headcount,
             data: points.map(x => ({ x, y: getPersonaePayouts(
               row,
@@ -457,7 +457,7 @@
           });
         }
         datasets.push({
-          label: getPersonaeDisplayName(row) + ' — hybride',
+           label: getPersonaeDisplayName(row) + ' — hybrid',
           personaeHeadcount: row.headcount,
           data: getPersonaeCurvePoints(
             row,
@@ -487,7 +487,7 @@
             );
             datasets.push({
               type: 'scatter',
-              label: getPersonaeDisplayName(row) + ' — début du dépassement',
+               label: getPersonaeDisplayName(row) + ' — crossover start',
               personaeHeadcount: row.headcount,
               data: [{ x: axisCrossing, y: getPersonaePayouts(
                 row, crossing, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
@@ -506,13 +506,13 @@
       personaeChart.data.datasets = datasets;
       personaeChart.options.scales.x.max = xMax;
       personaeChart.options.scales.x.title.text = personaeMode === 'percent'
-        ? 'Atteinte avant hausse d’objectif (%)'
+        ? 'Achievement before objective increase (%)'
         : personaeAchievementBasis === 'after'
-          ? 'Atteinte après hausse d’objectif (%)'
-          : 'Atteinte avant hausse d’objectif (%)';
+          ? 'Achievement after objective increase (%)'
+          : 'Achievement before objective increase (%)';
       personaeChart.options.scales.y.title.text = personaeMode === 'percent'
-        ? '% du nominal propre à chaque courbe'
-        : 'Rémunération variable (€)';
+        ? '% of each curve’s own nominal'
+        : 'Variable pay (€)';
       personaeChart.update('none');
     }
 

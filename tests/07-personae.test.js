@@ -9,12 +9,12 @@ module.exports = function suite(__h) {
   check('compensation switch is available in both hybrid views',
     /id="adv-hybrid-objective-compensation"/.test(sweHtml) &&
     /id="personae-hybrid-objective-compensation"/.test(sweHtml));
-  check('Personae view includes both chart modes and no-increase notice', /personae-mode-percent/.test(sweHtml) && /Pas de hausse d’objectif appliquée en mode %\/%/.test(sweHtml));
+  check('Personae view includes both chart modes and no-increase notice in English', /personae-mode-percent/.test(sweHtml) && /No objective increase applied in %\/%/.test(sweHtml));
   check('Personae chart has a legend mapping colors to segments', /id="personae-chart-legend"/.test(sweHtml));
   check('Personae euro chart exposes a before/after objective switch',
     /id="personae-achievement-basis"/.test(sweHtml));
-  check('Country filter supports multiple selections and the new axis label', /id="personae-filter-countries"/.test(sweHtml) && /Atteinte avant hausse d’objectif/.test(sweHtml));
-  check('Portugal is selectable as a country, not filtered by persona text', /Portugal est décoché par défaut/.test(sweHtml) && !/personas contenant « PT » sont exclues/.test(sweHtml));
+  check('Country filter supports multiple selections and the new axis label in English', /id="personae-filter-countries"/.test(sweHtml) && /Achievement before objective increase/.test(sweHtml));
+  check('Portugal is selectable as a country, not filtered by persona text', /Portugal is unchecked by default/.test(sweHtml) && !/personas contenant « PT » sont exclues/.test(sweHtml));
 
   const helpersAvailable =
     typeof getPersonaeNominals === 'function' &&
@@ -137,39 +137,39 @@ module.exports = function suite(__h) {
     els['personae-mode-euros'].ariaPressed === 'true' &&
     els['personae-mode-percent'].ariaPressed === 'false');
   const tooltipLabel = personaeChart.options.plugins.tooltip.callbacks.label;
-  const oldCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— ancienne'));
-  const hybridCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— hybride'));
+  const oldCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— old'));
+  const hybridCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— hybrid'));
   check('hovering either persona curve shows its category headcount',
     oldCurve.personaeHeadcount === persona.headcount &&
     hybridCurve.personaeHeadcount === persona.headcount &&
-    tooltipLabel({ dataset: hybridCurve, raw: { y: 10000 } }).includes('Effectif : 10'));
+    tooltipLabel({ dataset: hybridCurve, raw: { y: 10000 } }).includes('Headcount: 10'));
 
   const achievementBasisSwitch = document.getElementById('personae-achievement-basis');
   achievementBasisSwitch.checked = true;
   if (achievementBasisSwitch.__handlers.change) {
     achievementBasisSwitch.__handlers.change({ target: achievementBasisSwitch });
   }
-  const afterBasisHybridCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— hybride'));
+  const afterBasisHybridCurve = personaeChart.data.datasets.find(dataset => dataset.label.includes('— hybrid'));
   const afterBasisPoint = afterBasisHybridCurve.data.find(point => point.x === 100);
   const afterBasisOldCurve = personaeChart.data.datasets.find(dataset =>
-    dataset.label === getPersonaeDisplayName(persona) + ' — ancienne'
+    dataset.label === getPersonaeDisplayName(persona) + ' — old'
   );
   const afterBasisOldPoint = afterBasisOldCurve.data.find(point => point.x === 100);
   const expectedCrossing = getPersonaeCrossover(persona, 8000, 20, 220);
   const afterBasisMarker = personaeChart.data.datasets.find(dataset =>
-    dataset.label === getPersonaeDisplayName(persona) + ' — début du dépassement'
+    dataset.label === getPersonaeDisplayName(persona) + ' — crossover start'
   );
   check('after-rise axis shifts euro curves without changing their payments',
     afterBasisPoint &&
     afterBasisPoint.y === getPersonaePayouts(persona, 120, 'euros', 8000, 20).newPayout &&
-    personaeChart.options.scales.x.title.text === 'Atteinte après hausse d’objectif (%)');
+    personaeChart.options.scales.x.title.text === 'Achievement after objective increase (%)');
   check('after-rise axis shifts the old curve and crossover marker too',
     afterBasisOldPoint &&
     afterBasisOldPoint.y === getPersonaePayouts(persona, 120, 'euros', 8000, 20).oldPayout &&
     afterBasisMarker &&
     afterBasisMarker.data[0].x === expectedCrossing - 20 &&
     els['personae-crossings'].innerHTML.includes(
-      'Dépassement dès ' + formatPersonaeNumber(expectedCrossing - 20, 1) + ' %'
+      'Crossover from ' + formatPersonaeNumber(expectedCrossing - 20, 1) + '%'
     ));
   setPersonaeMode('percent');
   check('percent mode disables the achievement basis switch',

@@ -8,7 +8,9 @@ const root = path.join(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'src', 'dashboard', 'js', 'stats.js'), 'utf8');
 const api = new Function(`${source}
 return { parseAchievementPercent, ratingLevel, RATING_LEVELS, binLabel, parseSwe2025Csv,
-  pearson, spearman, linearFit, aggregateDashboard };`)();
+  pearson, spearman, linearFit, aggregateDashboard,
+  aggregateCountryDashboard: typeof aggregateCountryDashboard === 'function' ? aggregateCountryDashboard : null,
+  correlationStrength: typeof correlationStrength === 'function' ? correlationStrength : null };`)();
 const fixture = fs.readFileSync(path.join(root, 'population_test_swe2025.csv'), 'utf8');
 
 let failures = 0;
@@ -78,7 +80,7 @@ test('aggregate on the fixture: row count, achievement mean, rating counts', () 
   assert.ok(Math.abs(model.meanAchievement - 696 / 7) < 1e-9);
   assert.deepEqual(
     model.byRating.map(entry => [entry.level, entry.n]),
-    [['P1', 1], ['P2', 1], ['P3', 2], ['P4', 1], ['P5', 1], ['Unclassified', 1]]
+    [['Unclassified', 1], ['P2', 1], ['P3', 2], ['P4', 1], ['P5', 1]]
   );
   assert.equal(JSON.stringify(model).includes('NaN'), false);
 });
@@ -91,7 +93,6 @@ test('France filter leaves 2 rows and correlations stay n/a', () => {
   assert.equal(model.trend, null);
   for (const row of model.correlations) {
     assert.equal(row.n, 2);
-    assert.equal(row.pearson, null);
     assert.equal(row.spearman, null);
   }
 });
@@ -140,8 +141,72 @@ test('aggregate excludes undefined and NaN achievements from counts and correlat
   assert.equal(model.scatter.length, 3);
   for (const row of model.correlations) {
     assert.equal(row.n, 3);
-    assert.ok(Number.isFinite(row.pearson), `${row.variable} Pearson must be finite`);
     assert.ok(Number.isFinite(row.spearman), `${row.variable} Spearman must be finite`);
+  }
+});
+
+test('category and blank market filters are cumulative, blank is distinct from All', () => {
+  const rows = [
+    { country: 'France', category: 'Sales', market: '', fixed: 1, nominal: 1, achievement: 80 },
+    { country: 'France', category: 'Sales', market: 'Retail', fixed: 2, nominal: 2, achievement: 100 },
+    { country: 'France', category: 'Managers', market: '', fixed: 3, nominal: 3, achievement: 120 }
+  ];
+  assert.equal(api.aggregateDashboard(rows, { category: 'Sales' }).rowCount, 2);
+  assert.equal(api.aggregateDashboard(rows, { category: 'Sales', market: '__EMPTY__' }).meanAchievement, 80);
+  assert.equal(api.aggregateDashboard(rows, { category: '__EMPTY__' }).rowCount, 0);
+});
+
+test('scatter points carry employee context without missing achievements', () => {
+  const rows = api.parseSwe2025Csv(fixture).rows;
+  const point = api.aggregateDashboard(rows, { country: 'France' }).scatter[0];
+  assert.deepEqual(point, { x: 52000, y: 104, jobProfile: 'Account Executive', nominal: 6760, country: 'France' });
+});
+
+test('country histograms share bins, preserve boundaries and include empty Portugal', () => {
+  assert.equal(typeof api.aggregateCountryDashboard, 'function');
+  const rows = [0, 19.9, 20, 100, 120, null].map((achievement, i) => ({
+    country: i < 3 ? 'France' : 'Spain', jobProfile: 'Sales', market: '',
+    fixed: i + 1, nominal: 10 - i, seniority: i, rating: 'P' + (i % 5 + 1), achievement
+  }));
+  rows.push({ country: 'Germany', achievement: 5000 });
+  const overview = api.aggregateCountryDashboard(rows, { country: 'Spain', market: '__EMPTY__' });
+  assert.deepEqual(overview.countries.map(item => item.country), ['France', 'Spain', 'Italy', 'Portugal']);
+  assert.deepEqual(overview.countries[0].histogram, [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(overview.countries[1].histogram, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0]);
+  assert.equal(overview.countries[3].achievementCount, 0);
+  assert.ok(Math.abs(overview.countries[1].meanAchievement - 110) < 1e-9);
+  assert.equal(overview.countries[1].stdAchievement, 10);
+  assert.equal(overview.countries[3].stdAchievement, null);
+  assert.equal(overview.countries[0].correlations[0].spearman, 1);
+  assert.equal(overview.countries[0].correlations[1].spearman, -1);
+  assert.deepEqual(overview.countries[0].correlations.map(item => item.variable),
+    ['Annualized base pay', 'Nominal', 'Seniority', 'Rating level']);
+  assert.ok(overview.countries[3].correlations.every(item => item.spearman === null));
+});
+
+test('fixed histogram includes 200 in the final bin and reports outliers without changing summary statistics', () => {
+  const rows = [-10, 0, 9.9, 10, 199.9, 200, 210, null, NaN].map(achievement => ({ country: 'France', achievement }));
+  const overview = api.aggregateCountryDashboard(rows);
+  assert.equal(overview.bins.length, 20);
+  assert.deepEqual(overview.bins[0], { low: 0, high: 10 });
+  assert.deepEqual(overview.bins[19], { low: 190, high: 200 });
+  const france = overview.countries[0];
+  assert.equal(france.histogram[0], 2);
+  assert.equal(france.histogram[1], 1);
+  assert.equal(france.histogram[19], 2);
+  assert.equal(france.histogram.reduce((sum, n) => sum + n, 0), 5);
+  assert.equal(france.belowRange, 1);
+  assert.equal(france.aboveRange, 1);
+  assert.equal(france.achievementCount, 7);
+  assert.ok(Math.abs(france.meanAchievement - 619.8 / 7) < 1e-9);
+});
+
+test('correlation strength uses absolute rho and exact threshold boundaries', () => {
+  assert.equal(typeof api.correlationStrength, 'function');
+  for (const [value, expected] of [[0, 'negligible'], [0.1499, 'negligible'], [-0.1499, 'negligible'],
+    [0.15, 'weak'], [-0.2999, 'weak'], [0.30, 'moderate'], [-0.4999, 'moderate'],
+    [0.50, 'strong'], [-1, 'strong'], [null, null], [NaN, null]]) {
+    assert.equal(api.correlationStrength(value), expected);
   }
 });
 

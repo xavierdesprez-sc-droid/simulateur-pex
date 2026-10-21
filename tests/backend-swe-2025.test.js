@@ -6,7 +6,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const root = path.join(__dirname, '..');
-const code = fs.readFileSync(path.join(root, 'Code.gs'), 'utf8');
+const readLf = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+const code = readLf(path.join(root, 'Code.gs'));
 const fixtureCsv = fs.readFileSync(path.join(root, 'population_test_swe2025.csv'), 'utf8');
 const ACCESS_ID = '1uLTW_Kk4Z5YEfsZWkLHAKWhAcBaenDsGn6t6wogzqTA';
 const SWE_LEGACY_ID = '1yszfpDvR3iVB1GX1mRTiymFIKXki2WXsAYsj7b2cP-Y';
@@ -176,7 +177,7 @@ const block = (text, name) => {
 };
 
 test('dashboard shared blocks are byte-identical to Code.gs', () => {
-  const dashboardCode = fs.readFileSync(path.join(root, 'dashboard', 'Code.gs'), 'utf8');
+  const dashboardCode = readLf(path.join(root, 'dashboard', 'Code.gs'));
   assert.equal(block(dashboardCode, 'access'), block(code, 'access'));
   assert.equal(block(dashboardCode, 'swe2025-source'), block(code, 'swe2025-source'));
 });

@@ -192,15 +192,13 @@ const CORRELATION_VARIABLES = [
 
 function aggregateDashboard(rows, filters) {
   const f = filters || {};
-  const wanted = key => String(f[key] || '').trim();
-  const filtered = rows.filter(row =>
-    (!wanted('country') || row.country === wanted('country')) &&
-    (!wanted('market') || row.market === wanted('market')) &&
-    (!wanted('category') || row.category === wanted('category')));
+  const filtered = filterDashboardRows(rows, f);
   const withAchievement = filtered.filter(row => Number.isFinite(row.achievement));
   const achievements = withAchievement.map(row => row.achievement);
   const xs = withAchievement.map(row => row.fixed);
-  const scatter = withAchievement.map(row => ({ x: row.fixed, y: row.achievement }));
+  const scatter = withAchievement.map(row => ({
+    x: row.fixed, y: row.achievement, jobProfile: row.jobProfile, nominal: row.nominal, country: row.country
+  }));
   return {
     rowCount: filtered.length,
     achievementCount: withAchievement.length,
@@ -210,7 +208,7 @@ function aggregateDashboard(rows, filters) {
       const fit = linearFit(xs, achievements);
       return fit ? { slope: fit.slope, intercept: fit.intercept, x0: Math.min(...xs), x1: Math.max(...xs) } : null;
     })() : null,
-    byRating: RATING_LEVELS.map(level => {
+    byRating: ['Unclassified', 'P2', 'P3', 'P4', 'P5'].map(level => {
       const items = withAchievement.filter(row => ratingLevel(row.rating) === level);
       return {
         level,
@@ -228,10 +226,63 @@ function aggregateDashboard(rows, filters) {
       const py = pairs.map(pair => pair[1]);
       return {
         variable: variable.name,
-        pearson: pearson(px, py),
         spearman: spearman(px, py),
         n: pairs.length
       };
     })
   };
+}
+
+const DASHBOARD_COUNTRIES = ['France', 'Spain', 'Italy', 'Portugal'];
+const DASHBOARD_EMPTY_FILTER = '__EMPTY__';
+
+function filterDashboardRows(rows, filters = {}) {
+  return rows.filter(row => ['country', 'market', 'category', 'jobProfile'].every(key => {
+    const wanted = String(filters[key] || '').trim();
+    if (!wanted) return true;
+    const value = String(row[key] || '').trim();
+    return wanted === DASHBOARD_EMPTY_FILTER ? value === '' : value === wanted;
+  }));
+}
+
+function aggregateCountryDashboard(rows, filters = {}) {
+  const countryRows = rows.filter(row => DASHBOARD_COUNTRIES.includes(row.country));
+  const width = 10;
+  const bins = Array.from({ length: 20 }, (_, i) => ({
+    low: i * width, high: (i + 1) * width
+  }));
+  const filtered = filterDashboardRows(countryRows, { ...filters, country: '' });
+  const countries = DASHBOARD_COUNTRIES.map(country => {
+    const items = filtered.filter(row => row.country === country);
+    const model = aggregateDashboard(items);
+    const histogram = bins.map(() => 0);
+    let belowRange = 0;
+    let aboveRange = 0;
+    items.forEach(row => {
+      const value = row.achievement;
+      if (!Number.isFinite(value)) return;
+      if (value < 0) belowRange++;
+      else if (value > 200) aboveRange++;
+      else histogram[Math.min(19, Math.floor(value / width))]++;
+    });
+    return {
+      country, rowCount: model.rowCount, achievementCount: model.achievementCount,
+      meanAchievement: model.meanAchievement,
+      stdAchievement: model.achievementCount ? Math.sqrt(mean(items
+        .filter(row => Number.isFinite(row.achievement))
+        .map(row => (row.achievement - model.meanAchievement) ** 2))) : null,
+      histogram, belowRange, aboveRange,
+      correlations: model.correlations.filter(row => row.variable !== 'Age')
+    };
+  });
+  return { bins, countries, maxFrequency: Math.max(1, ...countries.flatMap(country => country.histogram)) };
+}
+
+function correlationStrength(value) {
+  if (!Number.isFinite(value)) return null;
+  const magnitude = Math.abs(value);
+  if (magnitude < 0.15) return 'negligible';
+  if (magnitude < 0.30) return 'weak';
+  if (magnitude < 0.50) return 'moderate';
+  return 'strong';
 }

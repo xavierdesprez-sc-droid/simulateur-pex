@@ -176,7 +176,7 @@ columns G/H. NCE reads `Job Profile`, `Country`, `Annual Base Pay 2026 Revised`,
 Both profiles expose only `Country` and `Job Profile` filters on the first page and calculate
 Current PEX Paid, headcount, and Avg. Current Var. Share from the filtered Sheet data.
 
-### Deploying SWE, NCE, or Sales Rep
+### Deploying SWE, NCE, Sales Rep, or Dashboard
 
 From the repository root in PowerShell, name the target explicitly:
 
@@ -185,6 +185,8 @@ From the repository root in PowerShell, name the target explicitly:
 .\scripts\deploy.ps1 -Target SWE
 .\scripts\deploy.ps1 -Target NCE
 .\scripts\deploy.ps1 -Target SalesRep
+.\scripts\deploy.ps1 -Target Dashboard -DryRun
+.\scripts\deploy.ps1 -Target Dashboard -ConfirmRemoteChanges
 .\scripts\deploy.ps1 -Target All
 ```
 
@@ -206,6 +208,12 @@ temporary directory outside the repository, keeps its remote `Code.js` and
 `appsscript.json` unchanged, and stages only the generated `index.html`. This is why
 the backends differ: the SWE backend is maintained in this repository, NCE has a
 profile-fixed copy, and Sales Rep has a smaller calculator-specific access gate.
+
+Dashboard uses the existing project named `SWE 2025 Achievement Dashboard`. Its bundle is
+built from `src/dashboard/` automatically. The script preserves the remote backend and
+manifest and checks that the backend matches `dashboard/Code.gs` before publishing.
+The synthetic CSV is never uploaded. The verified production URL is printed when done.
+`All` continues to select SWE, NCE, and Sales Rep; select `Dashboard` explicitly to publish it.
 
 After confirmation, each selected project is pushed without force, given a new immutable
 version, and redeployed through its existing production deployment ID to preserve its

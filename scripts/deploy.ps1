@@ -6,11 +6,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $script:RepositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$script:AllowedTargets = @('SWE', 'NCE', 'SalesRep', 'All')
+$script:AllowedTargets = @('SWE', 'NCE', 'SalesRep', 'Dashboard', 'All')
 $script:ProjectTitles = @{
   SWE = 'Simulateur Remuneration Variable'
   NCE = 'Simulateur Remuneration Variable NCE'
   SalesRep = 'Sales Rep Variable Compensation Calculator'
+  Dashboard = 'SWE 2025 Achievement Dashboard'
 }
 $script:SelectedTargets = @()
 $script:CurrentTarget = $null
@@ -20,11 +21,11 @@ $script:PushedTargets = New-Object 'System.Collections.Generic.List[string]'
 
 if (-not $PSBoundParameters.ContainsKey('Target') -or
     [string]::IsNullOrWhiteSpace($Target)) {
-  [Console]::Error.WriteLine('A target is required. Use -Target SWE|NCE|SalesRep|All.')
+  [Console]::Error.WriteLine('A target is required. Use -Target SWE|NCE|SalesRep|Dashboard|All.')
   exit 2
 }
 if ($script:AllowedTargets -cnotcontains $Target) {
-  [Console]::Error.WriteLine('Invalid target. Use exactly SWE, NCE, SalesRep, or All.')
+  [Console]::Error.WriteLine('Invalid target. Use exactly SWE, NCE, SalesRep, Dashboard, or All.')
   exit 2
 }
 
@@ -468,7 +469,9 @@ function Build-TargetBundle {
   )
 
   $buildArguments = @('build.js')
-  if ($SelectedTarget -eq 'SalesRep') {
+  if ($SelectedTarget -eq 'Dashboard') {
+    $buildArguments += @('--app=dashboard', "--out=$BuildPath")
+  } elseif ($SelectedTarget -eq 'SalesRep') {
     $buildArguments += @('--app=sales-rep', "--out=$BuildPath")
   } else {
     $buildArguments += @("--profile=$SelectedTarget", "--out=$BuildPath")
@@ -479,7 +482,11 @@ function Build-TargetBundle {
   }
 
   $html = [System.IO.File]::ReadAllText($BuildPath)
-  if ($SelectedTarget -eq 'SalesRep') {
+  if ($SelectedTarget -eq 'Dashboard') {
+    if ($html -notmatch 'id="dashboard-app"') {
+      throw 'Dashboard bundle does not contain the Dashboard application.'
+    }
+  } elseif ($SelectedTarget -eq 'SalesRep') {
     if ($html -notmatch 'id="sales-rep-app"') {
       throw 'SalesRep bundle does not contain the Sales Rep application.'
     }
@@ -507,6 +514,14 @@ function Assert-PreflightFiles {
   Assert-BackendSyntax -BackendPath $backendPath -SelectedTarget $SelectedTarget
   if ($SelectedTarget -eq 'SWE' -or $SelectedTarget -eq 'NCE') {
     Assert-BackendProfile -BackendPath $backendPath -SelectedTarget $SelectedTarget
+  } elseif ($SelectedTarget -eq 'Dashboard') {
+    $backend = [System.IO.File]::ReadAllText($backendPath).Replace("`r`n", "`n").Trim()
+    $expectedBackend = [System.IO.File]::ReadAllText(
+      (Join-Path $script:RepositoryRoot 'dashboard/Code.gs')
+    ).Replace("`r`n", "`n").Trim()
+    if ($backend -cne $expectedBackend) {
+      throw 'Dashboard remote backend differs from dashboard/Code.gs.'
+    }
   } else {
     Assert-SalesRepBackend -BackendPath $backendPath
   }
@@ -603,6 +618,10 @@ try {
     New-Item -ItemType Directory -Path (Split-Path -Parent $buildPath) -Force -ErrorAction Stop |
       Out-Null
     Build-TargetBundle -SelectedTarget $selectedTarget -BuildPath $buildPath
+    if ($selectedTarget -eq 'Dashboard') {
+      # The dashboard builder also emits its local CSV fixture; never stage it for Apps Script.
+      Remove-Item -LiteralPath (Join-Path (Split-Path -Parent $buildPath) 'population_test_swe2025.csv')
+    }
 
     if ($selectedTarget -eq 'SWE') {
       $expectedFiles = @('Code.gs', 'appsscript.json', 'index.html')
@@ -690,6 +709,9 @@ try {
     New-Item -ItemType Directory -Path $verifyPath -Force -ErrorAction Stop | Out-Null
     Assert-PulledVersion -PreparedProject $preparedProject -VerifyPath $verifyPath -Version $newVersion
     Write-Host ($preparedProject.Target + ' deployed and verified.')
+    if ($preparedProject.Target -eq 'Dashboard') {
+      Write-Host ('https://script.google.com/macros/s/' + $preparedProject.DeploymentId + '/exec')
+    }
   }
 } catch {
   $exitCode = 1
