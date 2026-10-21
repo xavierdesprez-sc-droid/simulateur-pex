@@ -8,21 +8,27 @@ const SALES_REP_KPIS = [
 ];
 const SALES_REP_PERFORMANCE_THRESHOLD = 40;
 
+const SALES_REP_PERIODS = ['q1', 'q2', 'q3', 'fy'];
+
+function salesRepDefaultPeriod() {
+  return {
+    entered: false,
+    achievements: { c2pTotal: 100, c2pPrice: 100, dev: 100, churn: 100 },
+    qualifiers: { portfolio: 100, visits: 100 }
+  };
+}
+
 const salesRepState = {
   fixedSalary: 40000,
   oldNominalMode: 'fixed',
   oldNominalFixedE: 6000,
   oldNominalPercent: 15,
   minNominalE: 8000,
-  achievements: {
-    c2pTotal: 100,
-    c2pPrice: 100,
-    dev: 100,
-    churn: 100
-  },
-  qualifiers: {
-    portfolio: 100,
-    visits: 100
+  periods: {
+    q1: salesRepDefaultPeriod(),
+    q2: salesRepDefaultPeriod(),
+    q3: salesRepDefaultPeriod(),
+    fy: salesRepDefaultPeriod()
   }
 };
 
@@ -82,6 +88,28 @@ function calculateSalesRepPayout(inputs = salesRepState) {
     qualifierMultiplier,
     finalPayout: performanceSubtotal * qualifierMultiplier
   };
+}
+
+function salesRepAnnualPayout(period, shared = salesRepState) {
+  return calculateSalesRepPayout({
+    ...shared,
+    achievements: period.achievements,
+    qualifiers: period.qualifiers
+  }).finalPayout;
+}
+
+function salesRepQuarterPayment(period, shared = salesRepState) {
+  return period.entered ? salesRepAnnualPayout(period, shared) / 4 : 0;
+}
+
+function salesRepPaidBeforeQ4(state = salesRepState) {
+  return ['q1', 'q2', 'q3'].reduce(
+    (sum, key) => sum + salesRepQuarterPayment(state.periods[key], state), 0);
+}
+
+function salesRepQ4Payment(state = salesRepState) {
+  if (!state.periods.fy.entered) return 0;
+  return Math.max(0, salesRepAnnualPayout(state.periods.fy, state) - salesRepPaidBeforeQ4(state));
 }
 
 const SALES_REP_CHARTS = {};
@@ -217,7 +245,7 @@ function salesRepRefreshCharts(result) {
 }
 
 function updateSalesRepCalculator() {
-  const result = calculateSalesRepPayout();
+  const result = calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 });
   result.kpiPayouts.forEach(item => {
     const key = item.key.replace(/([A-Z])/g, '-$1').toLowerCase();
     salesRepSetOutput('sr-payout-' + key, salesRepFormatE(item.weightedPayout));
@@ -233,8 +261,8 @@ function updateSalesRepCalculator() {
       ? '—'
       : ((result.finalPayout / result.context.newNomE) * 100).toFixed(1) + '%'
   );
-  salesRepSetOutput('sr-qualifier-portfolio-value', Math.min(salesRepState.qualifiers.portfolio, 100).toFixed(0) + '%');
-  salesRepSetOutput('sr-qualifier-visits-value', Math.min(salesRepState.qualifiers.visits, 100).toFixed(0) + '%');
+  salesRepSetOutput('sr-qualifier-portfolio-value', Math.min(salesRepState.periods.q1.qualifiers.portfolio, 100).toFixed(0) + '%');
+  salesRepSetOutput('sr-qualifier-visits-value', Math.min(salesRepState.periods.q1.qualifiers.visits, 100).toFixed(0) + '%');
   salesRepRefreshCharts(result);
   return result;
 }
@@ -265,7 +293,7 @@ function salesRepBindSlider(id, target, key, max) {
     const value = Number(event.target.value);
     if (!Number.isFinite(value)) return;
     const bounded = Math.max(0, Math.min(max, value));
-    salesRepState[target][key] = bounded;
+    salesRepState.periods.q1[target][key] = bounded;
     event.target.value = String(bounded);
     updateSalesRepCalculator();
   };
@@ -282,12 +310,12 @@ function initializeSalesRepCalculator() {
     'sr-old-nominal-fixed': salesRepState.oldNominalFixedE,
     'sr-old-nominal-percent': salesRepState.oldNominalPercent,
     'sr-min-nominal': salesRepState.minNominalE,
-    'sr-achievement-c2p-total': salesRepState.achievements.c2pTotal,
-    'sr-achievement-c2p-price': salesRepState.achievements.c2pPrice,
-    'sr-achievement-dev': salesRepState.achievements.dev,
-    'sr-achievement-churn': salesRepState.achievements.churn,
-    'sr-qualifier-portfolio': salesRepState.qualifiers.portfolio,
-    'sr-qualifier-visits': salesRepState.qualifiers.visits
+    'sr-achievement-c2p-total': salesRepState.periods.q1.achievements.c2pTotal,
+    'sr-achievement-c2p-price': salesRepState.periods.q1.achievements.c2pPrice,
+    'sr-achievement-dev': salesRepState.periods.q1.achievements.dev,
+    'sr-achievement-churn': salesRepState.periods.q1.achievements.churn,
+    'sr-qualifier-portfolio': salesRepState.periods.q1.qualifiers.portfolio,
+    'sr-qualifier-visits': salesRepState.periods.q1.qualifiers.visits
   };
   Object.keys(defaults).forEach(id => { document.getElementById(id).value = String(defaults[id]); });
   salesRepBindNumber('sr-fixed-salary', 'fixedSalary');

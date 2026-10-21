@@ -83,8 +83,38 @@ module.exports = function suite(__h) {
     salesRepState.oldNominalFixedE === 6000 &&
     salesRepState.oldNominalPercent === 15 &&
     salesRepState.minNominalE === 8000 &&
-    Object.values(salesRepState.achievements).every(value => value === 100) &&
-    Object.values(salesRepState.qualifiers).every(value => value === 100));
+    SALES_REP_PERIODS.join(',') === 'q1,q2,q3,fy' &&
+    SALES_REP_PERIODS.every(key => {
+      const p = salesRepState.periods[key];
+      return p.entered === false &&
+        Object.values(p.achievements).every(value => value === 100) &&
+        Object.values(p.qualifiers).every(value => value === 100);
+    }));
+
+  const mkPeriod = (entered, ach, qual) => ({
+    entered,
+    achievements: { c2pTotal: ach, c2pPrice: ach, dev: ach, churn: ach },
+    qualifiers: { portfolio: qual, visits: qual }
+  });
+  const mkState = (q1, q2, q3, fy) => ({ ...rep, periods: { q1, q2, q3, fy } });
+  const off = mkPeriod(false, 100, 100);
+  assertClose('full-year period at 100% pays €8,000 annually',
+    salesRepAnnualPayout(mkPeriod(true, 100, 100), rep), 8000);
+  assertClose('entered Q1 at 100% pays €2,000', salesRepQuarterPayment(mkPeriod(true, 100, 100), rep), 2000);
+  assertClose('unentered quarter pays 0', salesRepQuarterPayment(off, rep), 0);
+  assertClose('Q4 after Q1-Q3 at 100% pays €2,000',
+    salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), mkPeriod(true, 100, 100))), 2000);
+  assertClose('untouched Q3 adds 0 so Q4 pays €4,000',
+    salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), off, mkPeriod(true, 100, 100))), 4000);
+  assertClose('paid before Q4 counts only entered quarters',
+    salesRepPaidBeforeQ4(mkState(mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), off, off)), 4000);
+  assertClose('Q1 at 200% pays €4,000 per quarter', salesRepQuarterPayment(mkPeriod(true, 200, 100), rep), 4000);
+  assertClose('Q4 subtracts a €4,000 Q1 from €8,000 FY',
+    salesRepQ4Payment(mkState(mkPeriod(true, 200, 100), off, off, mkPeriod(true, 100, 100))), 4000);
+  assertClose('Q4 floors at 0 when FY annual is below paid',
+    salesRepQ4Payment(mkState(mkPeriod(true, 200, 100), off, off, mkPeriod(true, 100, 0))), 0);
+  assertClose('Q4 pays 0 when FY is untouched',
+    salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), off, off, off)), 0);
 
   const uiReady = typeof __domReadyHandler === 'function';
   check('Sales Rep app registers DOM initialization', uiReady);
@@ -162,17 +192,17 @@ module.exports = function suite(__h) {
     h.input('sr-qualifier-portfolio', '120');
     check('qualifier input and state clamp values above 100%',
       els['sr-qualifier-portfolio'].value === '100' &&
-      salesRepState.qualifiers.portfolio === 100);
+      salesRepState.periods.q1.qualifiers.portfolio === 100);
     h.input('sr-qualifier-visits', '80');
     assertClose('qualifiers are individually capped before averaging',
-      calculateSalesRepPayout().qualifierMultiplier, 0.9);
-    const finalBeforeInvalid = calculateSalesRepPayout().finalPayout;
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).qualifierMultiplier, 0.9);
+    const finalBeforeInvalid = calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).finalPayout;
     h.input('sr-fixed-salary', '');
     assertClose('empty salary preserves the last valid calculation',
-      calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).finalPayout, finalBeforeInvalid);
     h.input('sr-fixed-salary', '-1');
     assertClose('negative salary preserves the last valid calculation',
-      calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).finalPayout, finalBeforeInvalid);
     h.input('sr-min-nominal', '-1');
     h.change('sr-old-nominal-mode', 'percent');
     check('changing nominal mode keeps validation visible while numeric inputs remain invalid',
@@ -210,7 +240,7 @@ module.exports = function suite(__h) {
     h.input('sr-old-nominal-fixed', '0');
     h.input('sr-min-nominal', '0');
     check('zero new nominal displays an em dash instead of dividing by zero',
-      calculateSalesRepPayout().context.newNomE === 0 &&
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).context.newNomE === 0 &&
       finalPayoutPercent() === '—');
   }
 };
