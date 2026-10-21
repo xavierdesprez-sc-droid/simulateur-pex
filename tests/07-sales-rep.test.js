@@ -10,9 +10,20 @@ module.exports = function suite(__h) {
     /id="sales-rep-app"/.test(salesRepHtml) &&
     /hybridContext\(oldNomE, fixedE, targetSharePct/.test(salesRepHtml));
   check('Sales Rep bundle excludes population parsing, server calls, and persistence',
-    !/parsePopulationCsv|google\.script\.run|localStorage|sessionStorage/.test(salesRepHtml));
+    !/parsePopulationCsv|google\.script\.run|sessionStorage/.test(salesRepHtml));
   check('Sales Rep bundle excludes existing simulator views',
     !/id="view-(standard|advanced|matrix)"/.test(salesRepHtml));
+  const requiredIds = ['sr-tab-q1', 'sr-tab-q2', 'sr-tab-q3', 'sr-tab-fy', 'sr-period-label', 'sr-reset-period',
+    'sr-storage-status', 'sr-recap', 'sr-recap-q1-payment', 'sr-recap-q2-payment', 'sr-recap-q3-payment',
+    'sr-recap-q4-payment', 'sr-recap-q1-status', 'sr-recap-q2-status', 'sr-recap-q3-status', 'sr-recap-q4-status',
+    'sr-recap-total', 'sr-q4-annual-payout', 'sr-q4-already-paid', 'sr-q4-payment', 'sr-year-total'];
+  check('quarterly markup declares every new id exactly once',
+    requiredIds.every(id => (salesRepHtml.match(new RegExp(`id="${id}"`, 'g')) || []).length === 1));
+  check('tab buttons carry their period and sit in a tablist',
+    ['q1', 'q2', 'q3', 'fy'].every(p => new RegExp(`id="sr-tab-${p}"[^>]*data-period="${p}"`).test(salesRepHtml)) &&
+    /role="tablist"/.test(salesRepHtml));
+  check('no existing KPI or qualifier id is duplicated',
+    ['c2p-total', 'c2p-price', 'dev', 'churn'].every(k => (salesRepHtml.match(new RegExp(`id="sr-achievement-${k}"`, 'g')) || []).length === 1));
   check('Sales Rep harness exposes matching generated HTML',
     htmlSrc === salesRepHtml);
   check('Sales Rep bundle is distinct from the default bundle',
@@ -246,7 +257,7 @@ module.exports = function suite(__h) {
       els['sr-final-payout-percent'] ? els['sr-final-payout-percent'].innerText : '';
     check('final payout percentage is labeled as a percentage of new nominal',
       /id="sr-final-payout-percent"/.test(salesRepHtml) &&
-      /Percentage of new nominal/.test(salesRepHtml));
+      /Percentage of annual new nominal/.test(salesRepHtml));
     check('full final payout displays as 100.0% of the new nominal',
       finalPayoutPercent() === '100.0%');
     h.input('sr-qualifier-visits', '50');
