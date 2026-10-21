@@ -186,6 +186,16 @@ function Test-Base64FilesEqual {
   return ((Get-Base64File -Path $FirstPath) -ceq (Get-Base64File -Path $SecondPath))
 }
 
+function Test-TextFilesEqualIgnoringLineEndings {
+  param(
+    [Parameter(Mandatory = $true)][string]$FirstPath,
+    [Parameter(Mandatory = $true)][string]$SecondPath
+  )
+  $first = [System.IO.File]::ReadAllText($FirstPath).Replace("`r`n", "`n")
+  $second = [System.IO.File]::ReadAllText($SecondPath).Replace("`r`n", "`n")
+  return ($first -ceq $second)
+}
+
 function Assert-FileInventory {
   param(
     [Parameter(Mandatory = $true)][string[]]$Actual,
@@ -626,7 +636,7 @@ try {
     if ($selectedTarget -eq 'SWE') {
       $expectedFiles = @('Code.gs', 'appsscript.json', 'index.html')
       Assert-SweAllowlist -ExpectedFiles $expectedFiles
-      if (-not (Test-Base64FilesEqual -FirstPath $buildPath `
+      if (-not (Test-TextFilesEqualIgnoringLineEndings -FirstPath $buildPath `
           -SecondPath (Join-Path $script:RepositoryRoot 'index.html'))) {
         throw 'The SWE build differs from root index.html after the freshness check.'
       }
