@@ -563,7 +563,7 @@ function Assert-PulledVersion {
   }
   Assert-LocalInventory -ProjectPath $VerifyPath -SelectedTarget $PreparedProject.Target `
     -ExpectedFiles $verifyExpectedFiles
-  if (-not (Test-Base64FilesEqual -FirstPath $PreparedProject.BuildPath `
+  if (-not (Test-TextFilesEqualIgnoringLineEndings -FirstPath $PreparedProject.BuildPath `
       -SecondPath (Join-Path $VerifyPath 'index.html'))) {
     throw "$($PreparedProject.Target) immutable deployed version HTML did not match the intended build."
   }
