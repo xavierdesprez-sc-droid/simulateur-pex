@@ -11,22 +11,23 @@ const buildPath = path.join(root, 'build.js');
 const outputPath = path.join(os.tmpdir(), `sales-rep-build-${process.pid}.html`);
 const nceIndexPath = path.join(root, 'dist', 'NCE', 'index.html');
 const nceOutputPath = path.join(os.tmpdir(), `nce-build-${process.pid}.html`);
-const originalIndex = fs.readFileSync(indexPath, 'utf8');
+const readLf = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+const originalIndex = readLf(indexPath);
 
 try {
   execFileSync(process.execPath, [
     buildPath, '--profile=NCE', `--out=${nceOutputPath}`
   ], { stdio: 'pipe' });
   assert.equal(
-    fs.readFileSync(nceOutputPath, 'utf8'),
-    fs.readFileSync(nceIndexPath, 'utf8'),
+    readLf(nceOutputPath),
+    readLf(nceIndexPath),
     'NCE target must be current'
   );
 
   execFileSync(process.execPath, [
     buildPath, '--app=sales-rep', `--out=${outputPath}`
   ], { stdio: 'pipe' });
-  const output = fs.readFileSync(outputPath, 'utf8');
+  const output = readLf(outputPath);
   assert.notEqual(output, originalIndex, 'Sales Rep target must produce a distinct page');
   assert.match(output, /<title>Sales Rep Variable Compensation Calculator<\/title>/);
   assert.match(output, /id="sales-rep-app"/);
@@ -34,7 +35,7 @@ try {
   execFileSync(process.execPath, [
     buildPath, '--app=sales-rep', `--out=${outputPath}`, '--check'
   ], { stdio: 'pipe' });
-  assert.equal(fs.readFileSync(indexPath, 'utf8'), originalIndex,
+  assert.equal(readLf(indexPath), originalIndex,
     'Sales Rep target must not modify root index.html');
 
   const { buildDashboardString } = require(buildPath);
