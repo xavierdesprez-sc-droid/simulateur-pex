@@ -11,22 +11,23 @@ const buildPath = path.join(root, 'build.js');
 const outputPath = path.join(os.tmpdir(), `sales-rep-build-${process.pid}.html`);
 const nceIndexPath = path.join(root, 'dist', 'NCE', 'index.html');
 const nceOutputPath = path.join(os.tmpdir(), `nce-build-${process.pid}.html`);
-const originalIndex = fs.readFileSync(indexPath, 'utf8');
+const readLf = file => fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
+const originalIndex = readLf(indexPath);
 
 try {
   execFileSync(process.execPath, [
     buildPath, '--profile=NCE', `--out=${nceOutputPath}`
   ], { stdio: 'pipe' });
   assert.equal(
-    fs.readFileSync(nceOutputPath, 'utf8'),
-    fs.readFileSync(nceIndexPath, 'utf8'),
+    readLf(nceOutputPath),
+    readLf(nceIndexPath),
     'NCE target must be current'
   );
 
   execFileSync(process.execPath, [
     buildPath, '--app=sales-rep', `--out=${outputPath}`
   ], { stdio: 'pipe' });
-  const output = fs.readFileSync(outputPath, 'utf8');
+  const output = readLf(outputPath);
   assert.notEqual(output, originalIndex, 'Sales Rep target must produce a distinct page');
   assert.match(output, /<title>Sales Rep Variable Compensation Calculator<\/title>/);
   assert.match(output, /id="sales-rep-app"/);
@@ -34,8 +35,23 @@ try {
   execFileSync(process.execPath, [
     buildPath, '--app=sales-rep', `--out=${outputPath}`, '--check'
   ], { stdio: 'pipe' });
-  assert.equal(fs.readFileSync(indexPath, 'utf8'), originalIndex,
+  assert.equal(readLf(indexPath), originalIndex,
     'Sales Rep target must not modify root index.html');
+
+  const { buildDashboardString } = require(buildPath);
+  const dashboardHtml = buildDashboardString();
+  assert.match(dashboardHtml, /<title>SWE 2025 Achievement Dashboard<\/title>/);
+  for (const id of [
+    'dashboard-app', 'dash-status', 'dash-csv-input', 'dash-filter-country', 'dash-filter-market',
+    'dash-filter-category', 'dash-counts', 'dash-scatter', 'dash-rating', 'dash-seniority', 'dash-age',
+    'dash-correlations-body'
+  ]) {
+    assert.match(dashboardHtml, new RegExp(`id="${id}"`), `dashboard markup must contain id ${id}`);
+  }
+  assert.doesNotMatch(dashboardHtml, /id="view-(standard|advanced|matrix)"/);
+  assert.doesNotMatch(dashboardHtml, /getPopulation/, 'dashboard must not call the simulator population endpoint');
+  execFileSync(process.execPath, [buildPath, '--app=dashboard', '--check'], { stdio: 'pipe' });
+  console.log('build-target.test.js: dashboard target is separate and current');
   console.log('build-target.test.js: Sales Rep output remains separate');
 } finally {
   if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);

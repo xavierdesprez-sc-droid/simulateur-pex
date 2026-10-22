@@ -46,17 +46,19 @@ const PERSONAE_HEADERS = [
   'Segment ("Persona")'
 ];
 const SHEET_ID = POPULATION_SPREADSHEET_IDS[DEPLOYED_PROFILE];
+
+function getSpreadsheet_() {
+  if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+// BEGIN SHARED: access
 const ACCESS_LIST_SPREADSHEET_ID = '1uLTW_Kk4Z5YEfsZWkLHAKWhAcBaenDsGn6t6wogzqTA';
 const ACCESS_LIST_SHEET_NAME = 'Access';
 const ACCESS_CONTACT_CELL = 'D2';
 const ACCESS_FULL_EMAIL_COLUMN = 1;
 const ACCESS_RESTRICTED_EMAIL_COLUMN = 2;
 const ACCESS_EMAIL_START_ROW = 2;
-
-function getSpreadsheet_() {
-  if (SHEET_ID) return SpreadsheetApp.openById(SHEET_ID);
-  return SpreadsheetApp.getActiveSpreadsheet();
-}
 
 function getAccessSheet_() {
   const spreadsheetId = String(ACCESS_LIST_SPREADSHEET_ID || '').trim();
@@ -126,6 +128,89 @@ function requireAccess_() {
   if (!access.allowed) throw new Error(getAccessDeniedMessage_(access.contactEmail));
   return access;
 }
+// END SHARED: access
+
+// BEGIN SHARED: swe2025-source
+const SWE_2025_SPREADSHEET_ID = '1c2D9H4r6ZkWRchhNysoGjwnY0kn_m0tbpHQSlQVofRM';
+const SWE_2025_SHEET_NAME = 'Copie de Liste Sales';
+const SWE_2025_HEADER_ROW = 1;
+const SWE_2025_REQUIRED_HEADERS = [
+  'Country', 'Business Title', 'In/Out', 'Annualized Base Pay', 'Nominal',
+  'Achievement 2025', 'Rating - Most Recent', 'Market', 'Category', 'seniority years', 'Age'
+];
+
+function normalizeHeader_(value) {
+  return String(value == null ? '' : value).trim().toLowerCase();
+}
+
+function parseNumberOrNull_(value) {
+  const text = String(value == null ? '' : value).trim();
+  if (text === '') return null;
+  const number = Number(text);
+  return isFinite(number) ? number : null;
+}
+
+function parseAchievementPercent_(text) {
+  const cleaned = String(text == null ? '' : text)
+    .replace(/[\s\u00a0]/g, '')
+    .replace(/%$/, '')
+    .replace(',', '.');
+  if (cleaned === '') return null;
+  const value = Number(cleaned);
+  return isFinite(value) ? value : null;
+}
+
+function readSwe2025Rows_() {
+  const sheet = SpreadsheetApp.openById(SWE_2025_SPREADSHEET_ID).getSheetByName(SWE_2025_SHEET_NAME);
+  if (!sheet) throw new Error('Sheet "' + SWE_2025_SHEET_NAME + '" not found in the 2025 population spreadsheet.');
+  const counts = { total: 0, notIn: 0, invalid: 0, achievementMissing: 0 };
+  const lastRow = sheet.getLastRow();
+  const lastColumn = sheet.getLastColumn();
+  const headers = sheet.getRange(SWE_2025_HEADER_ROW, 1, 1, lastColumn).getDisplayValues()[0];
+  const columnOf = {};
+  headers.forEach((name, index) => { columnOf[normalizeHeader_(name)] = index; });
+  const missing = SWE_2025_REQUIRED_HEADERS.filter(name => columnOf[normalizeHeader_(name)] === undefined);
+  if (missing.length) throw new Error('Missing column in the 2025 population sheet: ' + missing[0]);
+  const numRows = lastRow - SWE_2025_HEADER_ROW;
+  if (numRows < 1) return { rows: [], counts };
+  const values = sheet.getRange(SWE_2025_HEADER_ROW + 1, 1, numRows, lastColumn).getValues();
+  const display = sheet.getRange(SWE_2025_HEADER_ROW + 1, 1, numRows, lastColumn).getDisplayValues();
+  const rows = [];
+  values.forEach((row, index) => {
+    if (row.every(value => String(value == null ? '' : value).trim() === '')) return;
+    counts.total++;
+    const cell = name => row[columnOf[normalizeHeader_(name)]];
+    const text = name => String(cell(name) == null ? '' : cell(name)).trim();
+    if (text('In/Out').toLowerCase() !== 'in') {
+      counts.notIn++;
+      return;
+    }
+    const fixed = parseNumberOrNull_(cell('Annualized Base Pay'));
+    const nominal = parseNumberOrNull_(cell('Nominal'));
+    const country = text('Country');
+    const jobProfile = text('Business Title');
+    if (!country || !jobProfile || fixed === null || !(fixed > 0) || nominal === null || nominal < 0) {
+      counts.invalid++;
+      return;
+    }
+    const achievement = parseAchievementPercent_(display[index][columnOf[normalizeHeader_('Achievement 2025')]]);
+    if (achievement === null) counts.achievementMissing++;
+    rows.push({
+      country,
+      jobProfile,
+      fixed,
+      nominal,
+      achievement,
+      market: text('Market'),
+      category: text('Category'),
+      rating: text('Rating - Most Recent'),
+      seniority: parseNumberOrNull_(cell('seniority years')),
+      age: parseNumberOrNull_(cell('Age'))
+    });
+  });
+  return { rows, counts };
+}
+// END SHARED: swe2025-source
 
 function getDataSheet_(profile) {
   const sh = getSpreadsheet_().getSheetByName(profile.sheetName);
@@ -142,8 +227,38 @@ function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
-function getPopulation() {
+const DEFAULT_POPULATION_SOURCE = 'swe2025';
+
+function resolvePopulationSource_(sourceKey) {
+  const requested = sourceKey === undefined || sourceKey === null ? '' : String(sourceKey).trim();
+  if (DEPLOYED_PROFILE !== 'SWE') {
+    if (requested && requested !== 'legacy') {
+      throw new Error('Population source ' + requested + ' is not available in this deployment.');
+    }
+    return 'legacy';
+  }
+  const key = requested || DEFAULT_POPULATION_SOURCE;
+  if (key !== 'swe2025' && key !== 'legacy') throw new Error('Unknown population source: ' + key);
+  return key;
+}
+
+function getPopulation(sourceKey) {
   const access = requireAccess_();
+  if (resolvePopulationSource_(sourceKey) === 'legacy') return readLegacyPopulation_(access);
+  const parsed = readSwe2025Rows_();
+  return {
+    reps: parsed.rows.map(row => ({
+      jobProfile: row.jobProfile,
+      country: row.country,
+      fixed: row.fixed,
+      nominal: row.nominal
+    })),
+    ignored: parsed.counts.total - parsed.rows.length,
+    canViewIndividualTables: access.canViewIndividualTables
+  };
+}
+
+function readLegacyPopulation_(access) {
 
   const profile = POPULATION_PROFILES[DEPLOYED_PROFILE];
   if (!profile) throw new Error('Unknown deployed population profile: ' + DEPLOYED_PROFILE);

@@ -10,16 +10,18 @@ module.exports = function suite(h) {
       return script && !/\b(?:integrity|crossorigin)\s*=/.test(script);
     }));
 
-  const header = html.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
-  h.check('simulator header wraps on narrow screens and keeps all presets available',
-    /flex-col[^"]*xl:flex-row/.test(header) &&
-    !/hidden md:flex/.test(header) &&
-    /role="group" aria-label="Scenario presets" class="[^"]*overflow-x-auto/.test(header) &&
-    ['preset-initial', 'preset-targetGroup', 'preset-highIncentive']
-      .every(id => header.includes(`id="${id}"`)));
+  const nceHtml = h.buildString('NCE');
+  h.check('scenario preset shortcuts are absent from every app header',
+    [html, nceHtml, salesRepHtml].every(page => {
+      const pageHeader = page.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
+      return !/Scenario presets|preset-(?:initial|targetGroup|highIncentive)/.test(pageHeader);
+    }));
 
-  h.check('reset icon button has an accessible name',
-    /<button[^>]*aria-label="Reset parameters"[^>]*>[\s\S]*?<i[^>]*aria-hidden="true"/.test(header));
+  h.check('reset icon button remains accessible in cluster profile headers',
+    [html, nceHtml].every(page => {
+      const pageHeader = page.match(/<header\b[\s\S]*?<\/header>/)?.[0] || '';
+      return /<button[^>]*aria-label="Reset parameters"[^>]*>[\s\S]*?<i[^>]*aria-hidden="true"/.test(pageHeader);
+    }));
 
   h.check('simulator typography and keyboard focus styles are upgraded',
     html.includes('[class~="text-[10px]"]') &&
@@ -29,7 +31,7 @@ module.exports = function suite(h) {
   const describedCharts = [
     ['mainChart', 'Distribution, payout, and nominal-weighted curves'],
     ['advChart', 'Hybrid, old, and all-new payout curves'],
-    ['personae-chart', 'Comparaison des courbes de rémunération des personas']
+    ['personae-chart', 'Comparison of persona pay curves']
   ];
   h.check('primary simulator charts expose accessible descriptions',
     describedCharts.every(([id, description]) => {
@@ -41,8 +43,8 @@ module.exports = function suite(h) {
     /role="region"[^>]*aria-label="Scrollable salary and performance matrix"[^>]*tabindex="0"[^>]*class="[^"]*overflow-x-auto/.test(html) &&
     /id="matrix-grid"[^>]*class="[^"]*min-w-\[/.test(html));
 
-  h.check('breakpoint data table can scroll horizontally on narrow screens',
-    /class="overflow-x-auto[^"]*rounded-xl"[^>]*>\s*<table class="w-full min-w-\[/.test(html));
+  h.check('breakpoint table retains its accessible region label',
+    /role="region" aria-label="Curve breakpoint table"/.test(html));
 
   h.check('all Sales Rep KPI charts have role, title, and text alternative',
     ['c2p-total', 'c2p-price', 'dev', 'churn'].every(key => {

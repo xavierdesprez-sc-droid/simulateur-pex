@@ -91,7 +91,7 @@
                 <span id="adv-val-t2" class="font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md">100%</span>
               </div>
             </div>
-            <div class="relative h-6">
+            <div class="relative h-10">
               <div class="absolute w-full top-1/2 -translate-y-1/2 h-2 bg-slate-200 rounded-full"></div>
               <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:40%; width:10%"></div>
               <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80" class="dual-range dual-t1 absolute inset-0 w-full m-0">
@@ -184,7 +184,7 @@
                 Standard Scenario (breakpoints)
               </button>
               <button id="btn-adv-gaussian" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">
-                Distribution gaussienne
+                Gaussian distribution
               </button>
             </div>
           </div>
@@ -203,7 +203,7 @@
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-orange-600 mt-1.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-orange-700">Hybrid <span id="adv-legend-t1">85%</span></span>
+                <span class="font-bold text-orange-700">Hybrid <span id="adv-legend-t1">80%</span></span>
                 <p class="text-[10px] text-slate-400">This rep</p>
               </div>
             </div>
@@ -265,12 +265,20 @@
             <button id="pop-clear-btn" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-all">Reset</button>
           </div>
 
+          <div id="pop-source-switch" class="space-y-1">
+            <label for="pop-source-select" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Population source</label>
+            <select id="pop-source-select" onchange="onPopulationSourceChange(this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200">
+              <option value="swe2025">New source (Copie de Liste Sales)</option>
+              <option value="legacy">Legacy source (Data dynamic distributions)</option>
+            </select>
+          </div>
+
           <div id="pop-input-zone" class="space-y-2">
             <button id="pop-sheet-btn" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2">
               <i data-lucide="refresh-cw" class="w-4 h-4"></i> Load from Google Sheet
             </button>
             <input type="file" id="pop-csv-input" accept=".csv,text/csv" class="hidden" />
-            <p class="text-[10px] text-slate-400">Apps Script deployment: reads the connected Sheet using the active cluster profile (header row 4). Local file: loads population_test.csv automatically, or lets you pick a CSV. Invalid rows are excluded and counted. Data stays in your browser.</p>
+            <p class="text-[10px] text-slate-400">Apps Script deployment: reads the connected Sheet for the selected source (SWE: row 1 for the 2025 source, row 4 for the legacy source; NCE: row 4). Local file: loads the profile's sample CSV automatically, or lets you pick a CSV. Invalid rows are excluded and counted. Data stays in your browser.</p>
           </div>
 
           <p id="pop-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
@@ -329,13 +337,13 @@
     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
       <div class="flex items-center gap-2 mb-2">
         <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="flask-conical" class="w-4 h-4"></i></div>
-        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between <span id="adv-title-t1">85%</span> and <span id="adv-title-t2">100%</span></h2>
+        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between <span id="adv-title-t1">80%</span> and <span id="adv-title-t2">100%</span></h2>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed">
         Below <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> achievement: <strong>0 paid</strong>.
-        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">85%</span>: old scheme (linear on the old nominal).
-        From <span id="adv-desc-t1b" class="font-mono">85%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear transition from the old curve to the new one.
-        Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
+        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">80%</span>: at the same achievement percentage, the sales rep earns the same bonus as under the existing scheme.
+        From <span id="adv-desc-t1b" class="font-mono">80%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear acceleration to the new nominal.
+        Beyond: new curve — linear from 100% to 200%, reaching the value described below at 200%.
         <strong>New nominal</strong> = max(20% target, € minimum nominal, existing nominal kept) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
         Each rep has their own curve: the lower their old nominal, the bigger the jump between the transition bounds.
         Without the adjustment (and when no guaranteed floors bind), a rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.

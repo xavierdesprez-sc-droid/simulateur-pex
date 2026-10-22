@@ -11,14 +11,31 @@ const HTML_PATH = path.join(__dirname, '..', 'index.html');
 const results = { pass: 0, fail: 0, failures: [] };
 
 function makeEl() {
-  return new Proxy(
-    {
-      style: {}, classList: { toggle(){}, add(){}, remove(){} },
-      innerText: '', innerHTML: '',
-      __handlers: {},
-      addEventListener(event, handler) { this.__handlers[event] = handler; },
-      getContext: () => ({}), appendChild: () => ({}), removeChild: () => ({})
+  const element = {
+    style: {}, className: '',
+    innerText: '', innerHTML: '',
+    __handlers: {},
+    addEventListener(event, handler) { this.__handlers[event] = handler; },
+    setAttribute(name, value) { element[name] = value; },
+    getContext: () => ({}), appendChild: () => ({}), removeChild: () => ({})
+  };
+  element.classList = {
+    contains(name) { return element.className.split(/\s+/).includes(name); },
+    add(...names) {
+      element.className = [...new Set([...element.className.split(/\s+/).filter(Boolean), ...names])].join(' ');
     },
+    remove(...names) {
+      element.className = element.className.split(/\s+/).filter(name => name && !names.includes(name)).join(' ');
+    },
+    toggle(name, force) {
+      const enabled = force === undefined ? !this.contains(name) : force;
+      if (enabled) this.add(name);
+      else this.remove(name);
+      return enabled;
+    }
+  };
+  return new Proxy(
+    element,
     {
       get(t, p) { if (p in t) return t[p]; return t[p] = makeEl(); },
       set(t, p, v) { t[p] = v; return true; }
@@ -89,7 +106,8 @@ function runSuite(suiteFile, app = 'default') {
   global.google.script.run = (() => {
     const obj = {};
     const api = {
-      getPopulation() {
+      getPopulation(sourceKey) {
+        mocks.lastPopulationKey = sourceKey;
         if (mocks.sheetError) { if (obj.fail) obj.fail({ message: mocks.sheetError }); }
         else if (obj.ok) obj.ok(mocks.sheetReps);
         return api;
@@ -110,12 +128,21 @@ function runSuite(suiteFile, app = 'default') {
     else { results.fail++; results.failures.push({ suite: suiteName, name }); console.log('  FAIL:', name); }
   };
   const defaultHtmlSrc = fs.readFileSync(HTML_PATH, 'utf8');
+  const storage = {
+    __fail: false, __data: {},
+    getItem(k) { if (this.__fail) throw new Error('storage blocked'); return k in this.__data ? this.__data[k] : null; },
+    setItem(k, v) { if (this.__fail) throw new Error('storage blocked'); this.__data[k] = String(v); },
+    removeItem(k) { delete this.__data[k]; }
+  };
+  global.window.localStorage = storage;
   const h = {
+    storage,
     els,
     mock: mocks,
     check: record,
     htmlSrc: app === 'sales-rep' ? buildSalesRepString() : defaultHtmlSrc,
     defaultHtmlSrc,
+    readRepoFile: relPath => fs.readFileSync(path.join(__dirname, '..', relPath), 'utf8'),
     buildString,
     buildSalesRepString,
     input(id, value) {

@@ -10,9 +10,20 @@ module.exports = function suite(__h) {
     /id="sales-rep-app"/.test(salesRepHtml) &&
     /hybridContext\(oldNomE, fixedE, targetSharePct/.test(salesRepHtml));
   check('Sales Rep bundle excludes population parsing, server calls, and persistence',
-    !/parsePopulationCsv|google\.script\.run|localStorage|sessionStorage/.test(salesRepHtml));
+    !/parsePopulationCsv|google\.script\.run|sessionStorage/.test(salesRepHtml));
   check('Sales Rep bundle excludes existing simulator views',
     !/id="view-(standard|advanced|matrix)"/.test(salesRepHtml));
+  const requiredIds = ['sr-tab-q1', 'sr-tab-q2', 'sr-tab-q3', 'sr-tab-fy', 'sr-period-label', 'sr-reset-period',
+    'sr-storage-status', 'sr-recap', 'sr-recap-q1-payment', 'sr-recap-q2-payment', 'sr-recap-q3-payment',
+    'sr-recap-q4-payment', 'sr-recap-q1-status', 'sr-recap-q2-status', 'sr-recap-q3-status', 'sr-recap-q4-status',
+    'sr-recap-total', 'sr-q4-annual-payout', 'sr-q4-already-paid', 'sr-q4-payment', 'sr-year-total'];
+  check('quarterly markup declares every new id exactly once',
+    requiredIds.every(id => (salesRepHtml.match(new RegExp(`id="${id}"`, 'g')) || []).length === 1));
+  check('tab buttons carry their period and sit in a tablist',
+    ['q1', 'q2', 'q3', 'fy'].every(p => new RegExp(`id="sr-tab-${p}"[^>]*data-period="${p}"`).test(salesRepHtml)) &&
+    /role="tablist"/.test(salesRepHtml));
+  check('no existing KPI or qualifier id is duplicated',
+    ['c2p-total', 'c2p-price', 'dev', 'churn'].every(k => (salesRepHtml.match(new RegExp(`id="sr-achievement-${k}"`, 'g')) || []).length === 1));
   check('Sales Rep harness exposes matching generated HTML',
     htmlSrc === salesRepHtml);
   check('Sales Rep bundle is distinct from the default bundle',
@@ -37,6 +48,18 @@ module.exports = function suite(__h) {
   assertClose('100% reaches the new nominal', Engine.hybridE(100, result.context), 8000);
   assertClose('110% follows the new curve above T2', Engine.hybridE(110, result.context), 8800);
   assertClose('200% reaches twice the new nominal', Engine.hybridE(200, result.context), 16000);
+  const belowThreshold = calculateSalesRepPayout({
+    ...rep,
+    achievements: { c2pTotal: 39, c2pPrice: 39, dev: 39, churn: 39 }
+  });
+  check('all performance KPI payouts are zero below 40% achievement',
+    belowThreshold.kpiPayouts.every(item => item.curvePayout === 0 && item.weightedPayout === 0));
+  const atThreshold = calculateSalesRepPayout({
+    ...rep,
+    achievements: { c2pTotal: 40, c2pPrice: 40, dev: 40, churn: 40 }
+  });
+  check('all performance KPI curves resume at 40% achievement',
+    atThreshold.kpiPayouts.every(item => item.curvePayout === Engine.hybridE(40, atThreshold.context)));
   assertClose('weighted KPI results sum to €8,000 at 100%', result.performanceSubtotal, 8000);
   assertClose('all qualifiers at 100% preserve the subtotal', result.finalPayout, 8000);
 
@@ -71,8 +94,59 @@ module.exports = function suite(__h) {
     salesRepState.oldNominalFixedE === 6000 &&
     salesRepState.oldNominalPercent === 15 &&
     salesRepState.minNominalE === 8000 &&
-    Object.values(salesRepState.achievements).every(value => value === 100) &&
-    Object.values(salesRepState.qualifiers).every(value => value === 100));
+    SALES_REP_PERIODS.join(',') === 'q1,q2,q3,fy' &&
+    SALES_REP_PERIODS.every(key => {
+      const p = salesRepState.periods[key];
+      return p.entered === false &&
+        Object.values(p.achievements).every(value => value === 100) &&
+        Object.values(p.qualifiers).every(value => value === 100);
+    }));
+
+  const mkPeriod = (entered, ach, qual) => ({
+    entered,
+    achievements: { c2pTotal: ach, c2pPrice: ach, dev: ach, churn: ach },
+    qualifiers: { portfolio: qual, visits: qual }
+  });
+  const mkState = (q1, q2, q3, fy) => ({ ...rep, periods: { q1, q2, q3, fy } });
+  const off = mkPeriod(false, 100, 100);
+  assertClose('full-year period at 100% pays €8,000 annually',
+    salesRepAnnualPayout(mkPeriod(true, 100, 100), rep), 8000);
+  assertClose('entered Q1 at 100% pays €2,000', salesRepQuarterPayment(mkPeriod(true, 100, 100), rep), 2000);
+  assertClose('unentered quarter pays 0', salesRepQuarterPayment(off, rep), 0);
+  assertClose('Q4 after Q1-Q3 at 100% pays €2,000',
+    salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), mkPeriod(true, 100, 100))), 2000);
+  assertClose('untouched Q3 adds 0 so Q4 pays €4,000',
+    salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), off, mkPeriod(true, 100, 100))), 4000);
+  assertClose('paid before Q4 counts only entered quarters',
+    salesRepPaidBeforeQ4(mkState(mkPeriod(true, 100, 100), mkPeriod(true, 100, 100), off, off)), 4000);
+  assertClose('Q1 at 200% pays €4,000 per quarter', salesRepQuarterPayment(mkPeriod(true, 200, 100), rep), 4000);
+  assertClose('Q4 subtracts a €4,000 Q1 from €8,000 FY',
+    salesRepQ4Payment(mkState(mkPeriod(true, 200, 100), off, off, mkPeriod(true, 100, 100))), 4000);
+  assertClose('Q4 floors at 0 when FY annual is below paid',
+    salesRepQ4Payment(mkState(mkPeriod(true, 200, 100), off, off, mkPeriod(true, 100, 0))), 0);
+  assertClose('Q4 pays 0 when FY is untouched',
+    salesRepQ4Payment(mkState(mkPeriod(true, 100, 100), off, off, off)), 0);
+
+  const stored = salesRepSerialize({ ...salesRepState });
+  check('serialized state carries version 1 and the storage key is versioned',
+    JSON.parse(stored).version === 1 && SALES_REP_STORAGE_KEY === 'sales-rep-quarterly-v1');
+  check('round-trip restores periods, entry flags and compensation inputs',
+    (() => {
+      const back = salesRepDeserialize(stored);
+      return back && back.fixedSalary === salesRepState.fixedSalary &&
+        back.periods.q1.entered === false &&
+        back.periods.fy.achievements.c2pTotal === 100;
+    })());
+  check('corrupt JSON loads as null without throwing', salesRepDeserialize('{not json') === null);
+  check('wrong version loads as null', salesRepDeserialize(JSON.stringify({ version: 2, periods: {} })) === null);
+  check('out-of-range achievements are clamped to 0–200',
+    salesRepDeserialize(JSON.stringify({ version: 1, periods: { q1: { entered: true, achievements: { c2pTotal: 999 }, qualifiers: { portfolio: 500 } } } })).periods.q1.achievements.c2pTotal === 200);
+  check('a non-boolean entered flag becomes false',
+    salesRepDeserialize(JSON.stringify({ version: 1, periods: { q1: { entered: 'yes' } } })).periods.q1.entered === false);
+  check('a save that throws returns false instead of crashing',
+    (() => { __h.storage.__fail = true; const ok = salesRepSaveState(__h.storage); __h.storage.__fail = false; return ok === false; })());
+  check('a load that throws returns null instead of crashing',
+    (() => { __h.storage.__fail = true; const v = salesRepLoadState(__h.storage); __h.storage.__fail = false; return v === null; })());
 
   const uiReady = typeof __domReadyHandler === 'function';
   check('Sales Rep app registers DOM initialization', uiReady);
@@ -80,6 +154,32 @@ module.exports = function suite(__h) {
   if (uiReady) {
     __domReadyHandler();
     check('four KPI charts initialize independently', __chartInstances.length === 4);
+    check('Sales Rep payout curves use a fine, smoothed line without point clutter',
+      __chartInstances.every(chart => {
+        const curve = chart.data.datasets[0];
+        return curve.borderWidth === 2 && curve.tension === 0.2 &&
+          curve.pointRadius === 0 && curve.pointHoverRadius === 4 && curve.fill === false;
+      }));
+    check('current achievement markers stay distinct but subtle',
+      __chartInstances.every(chart => {
+        const marker = chart.data.datasets[1];
+        return marker.pointRadius === 3.5 && marker.pointBorderWidth === 2 &&
+          marker.pointBorderColor === '#ffffff';
+      }));
+    check('Sales Rep charts use restrained axes and gridlines',
+      __chartInstances.every(chart => {
+        const { x, y } = chart.options.scales;
+        return x.grid?.display === false && x.ticks?.stepSize === 50 &&
+          y.grid?.color === 'rgba(148, 163, 184, 0.16)' && y.border?.display === false &&
+          y.beginAtZero === true;
+      }));
+    check('achievement axes use regular 50% ticks and larger labels',
+      __chartInstances.every(chart => {
+        const { x, y } = chart.options.scales;
+        return x.min === 0 && x.max === 200 && x.ticks.stepSize === 50 &&
+          x.ticks.font.size === 12 && y.ticks.font.size === 12 &&
+          x.title.font.size === 12 && y.title.font.size === 12;
+      }));
     check('responsive KPI charts stay inside fixed-height containers',
       ['c2p-total', 'c2p-price', 'dev', 'churn'].every(id =>
         new RegExp(`<div class="mt-3 relative h-48">\\s*<canvas id="sr-chart-${id}" class="w-full h-full"><\\/canvas>\\s*<\\/div>`).test(salesRepHtml)));
@@ -102,6 +202,8 @@ module.exports = function suite(__h) {
         new RegExp(`type="range" id="sr-qualifier-${key}" min="0" max="100"`).test(h.htmlSrc)));
     assertClose('C2P Total chart plots its weighted €4,000 at 100%',
       __chartInstances[0].data.datasets[0].data[100], 4000);
+    check('all KPI charts plot zero payout below the 40% threshold',
+      __chartInstances.every(chart => chart.data.datasets[0].data.slice(0, 40).every(value => value === 0)));
 
     h.input('sr-fixed-salary', '50000');
     h.input('sr-old-nominal-percent', '15');
@@ -122,17 +224,17 @@ module.exports = function suite(__h) {
     h.input('sr-qualifier-portfolio', '120');
     check('qualifier input and state clamp values above 100%',
       els['sr-qualifier-portfolio'].value === '100' &&
-      salesRepState.qualifiers.portfolio === 100);
+      salesRepState.periods.q1.qualifiers.portfolio === 100);
     h.input('sr-qualifier-visits', '80');
     assertClose('qualifiers are individually capped before averaging',
-      calculateSalesRepPayout().qualifierMultiplier, 0.9);
-    const finalBeforeInvalid = calculateSalesRepPayout().finalPayout;
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).qualifierMultiplier, 0.9);
+    const finalBeforeInvalid = calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).finalPayout;
     h.input('sr-fixed-salary', '');
     assertClose('empty salary preserves the last valid calculation',
-      calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).finalPayout, finalBeforeInvalid);
     h.input('sr-fixed-salary', '-1');
     assertClose('negative salary preserves the last valid calculation',
-      calculateSalesRepPayout().finalPayout, finalBeforeInvalid);
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).finalPayout, finalBeforeInvalid);
     h.input('sr-min-nominal', '-1');
     h.change('sr-old-nominal-mode', 'percent');
     check('changing nominal mode keeps validation visible while numeric inputs remain invalid',
@@ -155,7 +257,7 @@ module.exports = function suite(__h) {
       els['sr-final-payout-percent'] ? els['sr-final-payout-percent'].innerText : '';
     check('final payout percentage is labeled as a percentage of new nominal',
       /id="sr-final-payout-percent"/.test(salesRepHtml) &&
-      /Percentage of new nominal/.test(salesRepHtml));
+      /Percentage of annual new nominal/.test(salesRepHtml));
     check('full final payout displays as 100.0% of the new nominal',
       finalPayoutPercent() === '100.0%');
     h.input('sr-qualifier-visits', '50');
@@ -166,11 +268,62 @@ module.exports = function suite(__h) {
     check('changing a KPI input updates the final payout percentage',
       finalPayoutPercent() === '150.0%');
 
+    const clickTab = p => els[`sr-tab-${p}`].__handlers.click({ target: els[`sr-tab-${p}`] });
+    clickTab('q1');
+    h.input('sr-achievement-dev', '80');
+    clickTab('q2');
+    check('switching to Q2 shows Q2 defaults and does not leak Q1 values',
+      els['sr-achievement-dev'].value === '100' && salesRepState.periods.q2.achievements.dev === 100);
+    check('Q2 shows its label and is marked selected',
+      els['sr-period-label'].innerText === 'Q2 results' && els['sr-tab-q2']['aria-selected'] === 'true' &&
+      els['sr-tab-q1']['aria-selected'] === 'false');
+    check('an untouched quarter shows Not entered and no payment',
+      els['sr-recap-q2-status'].innerText === 'Not entered' && els['sr-recap-q2-payment'].innerText === '—');
+    h.input('sr-achievement-c2p-total', '120');
+    check('changing a value marks the active quarter as entered',
+      salesRepState.periods.q2.entered === true && els['sr-recap-q2-status'].innerText === 'Entered' &&
+      els['sr-recap-q2-payment'].innerText !== '—');
+    clickTab('q1');
+    check('returning to Q1 restores its own values',
+      els['sr-achievement-dev'].value === '80' && salesRepState.periods.q1.achievements.dev === 80);
+    clickTab('fy');
+    h.input('sr-qualifier-portfolio', '0');
+    h.input('sr-qualifier-visits', '0');
+    check('Q1-Q3 payments are paid before Q4 is computed', salesRepPaidBeforeQ4() > 0);
+    check('Q4 payment is floored at zero when the full-year payout is below the amount paid',
+      salesRepQ4Payment() === 0 && els['sr-q4-payment'].innerText === '€0');
+    check('the Q4 block reports the amount already paid',
+      els['sr-q4-already-paid'].innerText === salesRepFormatE(salesRepPaidBeforeQ4()));
+    clickTab('q2');
+    els['sr-reset-period'].__handlers.click({ target: els['sr-reset-period'] });
+    check('reset returns the active quarter to defaults and not entered',
+      salesRepState.periods.q2.entered === false && salesRepState.periods.q2.achievements.c2pTotal === 100 &&
+      els['sr-recap-q2-status'].innerText === 'Not entered');
+    h.input('sr-achievement-churn', '90');
+    clickTab('q3');
+    h.input('sr-achievement-churn', '70');
+    const stored = JSON.parse(__h.storage.__data['sales-rep-quarterly-v1']);
+    check('each change is autosaved to the versioned storage key',
+      stored.version === 1 && stored.periods.q3.entered === true && stored.periods.q3.achievements.churn === 70);
+    salesRepState.periods.q3.entered = false;
+    initializeSalesRepCalculator();
+    check('a reload restores saved entries from storage',
+      salesRepState.periods.q3.entered === true && salesRepState.periods.q3.achievements.churn === 70);
+    __h.storage.__fail = true;
+    h.input('sr-achievement-dev', '50');
+    check('blocked storage shows a message while the calculator keeps working',
+      els['sr-storage-status'].innerText.length > 0 && els['sr-final-payout'].innerText !== '');
+    __h.storage.__fail = false;
+    h.input('sr-achievement-dev', '51');
+    check('the storage message clears after a successful save',
+      els['sr-storage-status'].innerText === '');
+    clickTab('q1');
+
     h.input('sr-fixed-salary', '0');
     h.input('sr-old-nominal-fixed', '0');
     h.input('sr-min-nominal', '0');
     check('zero new nominal displays an em dash instead of dividing by zero',
-      calculateSalesRepPayout().context.newNomE === 0 &&
+      calculateSalesRepPayout({ ...salesRepState, ...salesRepState.periods.q1 }).context.newNomE === 0 &&
       finalPayoutPercent() === '—');
   }
 };

@@ -176,7 +176,7 @@ columns G/H. NCE reads `Job Profile`, `Country`, `Annual Base Pay 2026 Revised`,
 Both profiles expose only `Country` and `Job Profile` filters on the first page and calculate
 Current PEX Paid, headcount, and Avg. Current Var. Share from the filtered Sheet data.
 
-### Deploying SWE, NCE, or Sales Rep
+### Deploying SWE, NCE, Sales Rep, or Dashboard
 
 From the repository root in PowerShell, name the target explicitly:
 
@@ -185,6 +185,8 @@ From the repository root in PowerShell, name the target explicitly:
 .\scripts\deploy.ps1 -Target SWE
 .\scripts\deploy.ps1 -Target NCE
 .\scripts\deploy.ps1 -Target SalesRep
+.\scripts\deploy.ps1 -Target Dashboard -DryRun
+.\scripts\deploy.ps1 -Target Dashboard -ConfirmRemoteChanges
 .\scripts\deploy.ps1 -Target All
 ```
 
@@ -193,9 +195,11 @@ account. It runs the bundle freshness check, lint, and tests, then preflights **
 selected projects before any remote write. Projects are matched by their unique exact
 names. It verifies the intended bundle, Apps Script file inventory, backend profile,
 and exactly one existing versioned production deployment. `-DryRun` performs those
-checks without pushing or redeploying. A real run asks for an exact typed confirmation
-(for example, `DEPLOY All` is not accepted; use `DEPLOY ALL`). Redirected/noninteractive
-runs are refused.
+checks without pushing or redeploying. An interactive run asks for an exact typed
+confirmation (for example, `DEPLOY All` is not accepted; use `DEPLOY ALL`). For an
+explicitly authorized noninteractive deployment, pass `-ConfirmRemoteChanges`, e.g.
+`.\scripts\deploy.ps1 -Target All -ConfirmRemoteChanges`. All preflight checks still run
+before any remote write; without the switch, redirected/noninteractive runs are refused.
 
 SWE is repository-managed: `.clasp.json` selects SWE, `Code.gs` fixes the server profile,
 and `.claspignore` allows only `Code.gs`, `appsscript.json`, and root `index.html`.
@@ -204,6 +208,12 @@ temporary directory outside the repository, keeps its remote `Code.js` and
 `appsscript.json` unchanged, and stages only the generated `index.html`. This is why
 the backends differ: the SWE backend is maintained in this repository, NCE has a
 profile-fixed copy, and Sales Rep has a smaller calculator-specific access gate.
+
+Dashboard uses the existing project named `SWE 2025 Achievement Dashboard`. Its bundle is
+built from `src/dashboard/` automatically. The script preserves the remote backend and
+manifest and checks that the backend matches `dashboard/Code.gs` before publishing.
+The synthetic CSV is never uploaded. The verified production URL is printed when done.
+`All` continues to select SWE, NCE, and Sales Rep; select `Dashboard` explicitly to publish it.
 
 After confirmation, each selected project is pushed without force, given a new immutable
 version, and redeployed through its existing production deployment ID to preserve its
@@ -239,15 +249,26 @@ Déploiement inchangé : copier-coller `index.html` vers le fichier `index` Apps
 
 ## Development checks
 
-The app and build remain dependency-free. For linting and tests, install the pinned
+The app and build remain dependency-free. For development checks, install the pinned
 development tools with `npm ci`, then run:
 
 ```text
 npm run lint
 npm test
+npx playwright install chromium
+npm run test:browser
 ```
 
-GitHub Actions runs both checks for pushes and pull requests.
+The browser suite exercises the committed SWE and NCE bundles in Chromium at laptop
+viewport widths (1024, 1280, and 1366 CSS pixels). It checks that only the selected
+view appears, all navigation options fit without sideways scrolling, content stays
+within the page, and sliders contrast with their backgrounds. On Windows it also
+compares reviewed screenshots of Standard, Personae, and Matrix (charts are masked
+to avoid animation-dependent pixels). Review visual changes before updating baselines
+with `npx playwright test --update-snapshots` on Windows. The suite uses synthetic
+population data, not a real spreadsheet; it needs internet access for the app's CDNs.
+GitHub Actions runs the fast checks on Ubuntu and browser/screenshot checks on Windows
+for pushes and pull requests.
 
 ## Tests
 
@@ -259,7 +280,8 @@ node tests/run.js
 ```
 
 The runner checks the generated bundle, Apps Script syntax, backend authorization, and the
-simulated-DOM UI suites. The test harness uses Node.js built-ins; ESLint is a development-only dependency.
+simulated-DOM UI suites. The Node test harness uses built-ins; Playwright is a separate
+development-only browser test dependency.
 
 - `01-model`: curves (breakpoints, linear base, hybrid), linear blend, € floors, 0 threshold,
   continuity at boundaries, equality with the reference model (8 configs × 201 points)

@@ -275,13 +275,13 @@
       state.breakpoints.forEach((bp, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td class="py-1.5 px-3">
-            <input type="number" value="${bp.achievement}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'achievement', this.value)" class="w-20 px-2 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
+          <td class="py-1.5 px-2 whitespace-nowrap">
+            <input type="number" value="${bp.achievement}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'achievement', this.value)" class="w-14 px-1.5 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
           </td>
-          <td class="py-1.5 px-3">
-            <input type="number" value="${bp.payout}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'payout', this.value)" class="w-20 px-2 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
+          <td class="py-1.5 px-2 whitespace-nowrap">
+            <input type="number" value="${bp.payout}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'payout', this.value)" class="w-14 px-1.5 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
           </td>
-          <td class="py-1.5 px-2 text-right">
+          <td class="py-1.5 px-1 text-right">
             ${state.breakpoints.length > 2 ? `
               <button onclick="removeBreakpointRow(${index})" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-all" title="Delete this breakpoint">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>

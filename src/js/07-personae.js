@@ -16,6 +16,7 @@
     let personaeFilters = { countries: new Set(), seniority: '' };
     let personaeKnownCountries = new Set();
     let personaeMode = 'euros';
+    let personaeAchievementBasis = 'before';
     let personaeMinimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT;
     let personaeObjectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT;
     let personaeChart = null;
@@ -69,6 +70,21 @@
       };
     }
 
+    function getPersonaeAchievementForAxis(axisAchievement, basis = 'before',
+      objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT) {
+      if (!isFinite(axisAchievement)) throw new Error('Axis achievement must be finite.');
+      if (basis !== 'before' && basis !== 'after') throw new Error('Unknown Personae achievement basis: ' + basis);
+      const increase = Math.max(0, Number(objectiveIncrease) || 0);
+      return basis === 'after' ? axisAchievement + increase : axisAchievement;
+    }
+
+    function getPersonaeAxisValue(achievement, basis = 'before',
+      objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT) {
+      return basis === 'after'
+        ? achievement - Math.max(0, Number(objectiveIncrease) || 0)
+        : achievement;
+    }
+
     function getPersonaeCrossover(persona, minimumNominal, objectiveIncrease, maxAchievement) {
       let previousX = 0;
       let previousDifference = getPersonaePayouts(persona, 0, 'euros', minimumNominal, objectiveIncrease).newPayout;
@@ -115,8 +131,9 @@
     function getPersonaeCurvePoints(persona, mode, maxAchievement,
       minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT,
       objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT,
-      step = 2) {
-      const thresholdX = PERSONAE_ZERO_THRESHOLD + (mode === 'euros' ? objectiveIncrease : 0);
+      step = 2, achievementBasis = 'before') {
+      const thresholdX = PERSONAE_ZERO_THRESHOLD +
+        (mode === 'euros' && achievementBasis === 'before' ? objectiveIncrease : 0);
       const xValues = new Set();
       for (let x = 0; x <= maxAchievement; x += step) xValues.add(x);
       xValues.add(thresholdX);
@@ -124,7 +141,13 @@
         .filter(x => x >= 0 && x <= maxAchievement)
         .sort((a, b) => a - b)
         .flatMap(x => {
-          const payout = getPersonaePayouts(persona, x, mode, minimumNominal, objectiveIncrease).newPayout;
+          const payout = getPersonaePayouts(
+            persona,
+            getPersonaeAchievementForAxis(x, achievementBasis, objectiveIncrease),
+            mode,
+            minimumNominal,
+            objectiveIncrease
+          ).newPayout;
           return x === thresholdX
             ? [{ x, y: 0 }, { x, y: payout }]
             : [{ x, y: payout }];
@@ -140,7 +163,7 @@
     function normalizePersonaeResponse(response) {
       if (!response || !Array.isArray(response.personae) ||
           !Number.isInteger(response.ignored) || response.ignored < 0) {
-        throw new Error('Réponse Personae invalide.');
+        throw new Error('Invalid Personae response.');
       }
       return response.personae.map((row, index) => {
         const normalized = {
@@ -159,7 +182,7 @@
             !Number.isFinite(normalized.fixedSalary) || normalized.fixedSalary <= 0 ||
             !Number.isFinite(normalized.oldNominal) || normalized.oldNominal < 0 ||
             !Number.isFinite(normalized.oldNominalPct) || normalized.oldNominalPct < 0) {
-          throw new Error('Données invalides pour la persona en ligne ' + (index + 3) + '.');
+          throw new Error('Invalid data for persona on row ' + (index + 3) + '.');
         }
         return normalized;
       });
@@ -169,11 +192,11 @@
       const status = document.getElementById('personae-status');
       if (personaeLoading) return;
       if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        status.innerText = 'Erreur : ouvrez la version Apps Script pour charger les données Personae.';
+        status.innerText = 'Error: open the Apps Script version to load Personae data.';
         return;
       }
       personaeLoading = true;
-      status.innerText = 'Chargement des personas…';
+      status.innerText = 'Loading personas…';
       google.script.run
         .withSuccessHandler(response => {
           personaeLoading = false;
@@ -189,20 +212,20 @@
                 : true)
               .map(getPersonaeRowKey));
             updatePersonaeFilterOptions();
-            status.innerText = personaeData.length + ' persona(s) chargée(s), ' +
-              response.ignored + ' ligne(s) ignorée(s).';
+            status.innerText = personaeData.length + ' persona(s) loaded, ' +
+              response.ignored + ' row(s) ignored.';
             renderPersonaeView();
           } catch (error) {
             personaeData = [];
             personaeLoaded = false;
             personaeIncluded.clear();
-            status.innerText = 'Erreur : ' + error.message;
+            status.innerText = 'Error: ' + error.message;
             renderPersonaeView();
           }
         })
         .withFailureHandler(error => {
           personaeLoading = false;
-          status.innerText = 'Erreur : ' + (error && error.message ? error.message : String(error));
+          status.innerText = 'Error: ' + (error && error.message ? error.message : String(error));
         })
         .getPersonae();
     }
@@ -226,7 +249,7 @@
       const select = document.getElementById('personae-filter-seniority');
       const options = Array.from(new Set(personaeData.map(row => row.seniority))).sort((a, b) => a.localeCompare(b));
       if (personaeFilters.seniority && !options.includes(personaeFilters.seniority)) personaeFilters.seniority = '';
-      select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
+      select.innerHTML = '<option value="">All</option>' + options.map(value =>
         '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
       ).join('');
       select.value = personaeFilters.seniority;
@@ -249,11 +272,11 @@
     }
 
     function formatPersonaeNumber(value, maximumFractionDigits = 0) {
-      return new Intl.NumberFormat('fr-FR', { maximumFractionDigits }).format(value);
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value);
     }
 
     function formatPersonaeEuros(value) {
-      return new Intl.NumberFormat('fr-FR', {
+      return new Intl.NumberFormat('en-US', {
         style: 'currency', currency: 'EUR', maximumFractionDigits: 0
       }).format(value);
     }
@@ -268,7 +291,7 @@
         const label = escapePersonaeHtml(getPersonaeDisplayName(row));
         return '<tr>' +
           '<td class="px-3 py-2"><input type="checkbox" data-key="' + escapePersonaeHtml(key) + '"' + checked +
-            ' aria-label="Inclure ' + label + '" class="accent-violet-600"></td>' +
+            ' aria-label="Include ' + label + '" class="accent-violet-600"></td>' +
           '<td class="px-3 py-2">' + escapePersonaeHtml(row.country) + '</td>' +
           '<td class="px-3 py-2">' + escapePersonaeHtml(row.seniority) + '</td>' +
           '<td class="px-3 py-2 font-medium">' + segment + '</td>' +
@@ -284,6 +307,7 @@
     function setPersonaeMode(mode) {
       if (mode !== 'euros' && mode !== 'percent') throw new Error('Unknown Personae curve mode: ' + mode);
       personaeMode = mode;
+      if (mode === 'percent') personaeAchievementBasis = 'before';
       const euroButton = document.getElementById('personae-mode-euros');
       const percentButton = document.getElementById('personae-mode-percent');
       const active = 'px-3 py-2 rounded-lg bg-white text-violet-700 shadow-sm';
@@ -294,10 +318,13 @@
       percentButton.ariaPressed = String(mode === 'percent');
       const increaseInput = document.getElementById('personae-objective-increase');
       increaseInput.disabled = mode === 'percent';
+      const basisInput = document.getElementById('personae-achievement-basis');
+      basisInput.disabled = mode === 'percent';
+      basisInput.checked = mode === 'euros' && personaeAchievementBasis === 'after';
       const note = document.getElementById('personae-mode-note');
       note.innerText = mode === 'percent'
-        ? 'Pas de hausse d’objectif appliquée en mode %/%. Ancienne courbe commune y = x; les courbes hybrides sont exprimées en % de leur nouveau nominal.'
-        : 'En mode %/€, la nouvelle courbe tient compte de la hausse d’objectif.';
+        ? 'No objective increase applied in %/% mode. The old common curve is y = x; hybrid curves are expressed as a percentage of their new nominal.'
+        : 'In %/€ mode, the new curve accounts for the objective increase.';
       renderPersonaeView();
     }
 
@@ -322,8 +349,8 @@
                     : formatPersonaeEuros(point.y);
                   const headcount = context.dataset.personaeHeadcount;
                   const headcountInfo = Number.isFinite(headcount)
-                    ? ' · Effectif : ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
-                      (headcount === 1 ? ' personne' : ' personnes')
+                    ? ' · Headcount: ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
+                      (headcount === 1 ? ' person' : ' people')
                     : '';
                   return context.dataset.label + ': ' + value + headcountInfo;
                 }
@@ -335,15 +362,15 @@
               type: 'linear',
               min: 0,
               max: 150,
-              title: { display: true, text: 'Atteinte avant hausse d’objectif (%)' },
+              title: { display: true, text: 'Achievement before objective increase (%)' },
               ticks: { callback: value => value + '%' }
             },
             y: {
               beginAtZero: true,
-              title: { display: true, text: 'Rémunération variable (€)' },
+              title: { display: true, text: 'Variable pay (€)' },
               ticks: { callback: value => personaeMode === 'percent'
                 ? value + '%'
-                : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(value) + ' €' }
+                : new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value) + ' €' }
             }
           }
         }
@@ -353,18 +380,26 @@
     function renderPersonaeCrossings(rows) {
       const container = document.getElementById('personae-crossings');
       if (personaeMode === 'percent') {
-        container.innerHTML = '<p class="sm:col-span-2 lg:col-span-3 text-slate-500">Sans hausse d’objectif, les courbes hybrides rejoignent la référence y = x à 100 %; aucun dépassement n’est appliqué dans ce mode.</p>';
+        container.innerHTML = '<p class="sm:col-span-2 lg:col-span-3 text-slate-500">Without an objective increase, hybrid curves meet the y = x reference at 100%; there is no crossover in this mode.</p>';
         return;
       }
-      const maxAchievement = 200 + personaeObjectiveIncrease;
+      const maxAxisAchievement = personaeAchievementBasis === 'after'
+        ? 200
+        : 200 + personaeObjectiveIncrease;
+      const maxAchievement = getPersonaeAchievementForAxis(
+        maxAxisAchievement, personaeAchievementBasis, personaeObjectiveIncrease
+      );
       container.innerHTML = rows.map(row => {
         const crossing = getPersonaeCrossover(
           row, personaeMinimumNominal, personaeObjectiveIncrease, maxAchievement
         );
         const color = PERSONAE_COLORS[rows.indexOf(row) % PERSONAE_COLORS.length];
+        const axisCrossing = crossing === null
+          ? null
+          : getPersonaeAxisValue(crossing, personaeAchievementBasis, personaeObjectiveIncrease);
         const summary = crossing === null
-          ? 'Aucun dépassement jusqu’à ' + maxAchievement + ' %'
-          : 'Dépassement dès ' + formatPersonaeNumber(crossing, 1) + ' %';
+          ? 'No crossover up to ' + maxAxisAchievement + '%'
+          : 'Crossover from ' + formatPersonaeNumber(axisCrossing, 1) + '%';
         return '<div class="rounded-lg border border-slate-100 px-3 py-2"><span class="mr-2 inline-block h-2 w-2 rounded-full" style="background-color:' +
           color + '"></span><span class="font-semibold">' + escapePersonaeHtml(getPersonaeDisplayName(row)) +
           '</span><span class="mt-1 block text-slate-500">' + summary + '</span></div>';
@@ -382,13 +417,15 @@
 
     function renderPersonaeChart(rows) {
       if (!personaeChart) return;
-      const xMax = personaeMode === 'euros' ? 200 + personaeObjectiveIncrease : 150;
+      const xMax = personaeMode === 'euros' && personaeAchievementBasis === 'before'
+        ? 200 + personaeObjectiveIncrease
+        : personaeMode === 'euros' ? 200 : 150;
       const points = Array.from({ length: Math.ceil(xMax / 2) + 1 }, (_, index) => index * 2)
         .filter(value => value <= xMax);
       const datasets = [];
       if (personaeMode === 'percent') {
         datasets.push({
-          label: 'Ancienne courbe commune (y = x)',
+           label: 'Common old curve (y = x)',
           data: points.map(x => ({ x, y: x })),
           borderColor: '#475569',
           borderDash: [7, 5],
@@ -402,10 +439,14 @@
         const color = PERSONAE_COLORS[index % PERSONAE_COLORS.length];
         if (personaeMode === 'euros') {
           datasets.push({
-            label: getPersonaeDisplayName(row) + ' — ancienne',
+             label: getPersonaeDisplayName(row) + ' — old',
             personaeHeadcount: row.headcount,
             data: points.map(x => ({ x, y: getPersonaePayouts(
-              row, x, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
+              row,
+              getPersonaeAchievementForAxis(x, personaeAchievementBasis, personaeObjectiveIncrease),
+              'euros',
+              personaeMinimumNominal,
+              personaeObjectiveIncrease
             ).oldPayout })),
             borderColor: color,
             borderDash: [6, 4],
@@ -416,10 +457,16 @@
           });
         }
         datasets.push({
-          label: getPersonaeDisplayName(row) + ' — hybride',
+           label: getPersonaeDisplayName(row) + ' — hybrid',
           personaeHeadcount: row.headcount,
           data: getPersonaeCurvePoints(
-            row, personaeMode, xMax, personaeMinimumNominal, personaeObjectiveIncrease
+            row,
+            personaeMode,
+            xMax,
+            personaeMinimumNominal,
+            personaeObjectiveIncrease,
+            2,
+            personaeAchievementBasis
           ),
           borderColor: color,
           borderWidth: 2.5,
@@ -429,14 +476,20 @@
         });
         if (personaeMode === 'euros') {
           const crossing = getPersonaeCrossover(
-            row, personaeMinimumNominal, personaeObjectiveIncrease, xMax
+            row,
+            personaeMinimumNominal,
+            personaeObjectiveIncrease,
+            getPersonaeAchievementForAxis(xMax, personaeAchievementBasis, personaeObjectiveIncrease)
           );
           if (crossing !== null) {
+            const axisCrossing = getPersonaeAxisValue(
+              crossing, personaeAchievementBasis, personaeObjectiveIncrease
+            );
             datasets.push({
               type: 'scatter',
-              label: getPersonaeDisplayName(row) + ' — début du dépassement',
+               label: getPersonaeDisplayName(row) + ' — crossover start',
               personaeHeadcount: row.headcount,
-              data: [{ x: crossing, y: getPersonaePayouts(
+              data: [{ x: axisCrossing, y: getPersonaePayouts(
                 row, crossing, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
               ).newPayout }],
               borderColor: color,
@@ -452,9 +505,14 @@
       });
       personaeChart.data.datasets = datasets;
       personaeChart.options.scales.x.max = xMax;
+      personaeChart.options.scales.x.title.text = personaeMode === 'percent'
+        ? 'Achievement before objective increase (%)'
+        : personaeAchievementBasis === 'after'
+          ? 'Achievement after objective increase (%)'
+          : 'Achievement before objective increase (%)';
       personaeChart.options.scales.y.title.text = personaeMode === 'percent'
-        ? '% du nominal propre à chaque courbe'
-        : 'Rémunération variable (€)';
+        ? '% of each curve’s own nominal'
+        : 'Variable pay (€)';
       personaeChart.update('none');
     }
 
@@ -501,6 +559,10 @@
         if (!Number.isFinite(value)) return;
         personaeObjectiveIncrease = Math.max(0, Math.min(60, value));
         document.getElementById('personae-objective-value').innerText = '+' + personaeObjectiveIncrease;
+        renderPersonaeView();
+      });
+      document.getElementById('personae-achievement-basis').addEventListener('change', event => {
+        personaeAchievementBasis = event.target.checked ? 'after' : 'before';
         renderPersonaeView();
       });
       document.getElementById('personae-table-body').addEventListener('change', event => {

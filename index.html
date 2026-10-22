@@ -76,8 +76,7 @@
     .simulator-ui button {
       min-height: 2.25rem;
     }
-    .simulator-ui [id^="tab-"],
-    .simulator-ui .preset-btn {
+    .simulator-ui [id^="tab-"] {
       flex-shrink: 0;
       min-height: 2.5rem;
       white-space: nowrap;
@@ -101,6 +100,16 @@
     /* Custom Slider Styles */
     input[type=range] {
       -webkit-appearance: none;
+      background: transparent;
+      border-radius: 9999px;
+      height: 2.5rem;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      background: #e2e8f0;
+      border-radius: 9999px;
+      height: 8px;
+    }
+    input[type=range]::-moz-range-track {
       background: #e2e8f0;
       border-radius: 9999px;
       height: 8px;
@@ -116,6 +125,9 @@
       border: 2px solid #ffffff;
       transition: transform 0.1s ease;
     }
+    input[type=range]::-webkit-slider-thumb {
+      margin-top: -6px;
+    }
     input[type=range]::-webkit-slider-thumb:hover {
       transform: scale(1.15);
     }
@@ -124,6 +136,13 @@
       background: transparent;
       height: 24px;
       pointer-events: none;
+    }
+    input[type=range].dual-range::-webkit-slider-runnable-track {
+      background: transparent;
+    }
+    input[type=range].dual-range::-moz-range-track,
+    input[type=range].dual-range::-moz-range-progress {
+      background: transparent;
     }
     input[type=range].dual-range::-webkit-slider-thumb {
       pointer-events: auto;
@@ -148,7 +167,7 @@
 
   <!-- Navigation Bar -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 flex flex-col gap-3 py-3 xl:flex-row xl:items-center xl:justify-between">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 flex flex-col gap-3 py-3">
       <div class="flex min-w-0 items-center gap-3">
         <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-md shadow-indigo-200">
           <i data-lucide="trending-up" class="w-6 h-6" aria-hidden="true"></i>
@@ -159,7 +178,7 @@
       </div>
 
       <!-- View Tabs -->
-      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end xl:flex-1">
+      <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
         <div role="group" aria-label="Simulation views" class="flex w-full min-w-0 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
           <button id="tab-standard" onclick="setView('standard')" class="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg bg-white text-indigo-600 shadow-sm">
             Standard Scenario
@@ -173,22 +192,9 @@
             Matrix
           </button>
         </div>
-        <div class="flex min-w-0 flex-1 items-center gap-2">
-          <div role="group" aria-label="Scenario presets" class="flex w-full min-w-0 flex-1 items-center gap-1 overflow-x-auto custom-scrollbar bg-slate-100 p-1 rounded-xl text-xs font-semibold sm:w-auto">
-            <button onclick="applyPreset('initial')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-initial">
-              Current Situation (110% avg)
-            </button>
-            <button onclick="applyPreset('targetGroup')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-targetGroup">
-              Group Target (80% avg)
-            </button>
-            <button onclick="applyPreset('highIncentive')" class="preset-btn px-3 py-2 rounded-lg text-slate-600 hover:text-indigo-600 hover:bg-white transition-all shadow-none hover:shadow-sm" id="preset-highIncentive">
-              Optimized Scenario (+2% overperf)
-            </button>
-          </div>
-          <button onclick="resetDefaults()" class="shrink-0 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all" aria-label="Reset parameters" title="Reset parameters">
-            <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
-          </button>
-        </div>
+        <button onclick="resetDefaults()" class="shrink-0 self-end p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all sm:self-auto" aria-label="Reset parameters" title="Reset parameters">
+          <i data-lucide="rotate-ccw" class="w-5 h-5" aria-hidden="true"></i>
+        </button>
       </div>
     </div>
   </header>
@@ -449,16 +455,14 @@
             </button>
           </div>
 
-          <p class="text-xs text-slate-500">Breakpoints: flat 0 up to <strong>40%</strong> achievement, linear 0 &rarr; 100% payout between 40% and 100%, then <strong>100% &rarr; 200% payout</strong> between 100% and 200%.</p>
-
           <!-- Table of Breakpoints -->
-          <div role="region" aria-label="Curve breakpoint table" tabindex="0" class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
-            <table class="w-full min-w-[24rem] text-xs text-left">
+          <div role="region" aria-label="Curve breakpoint table" class="overflow-hidden border border-slate-200 rounded-xl">
+            <table class="w-full table-fixed text-xs text-left">
               <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th class="py-2 px-3">Achievement (%)</th>
-                  <th class="py-2 px-3">Payout (%)</th>
-                  <th class="py-2 px-2 text-right">Action</th>
+                  <th class="w-[42%] py-2 px-2 whitespace-normal break-words leading-tight">Achievement (%)</th>
+                  <th class="w-[38%] py-2 px-2 whitespace-normal break-words leading-tight">Payout (%)</th>
+                  <th class="w-[20%] py-2 px-1 text-right whitespace-normal break-words leading-tight">Action</th>
                 </tr>
               </thead>
               <tbody id="breakpoints-table-body" class="divide-y divide-slate-100 font-mono">
@@ -872,7 +876,7 @@
     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <div>
-          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Corridor C2P moyen</label>
+          <label class="block text-[11px] font-semibold text-slate-600 mb-1">Average C2P corridor</label>
           <div class="relative">
             <input type="number" id="four-to-one-corridor" value="300000" step="10000" min="1" class="w-full text-xs font-mono font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-cyan-500">
             <span class="absolute right-2.5 top-1.5 text-xs text-slate-400">€</span>
@@ -1055,7 +1059,7 @@
                 <span id="adv-val-t2" class="font-bold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-md">100%</span>
               </div>
             </div>
-            <div class="relative h-6">
+            <div class="relative h-10">
               <div class="absolute w-full top-1/2 -translate-y-1/2 h-2 bg-slate-200 rounded-full"></div>
               <div id="adv-dual-track" class="absolute top-1/2 -translate-y-1/2 h-2 rounded-full bg-amber-400" style="left:40%; width:10%"></div>
               <input type="range" id="adv-dual-t1" min="0" max="200" step="1" value="80" class="dual-range dual-t1 absolute inset-0 w-full m-0">
@@ -1148,7 +1152,7 @@
                 Standard Scenario (breakpoints)
               </button>
               <button id="btn-adv-gaussian" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 text-slate-500 border border-slate-200 transition-all">
-                Distribution gaussienne
+                Gaussian distribution
               </button>
             </div>
           </div>
@@ -1167,7 +1171,7 @@
             <div class="flex items-start gap-1.5">
               <span class="w-3 h-1 bg-orange-600 mt-1.5 shrink-0"></span>
               <div>
-                <span class="font-bold text-orange-700">Hybrid <span id="adv-legend-t1">85%</span></span>
+                <span class="font-bold text-orange-700">Hybrid <span id="adv-legend-t1">80%</span></span>
                 <p class="text-[10px] text-slate-400">This rep</p>
               </div>
             </div>
@@ -1229,12 +1233,20 @@
             <button id="pop-clear-btn" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2.5 py-1 rounded-lg transition-all">Reset</button>
           </div>
 
+          <div id="pop-source-switch" class="space-y-1">
+            <label for="pop-source-select" class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Population source</label>
+            <select id="pop-source-select" onchange="onPopulationSourceChange(this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-200">
+              <option value="swe2025">New source (Copie de Liste Sales)</option>
+              <option value="legacy">Legacy source (Data dynamic distributions)</option>
+            </select>
+          </div>
+
           <div id="pop-input-zone" class="space-y-2">
             <button id="pop-sheet-btn" class="w-full py-2 px-4 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-all flex items-center justify-center gap-2">
               <i data-lucide="refresh-cw" class="w-4 h-4"></i> Load from Google Sheet
             </button>
             <input type="file" id="pop-csv-input" accept=".csv,text/csv" class="hidden" />
-            <p class="text-[10px] text-slate-400">Apps Script deployment: reads the connected Sheet using the active cluster profile (header row 4). Local file: loads population_test.csv automatically, or lets you pick a CSV. Invalid rows are excluded and counted. Data stays in your browser.</p>
+            <p class="text-[10px] text-slate-400">Apps Script deployment: reads the connected Sheet for the selected source (SWE: row 1 for the 2025 source, row 4 for the legacy source; NCE: row 4). Local file: loads the profile's sample CSV automatically, or lets you pick a CSV. Invalid rows are excluded and counted. Data stays in your browser.</p>
           </div>
 
           <p id="pop-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
@@ -1293,13 +1305,13 @@
     <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
       <div class="flex items-center gap-2 mb-2">
         <div class="p-1.5 bg-orange-50 text-orange-600 rounded-lg"><i data-lucide="flask-conical" class="w-4 h-4"></i></div>
-        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between <span id="adv-title-t1">85%</span> and <span id="adv-title-t2">100%</span></h2>
+        <h2 class="font-bold text-slate-900 text-sm">Hybrid Scheme: nominal transition between <span id="adv-title-t1">80%</span> and <span id="adv-title-t2">100%</span></h2>
       </div>
       <p class="text-xs text-slate-500 leading-relaxed">
         Below <span id="adv-desc-zero" class="font-mono font-bold text-rose-600">0%</span> achievement: <strong>0 paid</strong>.
-        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">85%</span>: old scheme (linear on the old nominal).
-        From <span id="adv-desc-t1b" class="font-mono">85%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear transition from the old curve to the new one.
-        Beyond: new curve — linear from 0 to 100% up to the new nominal, then linear from 100% to 200%.
+        From <span id="adv-desc-zero2" class="font-mono">0%</span> to <span id="adv-desc-t1a" class="font-mono">80%</span>: at the same achievement percentage, the sales rep earns the same bonus as under the existing scheme.
+        From <span id="adv-desc-t1b" class="font-mono">80%</span> to <span id="adv-desc-t2a" class="font-mono">100%</span>: linear acceleration to the new nominal.
+        Beyond: new curve — linear from 100% to 200%, reaching the value described below at 200%.
         <strong>New nominal</strong> = max(20% target, € minimum nominal, existing nominal kept) &bull; <strong>Value at 200%</strong> = max(2&times; new nominal, € minimum amount).
         Each rep has their own curve: the lower their old nominal, the bigger the jump between the transition bounds.
         Without the adjustment (and when no guaranteed floors bind), a rep already at &ge; 20% has a ratio of 1: their hybrid is identical to the old scheme.
@@ -1444,43 +1456,50 @@
   <main id="view-personae" class="hidden flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-6">
     <section class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
       <div>
-        <h2 class="text-xl font-bold text-slate-900">Personae — courbes hybrides SWE</h2>
-        <p class="mt-1 text-sm text-slate-500">Comparez les courbes par pays, séniorité et persona.</p>
+        <h2 class="text-xl font-bold text-slate-900">Personae — hybrid curves (SWE)</h2>
+        <p class="mt-1 text-sm text-slate-500">Compare curves by country, seniority and persona.</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
-        <span id="personae-status" class="text-xs text-slate-500" role="status">Données non chargées.</span>
+        <span id="personae-status" class="text-xs text-slate-500" role="status">Data not loaded.</span>
         <button id="personae-reload" class="px-3 py-2 rounded-lg text-xs font-semibold bg-violet-600 text-white hover:bg-violet-700">
-          Recharger les données
+          Reload data
         </button>
       </div>
     </section>
 
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
       <div>
-        <p class="text-xs font-semibold text-slate-600">Pays (sélection multiple)</p>
+        <p class="text-xs font-semibold text-slate-600">Countries (multi-select)</p>
         <div id="personae-filter-countries" class="mt-1 flex min-h-10 flex-wrap items-center gap-2 rounded-lg border border-slate-300 p-2"></div>
       </div>
       <label class="text-xs font-semibold text-slate-600">
-        Niveau de séniorité
+        Seniority level
         <select id="personae-filter-seniority" class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal">
-          <option value="">Tous</option>
+          <option value="">All</option>
         </select>
       </label>
       <label class="text-xs font-semibold text-slate-600">
-        Minimum de nominal (€)
+        Minimum nominal (€)
         <input id="personae-min-nominal" type="number" min="0" step="500" value="8000" class="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal">
       </label>
       <label class="text-xs font-semibold text-slate-600">
-        Hausse d’objectif (points)
+        Objective increase (points)
         <div class="mt-1 flex items-center gap-3">
           <input id="personae-objective-increase" type="range" min="0" max="60" step="1" value="20" class="w-full accent-violet-600">
           <span id="personae-objective-value" class="w-12 text-right font-mono text-sm text-violet-700">+20</span>
         </div>
       </label>
       <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs">
-        <span class="font-semibold text-slate-700">Ajuster l’ancien paiement à la hausse d’objectif</span>
+        <span class="font-semibold text-slate-700">Adjust old payout for objective increase</span>
         <span class="relative inline-flex shrink-0">
           <input id="personae-hybrid-objective-compensation" type="checkbox" role="switch" class="peer sr-only">
+          <span aria-hidden="true" class="h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-violet-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>
+        </span>
+      </label>
+      <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs">
+        <span class="font-semibold text-slate-700">Show achievement after objective increase</span>
+        <span class="relative inline-flex shrink-0">
+          <input id="personae-achievement-basis" type="checkbox" role="switch" aria-label="Show achievement after objective increase" class="peer sr-only">
           <span aria-hidden="true" class="h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-violet-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-4"></span>
         </span>
       </label>
@@ -1489,53 +1508,53 @@
     <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <h3 class="font-bold text-slate-800">Comparaison des courbes</h3>
-          <p class="text-xs text-slate-500">Accélération dès 80 %; le paiement hybride démarre à 40 %.</p>
+          <h3 class="font-bold text-slate-800">Curve comparison</h3>
+          <p class="text-xs text-slate-500">Acceleration from 80%; hybrid payout starts at 40%.</p>
         </div>
         <div class="flex items-center gap-1 rounded-xl bg-slate-100 p-1 text-xs font-semibold">
           <button id="personae-mode-euros" onclick="setPersonaeMode('euros')" class="px-3 py-2 rounded-lg bg-white text-violet-700 shadow-sm">
-            Courbe %/€
+            Curve %/€
           </button>
           <button id="personae-mode-percent" onclick="setPersonaeMode('percent')" class="px-3 py-2 rounded-lg text-slate-600 hover:text-violet-700">
-            Courbe %/%
+            Curve %/%
           </button>
         </div>
       </div>
       <p id="personae-mode-note" class="mb-3 rounded-lg bg-violet-50 px-3 py-2 text-xs text-violet-800">
-        En mode %/€, la nouvelle courbe tient compte de la hausse d’objectif.
+        In %/€ mode, the new curve accounts for the objective increase.
       </p>
       <div class="h-[28rem] w-full">
-        <canvas id="personae-chart" role="img" aria-label="Comparaison des courbes de rémunération des personas" aria-describedby="personae-chart-description"></canvas>
+        <canvas id="personae-chart" role="img" aria-label="Comparison of persona pay curves" aria-describedby="personae-chart-description"></canvas>
       </div>
-      <p id="personae-chart-description" class="sr-only">Le graphique compare les courbes de rémunération ancienne et hybride selon le pourcentage d’atteinte; les lignes et repères sont identifiés dans la légende.</p>
+      <p id="personae-chart-description" class="sr-only">The chart compares old and hybrid pay curves by achievement percentage; lines and markers are identified in the legend.</p>
       <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-600">
-        <span class="inline-flex items-center gap-2"><span class="inline-block w-7 border-t-2 border-dashed border-slate-500"></span>Ancienne courbe</span>
-        <span class="inline-flex items-center gap-2"><span class="inline-block w-7 border-t-2 border-violet-600"></span>Nouvelle courbe hybride</span>
-        <span class="inline-flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rotate-45 bg-rose-500"></span>Premier dépassement</span>
+        <span class="inline-flex items-center gap-2"><span class="inline-block w-7 border-t-2 border-dashed border-slate-500"></span>Old curve</span>
+        <span class="inline-flex items-center gap-2"><span class="inline-block w-7 border-t-2 border-violet-600"></span>New hybrid curve</span>
+        <span class="inline-flex items-center gap-2"><span class="inline-block w-2.5 h-2.5 rotate-45 bg-rose-500"></span>First crossover</span>
       </div>
       <div id="personae-chart-legend" class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600"></div>
       <div id="personae-crossings" class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs"></div>
-      <p id="personae-empty" class="hidden py-10 text-center text-sm text-slate-400">Aucune persona incluse pour les filtres sélectionnés.</p>
+      <p id="personae-empty" class="hidden py-10 text-center text-sm text-slate-400">No persona included for the selected filters.</p>
     </section>
 
     <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
       <div class="px-4 py-4 border-b border-slate-100">
-        <h3 class="font-bold text-slate-800">Personas et données moyennes</h3>
-        <p class="mt-1 text-xs text-slate-500">Le Portugal est décoché par défaut; cochez-le pour l’inclure. Les personas ne sont pas filtrées par leur libellé.</p>
+        <h3 class="font-bold text-slate-800">Personas and average data</h3>
+        <p class="mt-1 text-xs text-slate-500">Portugal is unchecked by default; select it to include it. Personas are not filtered by their label.</p>
       </div>
       <div role="region" aria-label="Personae and average data table" tabindex="0" class="overflow-x-auto custom-scrollbar">
         <table class="min-w-[64rem] text-left text-xs">
           <thead class="bg-slate-50 text-slate-500">
             <tr>
-              <th class="px-3 py-3 font-semibold">Inclure</th>
-              <th class="px-3 py-3 font-semibold">Pays</th>
-              <th class="px-3 py-3 font-semibold">Séniorité</th>
+              <th class="px-3 py-3 font-semibold">Include</th>
+              <th class="px-3 py-3 font-semibold">Country</th>
+              <th class="px-3 py-3 font-semibold">Seniority</th>
               <th class="px-3 py-3 font-semibold">Persona</th>
-              <th class="px-3 py-3 text-right font-semibold">Effectif</th>
-              <th class="px-3 py-3 text-right font-semibold">Âge moyen</th>
-              <th class="px-3 py-3 text-right font-semibold">Fixe moyen</th>
-              <th class="px-3 py-3 text-right font-semibold">Bonus cible moyen</th>
-              <th class="px-3 py-3 text-right font-semibold">Bonus cible (%)</th>
+              <th class="px-3 py-3 text-right font-semibold">Headcount</th>
+              <th class="px-3 py-3 text-right font-semibold">Average age</th>
+              <th class="px-3 py-3 text-right font-semibold">Average fixed pay</th>
+              <th class="px-3 py-3 text-right font-semibold">Average target bonus</th>
+              <th class="px-3 py-3 text-right font-semibold">Target bonus (%)</th>
             </tr>
           </thead>
           <tbody id="personae-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
@@ -1567,6 +1586,12 @@ const BUILD_PROFILE = "SWE";
         columns: { orga: 0, jobProfile: 1, country: 2, fixed: 6, nominal: 7 },
         excludedOrgaPattern: /MG/i,
         views: { fourToOne: true, personae: true },
+        populationSourceSwitch: true,
+        defaultPopulationSource: 'legacy',
+        populationSources: {
+          swe2025: { label: 'New source (Copie de Liste Sales)', csvFile: 'population_test_swe2025.csv', format: 'named' },
+          legacy: { label: 'Legacy source (Data dynamic distributions)', csvFile: 'population_test.csv', format: 'indexed' }
+        },
         defaultBreakpoints: [
           { achievement: 0, payout: 0 },
           { achievement: 40, payout: 0 },
@@ -1583,6 +1608,7 @@ const BUILD_PROFILE = "SWE";
         columns: { jobProfile: 0, country: 1, fixed: 3, nominal: 4 },
         excludedOrgaPattern: null,
         views: { fourToOne: false, personae: false },
+        populationSourceSwitch: false,
         blankPopulationInputs: true,
         blankPopulationMetrics: true,
         defaultBreakpoints: [
@@ -1599,10 +1625,13 @@ const BUILD_PROFILE = "SWE";
       typeof BUILD_PROFILE === 'string' ? BUILD_PROFILE : 'SWE'
     ] || POPULATION_PROFILES.SWE;
 
+    let activePopulationSourceKey = activePopulationProfile.defaultPopulationSource || null;
+
     function configurePopulationProfile(profileId) {
       const profile = POPULATION_PROFILES[String(profileId || '').toUpperCase()];
       if (!profile) throw new Error('Unknown population profile: ' + profileId);
       activePopulationProfile = profile;
+      activePopulationSourceKey = profile.defaultPopulationSource || null;
       advPopulation = [];
       popFilters = { country: '', jobProfile: '' };
       realAgg = null;
@@ -1611,20 +1640,21 @@ const BUILD_PROFILE = "SWE";
     }
 
     function applyProfileUi() {
-      const hidden = !activePopulationProfile.views.fourToOne;
-      ['tab-four-to-one', 'view-four-to-one'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('hidden', hidden);
-        if (hidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
+      [
+        ['fourToOne', 'tab-four-to-one', 'view-four-to-one'],
+        ['personae', 'tab-personae', 'view-personae']
+      ].forEach(([feature, tabId, viewId]) => {
+        const hidden = !activePopulationProfile.views[feature];
+        const tab = document.getElementById(tabId);
+        if (tab) tab.classList.toggle('hidden', hidden);
+        const view = document.getElementById(viewId);
+        if (view && hidden) view.classList.add('hidden');
       });
-      const personaeHidden = !activePopulationProfile.views.personae;
-      ['tab-personae', 'view-personae'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('hidden', personaeHidden);
-        if (personaeHidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
-      });
+      const switchWrap = document.getElementById('pop-source-switch');
+      const switchEnabled = Boolean(activePopulationProfile.populationSourceSwitch);
+      if (switchWrap) switchWrap.classList.toggle('hidden', !switchEnabled);
+      const select = document.getElementById('pop-source-select');
+      if (select && switchEnabled) select.value = activePopulationSourceKey;
     }
     // State management
     const state = {
@@ -2033,13 +2063,13 @@ const BUILD_PROFILE = "SWE";
       state.breakpoints.forEach((bp, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td class="py-1.5 px-3">
-            <input type="number" value="${bp.achievement}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'achievement', this.value)" class="w-20 px-2 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
+          <td class="py-1.5 px-2 whitespace-nowrap">
+            <input type="number" value="${bp.achievement}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'achievement', this.value)" class="w-14 px-1.5 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
           </td>
-          <td class="py-1.5 px-3">
-            <input type="number" value="${bp.payout}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'payout', this.value)" class="w-20 px-2 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
+          <td class="py-1.5 px-2 whitespace-nowrap">
+            <input type="number" value="${bp.payout}" min="0" max="300" step="5" onchange="updateBreakpoint(${index}, 'payout', this.value)" class="w-14 px-1.5 py-1 bg-white border border-slate-200 rounded font-mono font-bold text-xs focus:ring-1 focus:ring-indigo-500"> %
           </td>
-          <td class="py-1.5 px-2 text-right">
+          <td class="py-1.5 px-1 text-right">
             ${state.breakpoints.length > 2 ? `
               <button onclick="removeBreakpointRow(${index})" class="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition-all" title="Delete this breakpoint">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -2705,7 +2735,69 @@ const BUILD_PROFILE = "SWE";
       return Boolean(pattern && pattern.test(String(orga || '')));
     }
 
-    function parsePopulationCsv(text) {
+    // Splits one CSV line: commas separate cells, double quotes group a cell, "" is a literal quote.
+    function splitCsvLine(line) {
+      const cells = [];
+      let current = '';
+      let quoted = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (quoted) {
+          if (ch === '"' && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else if (ch === '"') {
+            quoted = false;
+          } else {
+            current += ch;
+          }
+        } else if (ch === '"') {
+          quoted = true;
+        } else if (ch === ',') {
+          cells.push(current.trim());
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      cells.push(current.trim());
+      return cells;
+    }
+
+    // Named-header CSV for the 2025 source (same validity rule as the Apps Script backend).
+    function parseNamedPopulationCsv(text) {
+      const lines = String(text || '').split(/\r?\n/).filter(l => l.replace(/[\s,"]/g, '') !== '');
+      const header = splitCsvLine(lines[0] || '').map(c => c.toLowerCase());
+      const columnOf = name => header.indexOf(name.toLowerCase());
+      const required = ['Country', 'Business Title', 'In/Out', 'Annualized Base Pay', 'Nominal',
+        'Achievement 2025', 'Rating - Most Recent', 'Market', 'Category', 'seniority years', 'Age'];
+      const missing = required.find(name => columnOf(name) < 0);
+      if (missing) throw new Error('Missing column: ' + missing);
+      const numberOf = text => (String(text).trim() === '' ? NaN : Number(text));
+      const reps = [];
+      let ignored = 0;
+      lines.slice(1).forEach(line => {
+        const cells = splitCsvLine(line);
+        if (cells.length > header.length) {
+          ignored++;
+          return;
+        }
+        while (cells.length < header.length) cells.push('');
+        const cell = name => (columnOf(name) < cells.length ? cells[columnOf(name)] : '');
+        const fixed = numberOf(cell('Annualized Base Pay'));
+        const nominal = numberOf(cell('Nominal'));
+        if (cell('In/Out').toLowerCase() !== 'in' || !cell('Country') || !cell('Business Title') ||
+            !(fixed > 0) || !(nominal >= 0)) {
+          ignored++;
+          return;
+        }
+        reps.push({ jobProfile: cell('Business Title'), country: cell('Country'), fixed, nominal });
+      });
+      return { reps, ignored };
+    }
+
+    function parsePopulationCsv(text, format = 'indexed') {
+      if (format === 'named') return parseNamedPopulationCsv(text);
       const lines = String(text || '').split(/\r?\n/).filter(l => l.trim() !== '');
       const reps = [];
       let ignored = 0;
@@ -2794,16 +2886,49 @@ const BUILD_PROFILE = "SWE";
     function loadPopulationCsvFile(file) {
       setPopulationStatus('Loading ' + file.name + '…');
       const reader = new FileReader();
-      reader.onload = () => applyPopulationCsv(parsePopulationCsv(reader.result), file.name);
+      reader.onload = () => {
+        try {
+          applyPopulationCsv(parsePopulationCsv(reader.result, activePopulationFormat()), file.name);
+        } catch (err) {
+          setPopulationStatus('Reading error: ' + file.name + ' (' + (err && err.message ? err.message : err) + ')');
+        }
+      };
       reader.onerror = () => setPopulationStatus('Reading error: ' + file.name);
       reader.readAsText(file);
     }
 
+    // Source helpers: the SWE profile selects one of two sources; NCE has a single fixed source.
+    function activePopulationCsvFile() {
+      const profile = activePopulationProfile;
+      if (!profile.populationSourceSwitch) return profile.csvFile;
+      return profile.populationSources[activePopulationSourceKey].csvFile;
+    }
+
+    function activePopulationFormat() {
+      const profile = activePopulationProfile;
+      if (!profile.populationSourceSwitch) return 'indexed';
+      return profile.populationSources[activePopulationSourceKey].format;
+    }
+
+    function populationSourceArgs() {
+      return activePopulationProfile.populationSourceSwitch ? [activePopulationSourceKey] : [];
+    }
+
+    function onPopulationSourceChange(key) {
+      if (!activePopulationProfile.populationSourceSwitch || !activePopulationProfile.populationSources[key]) return;
+      activePopulationSourceKey = key;
+      advPopulation = [];
+      realAgg = null;
+      loadPopulationFromSheet();
+    }
+
     function loadPopulationFromSheet() {
+      const requestedKey = activePopulationSourceKey;
       if (typeof google !== 'undefined' && google.script && google.script.run) {
           setPopulationStatus('Loading from the Sheet…');
           google.script.run
             .withSuccessHandler(reps => {
+            if (requestedKey !== activePopulationSourceKey) return; // a newer source was selected meanwhile
             const loaded = Array.isArray(reps) ? { reps, ignored: 0 } : (reps || { reps: [], ignored: 0 });
             setIndividualTablesVisible(loaded.canViewIndividualTables === undefined
               ? true
@@ -2816,20 +2941,22 @@ const BUILD_PROFILE = "SWE";
               refreshPopulation();
             })
             .withFailureHandler(err => {
+              if (requestedKey !== activePopulationSourceKey) return;
               setIndividualTablesVisible(false);
               setPopulationStatus('Loading error: ' + (err && err.message ? err.message : err));
             })
-            .getPopulation();
+            .getPopulation(...populationSourceArgs());
           return;
       }
       // Local mode: fetch the profile-specific CSV sitting next to index.html,
       // falling back to a picker when the browser blocks file:// access.
-      const csvFile = activePopulationProfile.csvFile;
+      const csvFile = activePopulationCsvFile();
       setPopulationStatus('Loading ' + csvFile + '…');
       fetch(csvFile)
           .then(async r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
-          applyPopulationCsv(parsePopulationCsv(await r.text()), csvFile);
+          if (requestedKey !== activePopulationSourceKey) return;
+          applyPopulationCsv(parsePopulationCsv(await r.text(), activePopulationFormat()), csvFile);
           })
           .catch(err => {
             if ((err instanceof TypeError) || /^HTTP/.test(String(err && err.message))) showCsvPicker();
@@ -3391,19 +3518,6 @@ const BUILD_PROFILE = "SWE";
       });
     }
 
-    const PRESET_BUTTONS = [
-      ['initial', 'preset-initial'],
-      ['targetGroup', 'preset-targetGroup'],
-      ['highIncentive', 'preset-highIncentive']
-    ];
-
-    function syncPresetButtonStates(presetKey) {
-      PRESET_BUTTONS.forEach(([key, id]) => {
-        const button = document.getElementById(id);
-        if (button) button.ariaPressed = String(key === presetKey);
-      });
-    }
-
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
@@ -3455,31 +3569,22 @@ const BUILD_PROFILE = "SWE";
 
     // Presets
     function applyPreset(presetKey) {
-      syncPresetButtonStates(presetKey);
-      document.querySelectorAll('.preset-btn').forEach(b => {
-        b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
-        b.classList.add('text-slate-600');
-      });
-
       if (presetKey === 'initial') {
         state.targetIncrease = 0;
         state.overperf = 0;
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-initial').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'targetGroup') {
         // Absolute pp: mu = 110, targetIncrease = +30pp → new mu = 110 - 30 = 80%
         state.targetIncrease = 30;
         state.overperf = 0;
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-targetGroup').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'highIncentive') {
         state.targetIncrease = 30;
         state.overperf = 2; // +2 pp induced overperformance
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-highIncentive').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       }
 
       syncInputsFromState();
@@ -3751,7 +3856,6 @@ const BUILD_PROFILE = "SWE";
       appInitialized = true;
       applyProfileUi();
       syncViewButtonStates('standard');
-      syncPresetButtonStates(null);
       lucide.createIcons();
       renderBreakpointsTable();
       initChart();
@@ -3783,6 +3887,7 @@ const BUILD_PROFILE = "SWE";
     let personaeFilters = { countries: new Set(), seniority: '' };
     let personaeKnownCountries = new Set();
     let personaeMode = 'euros';
+    let personaeAchievementBasis = 'before';
     let personaeMinimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT;
     let personaeObjectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT;
     let personaeChart = null;
@@ -3836,6 +3941,21 @@ const BUILD_PROFILE = "SWE";
       };
     }
 
+    function getPersonaeAchievementForAxis(axisAchievement, basis = 'before',
+      objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT) {
+      if (!isFinite(axisAchievement)) throw new Error('Axis achievement must be finite.');
+      if (basis !== 'before' && basis !== 'after') throw new Error('Unknown Personae achievement basis: ' + basis);
+      const increase = Math.max(0, Number(objectiveIncrease) || 0);
+      return basis === 'after' ? axisAchievement + increase : axisAchievement;
+    }
+
+    function getPersonaeAxisValue(achievement, basis = 'before',
+      objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT) {
+      return basis === 'after'
+        ? achievement - Math.max(0, Number(objectiveIncrease) || 0)
+        : achievement;
+    }
+
     function getPersonaeCrossover(persona, minimumNominal, objectiveIncrease, maxAchievement) {
       let previousX = 0;
       let previousDifference = getPersonaePayouts(persona, 0, 'euros', minimumNominal, objectiveIncrease).newPayout;
@@ -3882,8 +4002,9 @@ const BUILD_PROFILE = "SWE";
     function getPersonaeCurvePoints(persona, mode, maxAchievement,
       minimumNominal = PERSONAE_MIN_NOMINAL_DEFAULT,
       objectiveIncrease = PERSONAE_OBJECTIVE_INCREASE_DEFAULT,
-      step = 2) {
-      const thresholdX = PERSONAE_ZERO_THRESHOLD + (mode === 'euros' ? objectiveIncrease : 0);
+      step = 2, achievementBasis = 'before') {
+      const thresholdX = PERSONAE_ZERO_THRESHOLD +
+        (mode === 'euros' && achievementBasis === 'before' ? objectiveIncrease : 0);
       const xValues = new Set();
       for (let x = 0; x <= maxAchievement; x += step) xValues.add(x);
       xValues.add(thresholdX);
@@ -3891,7 +4012,13 @@ const BUILD_PROFILE = "SWE";
         .filter(x => x >= 0 && x <= maxAchievement)
         .sort((a, b) => a - b)
         .flatMap(x => {
-          const payout = getPersonaePayouts(persona, x, mode, minimumNominal, objectiveIncrease).newPayout;
+          const payout = getPersonaePayouts(
+            persona,
+            getPersonaeAchievementForAxis(x, achievementBasis, objectiveIncrease),
+            mode,
+            minimumNominal,
+            objectiveIncrease
+          ).newPayout;
           return x === thresholdX
             ? [{ x, y: 0 }, { x, y: payout }]
             : [{ x, y: payout }];
@@ -3907,7 +4034,7 @@ const BUILD_PROFILE = "SWE";
     function normalizePersonaeResponse(response) {
       if (!response || !Array.isArray(response.personae) ||
           !Number.isInteger(response.ignored) || response.ignored < 0) {
-        throw new Error('Réponse Personae invalide.');
+        throw new Error('Invalid Personae response.');
       }
       return response.personae.map((row, index) => {
         const normalized = {
@@ -3926,7 +4053,7 @@ const BUILD_PROFILE = "SWE";
             !Number.isFinite(normalized.fixedSalary) || normalized.fixedSalary <= 0 ||
             !Number.isFinite(normalized.oldNominal) || normalized.oldNominal < 0 ||
             !Number.isFinite(normalized.oldNominalPct) || normalized.oldNominalPct < 0) {
-          throw new Error('Données invalides pour la persona en ligne ' + (index + 3) + '.');
+          throw new Error('Invalid data for persona on row ' + (index + 3) + '.');
         }
         return normalized;
       });
@@ -3936,11 +4063,11 @@ const BUILD_PROFILE = "SWE";
       const status = document.getElementById('personae-status');
       if (personaeLoading) return;
       if (typeof google === 'undefined' || !google.script || !google.script.run) {
-        status.innerText = 'Erreur : ouvrez la version Apps Script pour charger les données Personae.';
+        status.innerText = 'Error: open the Apps Script version to load Personae data.';
         return;
       }
       personaeLoading = true;
-      status.innerText = 'Chargement des personas…';
+      status.innerText = 'Loading personas…';
       google.script.run
         .withSuccessHandler(response => {
           personaeLoading = false;
@@ -3956,20 +4083,20 @@ const BUILD_PROFILE = "SWE";
                 : true)
               .map(getPersonaeRowKey));
             updatePersonaeFilterOptions();
-            status.innerText = personaeData.length + ' persona(s) chargée(s), ' +
-              response.ignored + ' ligne(s) ignorée(s).';
+            status.innerText = personaeData.length + ' persona(s) loaded, ' +
+              response.ignored + ' row(s) ignored.';
             renderPersonaeView();
           } catch (error) {
             personaeData = [];
             personaeLoaded = false;
             personaeIncluded.clear();
-            status.innerText = 'Erreur : ' + error.message;
+            status.innerText = 'Error: ' + error.message;
             renderPersonaeView();
           }
         })
         .withFailureHandler(error => {
           personaeLoading = false;
-          status.innerText = 'Erreur : ' + (error && error.message ? error.message : String(error));
+          status.innerText = 'Error: ' + (error && error.message ? error.message : String(error));
         })
         .getPersonae();
     }
@@ -3993,7 +4120,7 @@ const BUILD_PROFILE = "SWE";
       const select = document.getElementById('personae-filter-seniority');
       const options = Array.from(new Set(personaeData.map(row => row.seniority))).sort((a, b) => a.localeCompare(b));
       if (personaeFilters.seniority && !options.includes(personaeFilters.seniority)) personaeFilters.seniority = '';
-      select.innerHTML = '<option value="">Tous</option>' + options.map(value =>
+      select.innerHTML = '<option value="">All</option>' + options.map(value =>
         '<option value="' + escapePersonaeHtml(value) + '">' + escapePersonaeHtml(value) + '</option>'
       ).join('');
       select.value = personaeFilters.seniority;
@@ -4016,11 +4143,11 @@ const BUILD_PROFILE = "SWE";
     }
 
     function formatPersonaeNumber(value, maximumFractionDigits = 0) {
-      return new Intl.NumberFormat('fr-FR', { maximumFractionDigits }).format(value);
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits }).format(value);
     }
 
     function formatPersonaeEuros(value) {
-      return new Intl.NumberFormat('fr-FR', {
+      return new Intl.NumberFormat('en-US', {
         style: 'currency', currency: 'EUR', maximumFractionDigits: 0
       }).format(value);
     }
@@ -4035,7 +4162,7 @@ const BUILD_PROFILE = "SWE";
         const label = escapePersonaeHtml(getPersonaeDisplayName(row));
         return '<tr>' +
           '<td class="px-3 py-2"><input type="checkbox" data-key="' + escapePersonaeHtml(key) + '"' + checked +
-            ' aria-label="Inclure ' + label + '" class="accent-violet-600"></td>' +
+            ' aria-label="Include ' + label + '" class="accent-violet-600"></td>' +
           '<td class="px-3 py-2">' + escapePersonaeHtml(row.country) + '</td>' +
           '<td class="px-3 py-2">' + escapePersonaeHtml(row.seniority) + '</td>' +
           '<td class="px-3 py-2 font-medium">' + segment + '</td>' +
@@ -4051,6 +4178,7 @@ const BUILD_PROFILE = "SWE";
     function setPersonaeMode(mode) {
       if (mode !== 'euros' && mode !== 'percent') throw new Error('Unknown Personae curve mode: ' + mode);
       personaeMode = mode;
+      if (mode === 'percent') personaeAchievementBasis = 'before';
       const euroButton = document.getElementById('personae-mode-euros');
       const percentButton = document.getElementById('personae-mode-percent');
       const active = 'px-3 py-2 rounded-lg bg-white text-violet-700 shadow-sm';
@@ -4061,10 +4189,13 @@ const BUILD_PROFILE = "SWE";
       percentButton.ariaPressed = String(mode === 'percent');
       const increaseInput = document.getElementById('personae-objective-increase');
       increaseInput.disabled = mode === 'percent';
+      const basisInput = document.getElementById('personae-achievement-basis');
+      basisInput.disabled = mode === 'percent';
+      basisInput.checked = mode === 'euros' && personaeAchievementBasis === 'after';
       const note = document.getElementById('personae-mode-note');
       note.innerText = mode === 'percent'
-        ? 'Pas de hausse d’objectif appliquée en mode %/%. Ancienne courbe commune y = x; les courbes hybrides sont exprimées en % de leur nouveau nominal.'
-        : 'En mode %/€, la nouvelle courbe tient compte de la hausse d’objectif.';
+        ? 'No objective increase applied in %/% mode. The old common curve is y = x; hybrid curves are expressed as a percentage of their new nominal.'
+        : 'In %/€ mode, the new curve accounts for the objective increase.';
       renderPersonaeView();
     }
 
@@ -4089,8 +4220,8 @@ const BUILD_PROFILE = "SWE";
                     : formatPersonaeEuros(point.y);
                   const headcount = context.dataset.personaeHeadcount;
                   const headcountInfo = Number.isFinite(headcount)
-                    ? ' · Effectif : ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
-                      (headcount === 1 ? ' personne' : ' personnes')
+                    ? ' · Headcount: ' + formatPersonaeNumber(headcount, Number.isInteger(headcount) ? 0 : 1) +
+                      (headcount === 1 ? ' person' : ' people')
                     : '';
                   return context.dataset.label + ': ' + value + headcountInfo;
                 }
@@ -4102,15 +4233,15 @@ const BUILD_PROFILE = "SWE";
               type: 'linear',
               min: 0,
               max: 150,
-              title: { display: true, text: 'Atteinte avant hausse d’objectif (%)' },
+              title: { display: true, text: 'Achievement before objective increase (%)' },
               ticks: { callback: value => value + '%' }
             },
             y: {
               beginAtZero: true,
-              title: { display: true, text: 'Rémunération variable (€)' },
+              title: { display: true, text: 'Variable pay (€)' },
               ticks: { callback: value => personaeMode === 'percent'
                 ? value + '%'
-                : new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 }).format(value) + ' €' }
+                : new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(value) + ' €' }
             }
           }
         }
@@ -4120,18 +4251,26 @@ const BUILD_PROFILE = "SWE";
     function renderPersonaeCrossings(rows) {
       const container = document.getElementById('personae-crossings');
       if (personaeMode === 'percent') {
-        container.innerHTML = '<p class="sm:col-span-2 lg:col-span-3 text-slate-500">Sans hausse d’objectif, les courbes hybrides rejoignent la référence y = x à 100 %; aucun dépassement n’est appliqué dans ce mode.</p>';
+        container.innerHTML = '<p class="sm:col-span-2 lg:col-span-3 text-slate-500">Without an objective increase, hybrid curves meet the y = x reference at 100%; there is no crossover in this mode.</p>';
         return;
       }
-      const maxAchievement = 200 + personaeObjectiveIncrease;
+      const maxAxisAchievement = personaeAchievementBasis === 'after'
+        ? 200
+        : 200 + personaeObjectiveIncrease;
+      const maxAchievement = getPersonaeAchievementForAxis(
+        maxAxisAchievement, personaeAchievementBasis, personaeObjectiveIncrease
+      );
       container.innerHTML = rows.map(row => {
         const crossing = getPersonaeCrossover(
           row, personaeMinimumNominal, personaeObjectiveIncrease, maxAchievement
         );
         const color = PERSONAE_COLORS[rows.indexOf(row) % PERSONAE_COLORS.length];
+        const axisCrossing = crossing === null
+          ? null
+          : getPersonaeAxisValue(crossing, personaeAchievementBasis, personaeObjectiveIncrease);
         const summary = crossing === null
-          ? 'Aucun dépassement jusqu’à ' + maxAchievement + ' %'
-          : 'Dépassement dès ' + formatPersonaeNumber(crossing, 1) + ' %';
+          ? 'No crossover up to ' + maxAxisAchievement + '%'
+          : 'Crossover from ' + formatPersonaeNumber(axisCrossing, 1) + '%';
         return '<div class="rounded-lg border border-slate-100 px-3 py-2"><span class="mr-2 inline-block h-2 w-2 rounded-full" style="background-color:' +
           color + '"></span><span class="font-semibold">' + escapePersonaeHtml(getPersonaeDisplayName(row)) +
           '</span><span class="mt-1 block text-slate-500">' + summary + '</span></div>';
@@ -4149,13 +4288,15 @@ const BUILD_PROFILE = "SWE";
 
     function renderPersonaeChart(rows) {
       if (!personaeChart) return;
-      const xMax = personaeMode === 'euros' ? 200 + personaeObjectiveIncrease : 150;
+      const xMax = personaeMode === 'euros' && personaeAchievementBasis === 'before'
+        ? 200 + personaeObjectiveIncrease
+        : personaeMode === 'euros' ? 200 : 150;
       const points = Array.from({ length: Math.ceil(xMax / 2) + 1 }, (_, index) => index * 2)
         .filter(value => value <= xMax);
       const datasets = [];
       if (personaeMode === 'percent') {
         datasets.push({
-          label: 'Ancienne courbe commune (y = x)',
+           label: 'Common old curve (y = x)',
           data: points.map(x => ({ x, y: x })),
           borderColor: '#475569',
           borderDash: [7, 5],
@@ -4169,10 +4310,14 @@ const BUILD_PROFILE = "SWE";
         const color = PERSONAE_COLORS[index % PERSONAE_COLORS.length];
         if (personaeMode === 'euros') {
           datasets.push({
-            label: getPersonaeDisplayName(row) + ' — ancienne',
+             label: getPersonaeDisplayName(row) + ' — old',
             personaeHeadcount: row.headcount,
             data: points.map(x => ({ x, y: getPersonaePayouts(
-              row, x, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
+              row,
+              getPersonaeAchievementForAxis(x, personaeAchievementBasis, personaeObjectiveIncrease),
+              'euros',
+              personaeMinimumNominal,
+              personaeObjectiveIncrease
             ).oldPayout })),
             borderColor: color,
             borderDash: [6, 4],
@@ -4183,10 +4328,16 @@ const BUILD_PROFILE = "SWE";
           });
         }
         datasets.push({
-          label: getPersonaeDisplayName(row) + ' — hybride',
+           label: getPersonaeDisplayName(row) + ' — hybrid',
           personaeHeadcount: row.headcount,
           data: getPersonaeCurvePoints(
-            row, personaeMode, xMax, personaeMinimumNominal, personaeObjectiveIncrease
+            row,
+            personaeMode,
+            xMax,
+            personaeMinimumNominal,
+            personaeObjectiveIncrease,
+            2,
+            personaeAchievementBasis
           ),
           borderColor: color,
           borderWidth: 2.5,
@@ -4196,14 +4347,20 @@ const BUILD_PROFILE = "SWE";
         });
         if (personaeMode === 'euros') {
           const crossing = getPersonaeCrossover(
-            row, personaeMinimumNominal, personaeObjectiveIncrease, xMax
+            row,
+            personaeMinimumNominal,
+            personaeObjectiveIncrease,
+            getPersonaeAchievementForAxis(xMax, personaeAchievementBasis, personaeObjectiveIncrease)
           );
           if (crossing !== null) {
+            const axisCrossing = getPersonaeAxisValue(
+              crossing, personaeAchievementBasis, personaeObjectiveIncrease
+            );
             datasets.push({
               type: 'scatter',
-              label: getPersonaeDisplayName(row) + ' — début du dépassement',
+               label: getPersonaeDisplayName(row) + ' — crossover start',
               personaeHeadcount: row.headcount,
-              data: [{ x: crossing, y: getPersonaePayouts(
+              data: [{ x: axisCrossing, y: getPersonaePayouts(
                 row, crossing, 'euros', personaeMinimumNominal, personaeObjectiveIncrease
               ).newPayout }],
               borderColor: color,
@@ -4219,9 +4376,14 @@ const BUILD_PROFILE = "SWE";
       });
       personaeChart.data.datasets = datasets;
       personaeChart.options.scales.x.max = xMax;
+      personaeChart.options.scales.x.title.text = personaeMode === 'percent'
+        ? 'Achievement before objective increase (%)'
+        : personaeAchievementBasis === 'after'
+          ? 'Achievement after objective increase (%)'
+          : 'Achievement before objective increase (%)';
       personaeChart.options.scales.y.title.text = personaeMode === 'percent'
-        ? '% du nominal propre à chaque courbe'
-        : 'Rémunération variable (€)';
+        ? '% of each curve’s own nominal'
+        : 'Variable pay (€)';
       personaeChart.update('none');
     }
 
@@ -4268,6 +4430,10 @@ const BUILD_PROFILE = "SWE";
         if (!Number.isFinite(value)) return;
         personaeObjectiveIncrease = Math.max(0, Math.min(60, value));
         document.getElementById('personae-objective-value').innerText = '+' + personaeObjectiveIncrease;
+        renderPersonaeView();
+      });
+      document.getElementById('personae-achievement-basis').addEventListener('change', event => {
+        personaeAchievementBasis = event.target.checked ? 'after' : 'before';
         renderPersonaeView();
       });
       document.getElementById('personae-table-body').addEventListener('change', event => {

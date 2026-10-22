@@ -10,6 +10,12 @@
         columns: { orga: 0, jobProfile: 1, country: 2, fixed: 6, nominal: 7 },
         excludedOrgaPattern: /MG/i,
         views: { fourToOne: true, personae: true },
+        populationSourceSwitch: true,
+        defaultPopulationSource: 'legacy',
+        populationSources: {
+          swe2025: { label: 'New source (Copie de Liste Sales)', csvFile: 'population_test_swe2025.csv', format: 'named' },
+          legacy: { label: 'Legacy source (Data dynamic distributions)', csvFile: 'population_test.csv', format: 'indexed' }
+        },
         defaultBreakpoints: [
           { achievement: 0, payout: 0 },
           { achievement: 40, payout: 0 },
@@ -26,6 +32,7 @@
         columns: { jobProfile: 0, country: 1, fixed: 3, nominal: 4 },
         excludedOrgaPattern: null,
         views: { fourToOne: false, personae: false },
+        populationSourceSwitch: false,
         blankPopulationInputs: true,
         blankPopulationMetrics: true,
         defaultBreakpoints: [
@@ -42,10 +49,13 @@
       typeof BUILD_PROFILE === 'string' ? BUILD_PROFILE : 'SWE'
     ] || POPULATION_PROFILES.SWE;
 
+    let activePopulationSourceKey = activePopulationProfile.defaultPopulationSource || null;
+
     function configurePopulationProfile(profileId) {
       const profile = POPULATION_PROFILES[String(profileId || '').toUpperCase()];
       if (!profile) throw new Error('Unknown population profile: ' + profileId);
       activePopulationProfile = profile;
+      activePopulationSourceKey = profile.defaultPopulationSource || null;
       advPopulation = [];
       popFilters = { country: '', jobProfile: '' };
       realAgg = null;
@@ -54,18 +64,19 @@
     }
 
     function applyProfileUi() {
-      const hidden = !activePopulationProfile.views.fourToOne;
-      ['tab-four-to-one', 'view-four-to-one'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('hidden', hidden);
-        if (hidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
+      [
+        ['fourToOne', 'tab-four-to-one', 'view-four-to-one'],
+        ['personae', 'tab-personae', 'view-personae']
+      ].forEach(([feature, tabId, viewId]) => {
+        const hidden = !activePopulationProfile.views[feature];
+        const tab = document.getElementById(tabId);
+        if (tab) tab.classList.toggle('hidden', hidden);
+        const view = document.getElementById(viewId);
+        if (view && hidden) view.classList.add('hidden');
       });
-      const personaeHidden = !activePopulationProfile.views.personae;
-      ['tab-personae', 'view-personae'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.toggle('hidden', personaeHidden);
-        if (personaeHidden) el.className = (typeof el.className === 'string' ? el.className : '') + ' hidden';
-      });
+      const switchWrap = document.getElementById('pop-source-switch');
+      const switchEnabled = Boolean(activePopulationProfile.populationSourceSwitch);
+      if (switchWrap) switchWrap.classList.toggle('hidden', !switchEnabled);
+      const select = document.getElementById('pop-source-select');
+      if (select && switchEnabled) select.value = activePopulationSourceKey;
     }

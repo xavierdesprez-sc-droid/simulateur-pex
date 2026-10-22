@@ -7,7 +7,69 @@
       return Boolean(pattern && pattern.test(String(orga || '')));
     }
 
-    function parsePopulationCsv(text) {
+    // Splits one CSV line: commas separate cells, double quotes group a cell, "" is a literal quote.
+    function splitCsvLine(line) {
+      const cells = [];
+      let current = '';
+      let quoted = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (quoted) {
+          if (ch === '"' && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else if (ch === '"') {
+            quoted = false;
+          } else {
+            current += ch;
+          }
+        } else if (ch === '"') {
+          quoted = true;
+        } else if (ch === ',') {
+          cells.push(current.trim());
+          current = '';
+        } else {
+          current += ch;
+        }
+      }
+      cells.push(current.trim());
+      return cells;
+    }
+
+    // Named-header CSV for the 2025 source (same validity rule as the Apps Script backend).
+    function parseNamedPopulationCsv(text) {
+      const lines = String(text || '').split(/\r?\n/).filter(l => l.replace(/[\s,"]/g, '') !== '');
+      const header = splitCsvLine(lines[0] || '').map(c => c.toLowerCase());
+      const columnOf = name => header.indexOf(name.toLowerCase());
+      const required = ['Country', 'Business Title', 'In/Out', 'Annualized Base Pay', 'Nominal',
+        'Achievement 2025', 'Rating - Most Recent', 'Market', 'Category', 'seniority years', 'Age'];
+      const missing = required.find(name => columnOf(name) < 0);
+      if (missing) throw new Error('Missing column: ' + missing);
+      const numberOf = text => (String(text).trim() === '' ? NaN : Number(text));
+      const reps = [];
+      let ignored = 0;
+      lines.slice(1).forEach(line => {
+        const cells = splitCsvLine(line);
+        if (cells.length > header.length) {
+          ignored++;
+          return;
+        }
+        while (cells.length < header.length) cells.push('');
+        const cell = name => (columnOf(name) < cells.length ? cells[columnOf(name)] : '');
+        const fixed = numberOf(cell('Annualized Base Pay'));
+        const nominal = numberOf(cell('Nominal'));
+        if (cell('In/Out').toLowerCase() !== 'in' || !cell('Country') || !cell('Business Title') ||
+            !(fixed > 0) || !(nominal >= 0)) {
+          ignored++;
+          return;
+        }
+        reps.push({ jobProfile: cell('Business Title'), country: cell('Country'), fixed, nominal });
+      });
+      return { reps, ignored };
+    }
+
+    function parsePopulationCsv(text, format = 'indexed') {
+      if (format === 'named') return parseNamedPopulationCsv(text);
       const lines = String(text || '').split(/\r?\n/).filter(l => l.trim() !== '');
       const reps = [];
       let ignored = 0;
@@ -96,16 +158,49 @@
     function loadPopulationCsvFile(file) {
       setPopulationStatus('Loading ' + file.name + '…');
       const reader = new FileReader();
-      reader.onload = () => applyPopulationCsv(parsePopulationCsv(reader.result), file.name);
+      reader.onload = () => {
+        try {
+          applyPopulationCsv(parsePopulationCsv(reader.result, activePopulationFormat()), file.name);
+        } catch (err) {
+          setPopulationStatus('Reading error: ' + file.name + ' (' + (err && err.message ? err.message : err) + ')');
+        }
+      };
       reader.onerror = () => setPopulationStatus('Reading error: ' + file.name);
       reader.readAsText(file);
     }
 
+    // Source helpers: the SWE profile selects one of two sources; NCE has a single fixed source.
+    function activePopulationCsvFile() {
+      const profile = activePopulationProfile;
+      if (!profile.populationSourceSwitch) return profile.csvFile;
+      return profile.populationSources[activePopulationSourceKey].csvFile;
+    }
+
+    function activePopulationFormat() {
+      const profile = activePopulationProfile;
+      if (!profile.populationSourceSwitch) return 'indexed';
+      return profile.populationSources[activePopulationSourceKey].format;
+    }
+
+    function populationSourceArgs() {
+      return activePopulationProfile.populationSourceSwitch ? [activePopulationSourceKey] : [];
+    }
+
+    function onPopulationSourceChange(key) {
+      if (!activePopulationProfile.populationSourceSwitch || !activePopulationProfile.populationSources[key]) return;
+      activePopulationSourceKey = key;
+      advPopulation = [];
+      realAgg = null;
+      loadPopulationFromSheet();
+    }
+
     function loadPopulationFromSheet() {
+      const requestedKey = activePopulationSourceKey;
       if (typeof google !== 'undefined' && google.script && google.script.run) {
           setPopulationStatus('Loading from the Sheet…');
           google.script.run
             .withSuccessHandler(reps => {
+            if (requestedKey !== activePopulationSourceKey) return; // a newer source was selected meanwhile
             const loaded = Array.isArray(reps) ? { reps, ignored: 0 } : (reps || { reps: [], ignored: 0 });
             setIndividualTablesVisible(loaded.canViewIndividualTables === undefined
               ? true
@@ -118,20 +213,22 @@
               refreshPopulation();
             })
             .withFailureHandler(err => {
+              if (requestedKey !== activePopulationSourceKey) return;
               setIndividualTablesVisible(false);
               setPopulationStatus('Loading error: ' + (err && err.message ? err.message : err));
             })
-            .getPopulation();
+            .getPopulation(...populationSourceArgs());
           return;
       }
       // Local mode: fetch the profile-specific CSV sitting next to index.html,
       // falling back to a picker when the browser blocks file:// access.
-      const csvFile = activePopulationProfile.csvFile;
+      const csvFile = activePopulationCsvFile();
       setPopulationStatus('Loading ' + csvFile + '…');
       fetch(csvFile)
           .then(async r => {
             if (!r.ok) throw new Error('HTTP ' + r.status);
-          applyPopulationCsv(parsePopulationCsv(await r.text()), csvFile);
+          if (requestedKey !== activePopulationSourceKey) return;
+          applyPopulationCsv(parsePopulationCsv(await r.text(), activePopulationFormat()), csvFile);
           })
           .catch(err => {
             if ((err instanceof TypeError) || /^HTTP/.test(String(err && err.message))) showCsvPicker();

@@ -3,7 +3,7 @@
 const { ESLint } = require('eslint');
 const fs = require('node:fs');
 const path = require('node:path');
-const { concatJs, concatSalesRepJs } = require('../build');
+const { concatJs, concatSalesRepJs, concatDashboardJs } = require('../build');
 
 async function main() {
   const eslint = new ESLint();
@@ -18,8 +18,10 @@ async function main() {
   const files = [
     'build.js',
     'eslint.config.js',
+    'playwright.config.js',
     'src/top-strip.js',
     'Code.gs',
+    'dashboard/Code.gs',
     'scripts/**/*.js',
     'tests/**/*.js'
   ];
@@ -32,6 +34,10 @@ async function main() {
     ...(await eslint.lintText(
       `${concatSalesRepJs()}\n${readSuites(salesRepSuiteFiles)}`,
       { filePath: 'src/js/__sales_rep_bundle_with_tests.js' }
+    )),
+    ...(await eslint.lintText(
+      concatDashboardJs(),
+      { filePath: 'src/js/__dashboard_bundle.js' }
     ))
   );
 

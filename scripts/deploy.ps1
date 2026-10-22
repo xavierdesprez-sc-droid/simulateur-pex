@@ -1,15 +1,17 @@
 param(
   [string]$Target,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$ConfirmRemoteChanges
 )
 
 $ErrorActionPreference = 'Stop'
 $script:RepositoryRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$script:AllowedTargets = @('SWE', 'NCE', 'SalesRep', 'All')
+$script:AllowedTargets = @('SWE', 'NCE', 'SalesRep', 'Dashboard', 'All')
 $script:ProjectTitles = @{
   SWE = 'Simulateur Remuneration Variable'
   NCE = 'Simulateur Remuneration Variable NCE'
   SalesRep = 'Sales Rep Variable Compensation Calculator'
+  Dashboard = 'SWE 2025 Achievement Dashboard'
 }
 $script:SelectedTargets = @()
 $script:CurrentTarget = $null
@@ -19,11 +21,11 @@ $script:PushedTargets = New-Object 'System.Collections.Generic.List[string]'
 
 if (-not $PSBoundParameters.ContainsKey('Target') -or
     [string]::IsNullOrWhiteSpace($Target)) {
-  [Console]::Error.WriteLine('A target is required. Use -Target SWE|NCE|SalesRep|All.')
+  [Console]::Error.WriteLine('A target is required. Use -Target SWE|NCE|SalesRep|Dashboard|All.')
   exit 2
 }
 if ($script:AllowedTargets -cnotcontains $Target) {
-  [Console]::Error.WriteLine('Invalid target. Use exactly SWE, NCE, SalesRep, or All.')
+  [Console]::Error.WriteLine('Invalid target. Use exactly SWE, NCE, SalesRep, Dashboard, or All.')
   exit 2
 }
 
@@ -182,6 +184,16 @@ function Test-Base64FilesEqual {
     [Parameter(Mandatory = $true)][string]$SecondPath
   )
   return ((Get-Base64File -Path $FirstPath) -ceq (Get-Base64File -Path $SecondPath))
+}
+
+function Test-TextFilesEqualIgnoringLineEndings {
+  param(
+    [Parameter(Mandatory = $true)][string]$FirstPath,
+    [Parameter(Mandatory = $true)][string]$SecondPath
+  )
+  $first = [System.IO.File]::ReadAllText($FirstPath).Replace("`r`n", "`n")
+  $second = [System.IO.File]::ReadAllText($SecondPath).Replace("`r`n", "`n")
+  return ($first -ceq $second)
 }
 
 function Assert-FileInventory {
@@ -353,6 +365,30 @@ function Get-DeploymentRecord {
   return $versioned[0]
 }
 
+function Wait-ForDeploymentVersion {
+  param(
+    [Parameter(Mandatory = $true)][string]$ProjectPath,
+    [Parameter(Mandatory = $true)][string]$SelectedTarget,
+    [Parameter(Mandatory = $true)][string]$DeploymentId,
+    [Parameter(Mandatory = $true)][string]$Version
+  )
+
+  $deadline = [DateTime]::UtcNow.AddSeconds(60)
+  do {
+    $deployment = Get-DeploymentRecord -ProjectPath $ProjectPath -SelectedTarget $SelectedTarget
+    if ($deployment.DeploymentId -cne $DeploymentId) {
+      throw "$SelectedTarget production deployment ID changed during redeploy."
+    }
+    if ($deployment.Version -ceq $Version) {
+      return $deployment
+    }
+    if ([DateTime]::UtcNow -ge $deadline) {
+      throw "$SelectedTarget production deployment did not move to the new version within 60 seconds."
+    }
+    Start-Sleep -Seconds 1
+  } while ($true)
+}
+
 function Assert-BackendProfile {
   param(
     [Parameter(Mandatory = $true)][string]$BackendPath,
@@ -443,7 +479,9 @@ function Build-TargetBundle {
   )
 
   $buildArguments = @('build.js')
-  if ($SelectedTarget -eq 'SalesRep') {
+  if ($SelectedTarget -eq 'Dashboard') {
+    $buildArguments += @('--app=dashboard', "--out=$BuildPath")
+  } elseif ($SelectedTarget -eq 'SalesRep') {
     $buildArguments += @('--app=sales-rep', "--out=$BuildPath")
   } else {
     $buildArguments += @("--profile=$SelectedTarget", "--out=$BuildPath")
@@ -454,7 +492,11 @@ function Build-TargetBundle {
   }
 
   $html = [System.IO.File]::ReadAllText($BuildPath)
-  if ($SelectedTarget -eq 'SalesRep') {
+  if ($SelectedTarget -eq 'Dashboard') {
+    if ($html -notmatch 'id="dashboard-app"') {
+      throw 'Dashboard bundle does not contain the Dashboard application.'
+    }
+  } elseif ($SelectedTarget -eq 'SalesRep') {
     if ($html -notmatch 'id="sales-rep-app"') {
       throw 'SalesRep bundle does not contain the Sales Rep application.'
     }
@@ -482,6 +524,14 @@ function Assert-PreflightFiles {
   Assert-BackendSyntax -BackendPath $backendPath -SelectedTarget $SelectedTarget
   if ($SelectedTarget -eq 'SWE' -or $SelectedTarget -eq 'NCE') {
     Assert-BackendProfile -BackendPath $backendPath -SelectedTarget $SelectedTarget
+  } elseif ($SelectedTarget -eq 'Dashboard') {
+    $backend = [System.IO.File]::ReadAllText($backendPath).Replace("`r`n", "`n").Trim()
+    $expectedBackend = [System.IO.File]::ReadAllText(
+      (Join-Path $script:RepositoryRoot 'dashboard/Code.gs')
+    ).Replace("`r`n", "`n").Trim()
+    if ($backend -cne $expectedBackend) {
+      throw 'Dashboard remote backend differs from dashboard/Code.gs.'
+    }
   } else {
     Assert-SalesRepBackend -BackendPath $backendPath
   }
@@ -502,13 +552,22 @@ function Assert-PulledVersion {
   Copy-Item -LiteralPath $projectConfigPath -Destination $verifyConfigPath -Force
   Invoke-Clasp -Arguments @('pull', '--versionNumber', $Version) -WorkingDirectory $VerifyPath | Out-Null
 
+  $verifyBackendName = $PreparedProject.BackendName
+  $verifyExpectedFiles = @($PreparedProject.ExpectedFiles)
+  if ($PreparedProject.Target -eq 'SWE') {
+    # clasp pull normalizes Apps Script SERVER_JS files to a .js extension.
+    $verifyBackendName = 'Code.js'
+    $verifyExpectedFiles = @($verifyExpectedFiles | ForEach-Object {
+      if ($_ -ceq $PreparedProject.BackendName) { $verifyBackendName } else { $_ }
+    })
+  }
   Assert-LocalInventory -ProjectPath $VerifyPath -SelectedTarget $PreparedProject.Target `
-    -ExpectedFiles $PreparedProject.ExpectedFiles
-  if (-not (Test-Base64FilesEqual -FirstPath $PreparedProject.BuildPath `
+    -ExpectedFiles $verifyExpectedFiles
+  if (-not (Test-TextFilesEqualIgnoringLineEndings -FirstPath $PreparedProject.BuildPath `
       -SecondPath (Join-Path $VerifyPath 'index.html'))) {
     throw "$($PreparedProject.Target) immutable deployed version HTML did not match the intended build."
   }
-  if ((Get-Base64File -Path (Join-Path $VerifyPath $PreparedProject.BackendName)) -cne
+  if ((Get-Base64File -Path (Join-Path $VerifyPath $verifyBackendName)) -cne
       $PreparedProject.BackendBase64 -or
       (Get-Base64File -Path (Join-Path $VerifyPath 'appsscript.json')) -cne
       $PreparedProject.ManifestBase64) {
@@ -569,11 +628,15 @@ try {
     New-Item -ItemType Directory -Path (Split-Path -Parent $buildPath) -Force -ErrorAction Stop |
       Out-Null
     Build-TargetBundle -SelectedTarget $selectedTarget -BuildPath $buildPath
+    if ($selectedTarget -eq 'Dashboard') {
+      # The dashboard builder also emits its local CSV fixture; never stage it for Apps Script.
+      Remove-Item -LiteralPath (Join-Path (Split-Path -Parent $buildPath) 'population_test_swe2025.csv')
+    }
 
     if ($selectedTarget -eq 'SWE') {
       $expectedFiles = @('Code.gs', 'appsscript.json', 'index.html')
       Assert-SweAllowlist -ExpectedFiles $expectedFiles
-      if (-not (Test-Base64FilesEqual -FirstPath $buildPath `
+      if (-not (Test-TextFilesEqualIgnoringLineEndings -FirstPath $buildPath `
           -SecondPath (Join-Path $script:RepositoryRoot 'index.html'))) {
         throw 'The SWE build differs from root index.html after the freshness check.'
       }
@@ -611,18 +674,22 @@ try {
     exit 0
   }
 
-  if ($Target -eq 'All') {
-    $confirmationPhrase = 'DEPLOY ALL'
+  if ($ConfirmRemoteChanges) {
+    Write-Host 'Remote changes explicitly confirmed with -ConfirmRemoteChanges.'
   } else {
-    $confirmationPhrase = 'DEPLOY ' + $Target
-  }
-  try {
-    $confirmation = Read-Host "Type '$confirmationPhrase' to continue"
-  } catch {
-    throw 'Interactive confirmation is unavailable; no remote changes were made.'
-  }
-  if ([string]$confirmation -cne $confirmationPhrase) {
-    throw 'Confirmation did not match; no remote changes were made.'
+    if ($Target -eq 'All') {
+      $confirmationPhrase = 'DEPLOY ALL'
+    } else {
+      $confirmationPhrase = 'DEPLOY ' + $Target
+    }
+    try {
+      $confirmation = Read-Host "Type '$confirmationPhrase' to continue"
+    } catch {
+      throw 'Interactive confirmation is unavailable; no remote changes were made.'
+    }
+    if ([string]$confirmation -cne $confirmationPhrase) {
+      throw 'Confirmation did not match; no remote changes were made.'
+    }
   }
 
   foreach ($preparedProject in $preparedProjects) {
@@ -644,19 +711,17 @@ try {
       'PEX automated deployment'
     ) -WorkingDirectory $preparedProject.ProjectPath | Out-Null
     $script:DeployedTargets.Add($preparedProject.Target)
-    $updatedDeployment = Get-DeploymentRecord -ProjectPath $preparedProject.ProjectPath `
-      -SelectedTarget $preparedProject.Target
-    if ($updatedDeployment.DeploymentId -cne $preparedProject.DeploymentId) {
-      throw "$($preparedProject.Target) production deployment ID changed during redeploy."
-    }
-    if ($updatedDeployment.Version -cne $newVersion) {
-      throw "$($preparedProject.Target) production deployment did not move to the new version."
-    }
+    Wait-ForDeploymentVersion -ProjectPath $preparedProject.ProjectPath `
+      -SelectedTarget $preparedProject.Target -DeploymentId $preparedProject.DeploymentId `
+      -Version $newVersion | Out-Null
 
     $verifyPath = Join-Path (Join-Path $script:ScratchRoot 'verify') $preparedProject.Target
     New-Item -ItemType Directory -Path $verifyPath -Force -ErrorAction Stop | Out-Null
     Assert-PulledVersion -PreparedProject $preparedProject -VerifyPath $verifyPath -Version $newVersion
     Write-Host ($preparedProject.Target + ' deployed and verified.')
+    if ($preparedProject.Target -eq 'Dashboard') {
+      Write-Host ('https://script.google.com/macros/s/' + $preparedProject.DeploymentId + '/exec')
+    }
   }
 } catch {
   $exitCode = 1

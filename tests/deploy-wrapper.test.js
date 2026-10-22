@@ -39,7 +39,7 @@ function targetForCwd() {
     if (target) return target;
   }
   const segments = cwd.split(path.sep);
-  return ['SWE', 'NCE', 'SalesRep'].find(target => segments.includes(target));
+  return ['SWE', 'NCE', 'SalesRep', 'Dashboard'].find(target => segments.includes(target));
 }
 
 function record(target, extra = {}) {
@@ -73,7 +73,8 @@ if (command === 'list') {
   const projects = [
     { title: 'Simulateur Remuneration Variable', scriptId: state.scriptIds.SWE },
     { title: 'Simulateur Remuneration Variable NCE', scriptId: state.scriptIds.NCE },
-    { title: 'Sales Rep Variable Compensation Calculator', scriptId: state.scriptIds.SalesRep }
+    { title: 'Sales Rep Variable Compensation Calculator', scriptId: state.scriptIds.SalesRep },
+    { title: 'SWE 2025 Achievement Dashboard', scriptId: state.scriptIds.Dashboard }
   ];
   if (state.settings.missingProjectTarget) {
     const index = projects.findIndex(project =>
@@ -116,8 +117,15 @@ if (command === 'list') {
 } else if (command === 'deployments') {
   const target = targetForCwd();
   const currentDeployment = target && (state.deployments[target] || [])[0];
-  const productionVersion = currentDeployment &&
+  let productionVersion = currentDeployment &&
   (currentDeployment.activeVersion || currentDeployment.version);
+  if (target === state.settings.staleDeploymentReadsTarget &&
+      currentDeployment && currentDeployment.activeVersion &&
+      state.settings.staleDeploymentReads > 0) {
+    productionVersion = currentDeployment.version;
+    state.settings.staleDeploymentReads--;
+    saveState();
+  }
   record(target, { version: productionVersion || null });
   if (!target) {
   process.exitCode = 33;
@@ -180,7 +188,11 @@ if (command === 'list') {
   if (!snapshot) {
     process.exitCode = 37;
   } else {
-    writeFiles(snapshot);
+    const pulledFiles = target === 'SWE'
+      ? Object.fromEntries(Object.entries(snapshot).map(([name, contents]) =>
+        [name === 'Code.gs' ? 'Code.js' : name, contents]))
+      : snapshot;
+    writeFiles(pulledFiles);
     process.stdout.write('Pulled immutable version.\n');
   }
 } else {
@@ -206,12 +218,14 @@ function createSandbox(settings = {}) {
   const scriptIds = {
     SWE: rootConfig.scriptId,
     NCE: 'FAKE_SCRIPT_SECRET_NCE',
-    SalesRep: 'FAKE_SCRIPT_SECRET_SALESREP'
+    SalesRep: 'FAKE_SCRIPT_SECRET_SALESREP',
+    Dashboard: 'FAKE_SCRIPT_SECRET_DASHBOARD'
   };
   const fileNames = {
     SWE: ['Code.gs', 'appsscript.json', 'index.html'],
     NCE: ['Code.js', 'appsscript.json', 'index.html'],
-    SalesRep: ['Code.js', 'appsscript.json', 'index.html']
+    SalesRep: ['Code.js', 'appsscript.json', 'index.html'],
+    Dashboard: ['Code.js', 'appsscript.json', 'index.html']
   };
   const remoteFiles = {
     SWE: {
@@ -235,6 +249,11 @@ function createSandbox(settings = {}) {
       'index.html': encode('previous Sales Rep bundle\n')
     }
   };
+  remoteFiles.Dashboard = {
+    'Code.js': encode(fs.readFileSync(path.join(root, 'dashboard', 'Code.gs'))),
+    'appsscript.json': encode('{"timeZone":"Europe/Paris"}\n'),
+    'index.html': encode('previous dashboard bundle\n')
+  };
   if (settings.invalidBackendTarget) {
     remoteFiles[settings.invalidBackendTarget]['Code.js'] = encode(
       decode(remoteFiles[settings.invalidBackendTarget]['Code.js']) + 'function invalid( {\n'
@@ -244,11 +263,12 @@ function createSandbox(settings = {}) {
     scriptIds,
     fileNames,
     remoteFiles,
-    versions: { SWE: {}, NCE: {}, SalesRep: {} },
+    versions: { SWE: {}, NCE: {}, SalesRep: {}, Dashboard: {} },
     deployments: {
       SWE: [{ id: 'FAKE_DEPLOY_SWE', version: '4' }],
       NCE: [{ id: 'FAKE_DEPLOY_NCE', version: '4' }],
-      SalesRep: [{ id: 'FAKE_DEPLOY_SALESREP', version: '4' }]
+      SalesRep: [{ id: 'FAKE_DEPLOY_SALESREP', version: '4' }],
+      Dashboard: [{ id: 'FAKE_DEPLOY_DASHBOARD', version: '4' }]
     },
     nextVersion: 8,
     settings
@@ -297,6 +317,7 @@ function invokeWrapper(sandbox, target, options = {}) {
   const wrapperPath = wrapper.replace(/'/g, "''");
   const targetArg = target ? ` -Target '${target}'` : '';
   const dryRunArg = options.dryRun ? ' -DryRun' : '';
+  const confirmRemoteChangesArg = options.confirmRemoteChanges ? ' -ConfirmRemoteChanges' : '';
   if (options.realNpm) fs.unlinkSync(path.join(sandbox.bin, 'npm.ps1'));
   const env = {
     ...process.env,
@@ -311,7 +332,8 @@ function invokeWrapper(sandbox, target, options = {}) {
     return spawnSync(powershell, [
       '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
       '-File', wrapper, ...(target ? ['-Target', target] : []),
-      ...(options.dryRun ? ['-DryRun'] : [])
+      ...(options.dryRun ? ['-DryRun'] : []),
+      ...(options.confirmRemoteChanges ? ['-ConfirmRemoteChanges'] : [])
     ], {
       cwd: root,
       encoding: 'utf8',
@@ -327,7 +349,7 @@ function invokeWrapper(sandbox, target, options = {}) {
     const confirmation = String(options.confirmation).replace(/'/g, "''");
     promptFunction = `function Read-Host { param([string]$Prompt); return '${confirmation}' }; `;
   }
-  const command = `${promptFunction}& '${wrapperPath}'${targetArg}${dryRunArg}`;
+  const command = `${promptFunction}& '${wrapperPath}'${targetArg}${dryRunArg}${confirmRemoteChangesArg}`;
   return spawnSync(powershell, [
     '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command
   ], {
@@ -424,6 +446,37 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
     }
   });
 
+  runCase('Dashboard dry run stages only the dashboard without remote writes', () => {
+    const sandbox = createSandbox();
+    try {
+      const result = invokeWrapper(sandbox, 'Dashboard', { dryRun: true });
+      assert.equal(result.status, 0, outputOf(result));
+      const events = sandbox.readEvents();
+      assert.ok(events.some(event => event.command === 'clone' && event.target === 'Dashboard'));
+      assert.ok(events.some(event => event.command === 'status' && event.target === 'Dashboard'));
+      assertNoWrites(events);
+      assertScratchCleaned(events);
+    } finally { sandbox.cleanup(); }
+  });
+
+  runCase('Dashboard deployment preserves its backend and verifies the new immutable bundle', () => {
+    const sandbox = createSandbox();
+    const before = sandbox.readState().remoteFiles.Dashboard;
+    try {
+      const result = invokeWrapper(sandbox, 'Dashboard', { confirmRemoteChanges: true });
+      assert.equal(result.status, 0, outputOf(result));
+      const events = sandbox.readEvents();
+      assert.deepEqual(events.filter(event => event.command === 'push').map(event => event.target), ['Dashboard']);
+      const state = sandbox.readState();
+      assert.equal(state.remoteFiles.Dashboard['Code.js'], before['Code.js']);
+      assert.equal(state.remoteFiles.Dashboard['appsscript.json'], before['appsscript.json']);
+      assert.equal(decode(state.remoteFiles.Dashboard['index.html']), require('../build').buildDashboardString());
+      assert.ok(events.some(event => event.command === 'pull' && event.target === 'Dashboard' && event.version === '8'));
+      assert.match(outputOf(result), /https:\/\/script.google.com\/macros\/s\/FAKE_DEPLOY_DASHBOARD\/exec/);
+      assertScratchCleaned(events);
+    } finally { sandbox.cleanup(); }
+  });
+
   runCase('wrapper test command does not recursively run itself', () => {
     const sandbox = createSandbox();
     try {
@@ -447,6 +500,39 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
       assertNoWrites(events);
       assertScratchCleaned(events);
       assert.match(outputOf(result), /confirm|interactive|confirmation/i);
+    } finally {
+      sandbox.cleanup();
+    }
+  });
+
+  runCase('allows explicitly confirmed noninteractive All deployment after preflight', () => {
+    const sandbox = createSandbox();
+    try {
+      const result = invokeWrapper(sandbox, 'All', {
+        nativeFile: true,
+        confirmRemoteChanges: true
+      });
+      assert.equal(result.status, 0, outputOf(result));
+      const events = sandbox.readEvents();
+      const firstPush = events.findIndex(event => event.command === 'push');
+      assert.ok(firstPush >= 0);
+      for (const target of ['SWE', 'NCE', 'SalesRep']) {
+        assert.ok(events.slice(0, firstPush).some(event =>
+          event.command === 'status' && event.target === target),
+        `${target} must pass preflight before any push`);
+        assert.ok(events.slice(0, firstPush).some(event =>
+          event.command === 'deployments' && event.target === target),
+        `${target} production deployment must be checked before any push`);
+      }
+      assert.deepEqual(
+        events.filter(event => event.command === 'push').map(event => event.target),
+        ['SWE', 'NCE', 'SalesRep']
+      );
+      assert.deepEqual(
+        events.filter(event => event.command === 'redeploy').map(event => event.target),
+        ['SWE', 'NCE', 'SalesRep']
+      );
+      assertScratchCleaned(events);
     } finally {
       sandbox.cleanup();
     }
@@ -575,6 +661,48 @@ if (process.platform !== 'win32' && !process.env.POWERSHELL) {
       assert.equal(releaseCommands[5].version, '8');
       assertScratchCleaned(events);
       assert.doesNotMatch(outputOf(result), /FAKE_(?:SCRIPT|DEPLOY|HEAD)_/);
+    } finally {
+      sandbox.cleanup();
+    }
+  });
+
+  runCase('waits for the redeployed production version to become visible', () => {
+    const sandbox = createSandbox({
+      staleDeploymentReadsTarget: 'NCE',
+      staleDeploymentReads: 2
+    });
+    try {
+      const result = invokeWrapper(sandbox, 'NCE', { confirmation: 'DEPLOY NCE' });
+      assert.equal(result.status, 0, outputOf(result));
+      const deploymentReads = sandbox.readEvents().filter(event =>
+        event.command === 'deployments' && event.target === 'NCE'
+      );
+      assert.equal(deploymentReads.length, 4,
+        'deployment verification should retry two stale reads before observing the new version');
+      assert.equal(sandbox.readState().deployments.NCE[0].activeVersion, '8');
+      assertScratchCleaned(sandbox.readEvents());
+    } finally {
+      sandbox.cleanup();
+    }
+  });
+
+  runCase('verifies SWE versions when clasp normalizes the backend extension', () => {
+    const sandbox = createSandbox();
+    try {
+      const result = invokeWrapper(sandbox, 'SWE', { confirmation: 'DEPLOY SWE' });
+      assert.equal(result.status, 0, outputOf(result));
+      assert.match(outputOf(result), /SWE deployed and verified\./);
+      const state = sandbox.readState();
+      assert.equal(state.deployments.SWE[0].activeVersion, '8');
+      assert.equal(
+        decode(state.versions.SWE['8']['Code.gs']),
+        fs.readFileSync(path.join(root, 'Code.gs'), 'utf8')
+      );
+      const pull = sandbox.readEvents().find(event =>
+        event.command === 'pull' && event.target === 'SWE'
+      );
+      assert.equal(pull.version, '8');
+      assertScratchCleaned(sandbox.readEvents());
     } finally {
       sandbox.cleanup();
     }

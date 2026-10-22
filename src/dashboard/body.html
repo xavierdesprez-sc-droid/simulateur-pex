@@ -1,0 +1,106 @@
+<body class="font-sans text-slate-800 antialiased min-h-screen bg-slate-50">
+  <main id="dashboard-app" class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+    <header class="rounded-2xl bg-slate-900 px-6 py-5 text-white space-y-2">
+      <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-300">SWE · 2025 performance</p>
+      <h1 class="text-xl font-bold">Achievement Dashboard</h1>
+      <p class="text-xs text-slate-300">Country distributions and Spearman correlations with achievement. Rows marked Out are excluded.</p>
+    </header>
+
+    <nav class="flex gap-1 bg-slate-200/60 rounded-xl p-1 w-fit" role="tablist" aria-label="Dashboard views">
+      <button id="dash-tab-overview" type="button" role="tab" aria-selected="true" aria-controls="dash-view-overview" class="px-4 py-2 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-sm">Dashboard</button>
+      <button id="dash-tab-detail" type="button" role="tab" aria-selected="false" aria-controls="dash-view-detail" tabindex="-1" class="px-4 py-2 rounded-lg text-xs font-bold text-slate-500">Detailed analysis</button>
+    </nav>
+
+    <section aria-label="Population filters" class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-wrap gap-4">
+      <label class="space-y-1">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Market</span>
+        <select id="dash-filter-market" class="w-full min-w-40 text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+      <label id="dash-country-control" class="space-y-1 hidden">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Country</span>
+        <select id="dash-filter-country" class="w-full min-w-40 text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+      <label id="dash-category-control" class="space-y-1">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Category</span>
+        <select id="dash-filter-category" class="w-full min-w-40 text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-700"><option value="">All</option></select>
+      </label>
+    </section>
+
+    <p id="dash-counts" class="text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-2"></p>
+    <p id="dash-status" class="hidden text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></p>
+    <input type="file" id="dash-csv-input" accept=".csv,text/csv" class="hidden" />
+
+    <div id="dash-view-overview" role="tabpanel" aria-labelledby="dash-tab-overview" class="space-y-5">
+      <section aria-label="Achievement distributions" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">France</h2><span id="dash-hist-count-0" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-0" role="img" aria-label="France achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-0" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">Spain</h2><span id="dash-hist-count-1" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-1" role="img" aria-label="Spain achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-1" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">Italy</h2><span id="dash-hist-count-2" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-2" role="img" aria-label="Italy achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-2" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+        <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex justify-between items-center mb-3"><h2 class="text-sm font-bold text-slate-900">Portugal</h2><span id="dash-hist-count-3" class="text-[10px] text-slate-400"></span></div>
+          <div class="h-64"><canvas id="dash-hist-3" role="img" aria-label="Portugal achievement histogram"></canvas></div>
+          <p id="dash-hist-stats-3" class="text-[11px] text-slate-400 text-center mt-3"></p>
+        </article>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="mb-4 space-y-1"><h2 class="font-bold text-slate-900 text-sm">Spearman correlations by country</h2><p class="text-xs text-slate-400">Association with Achievement 2025 · Hover over a value for the number of valid pairs.</p></div>
+        <div class="overflow-x-auto"><table class="w-full table-fixed text-xs border-separate border-spacing-2">
+          <colgroup><col style="width:22%"><col style="width:19.5%"><col style="width:19.5%"><col style="width:19.5%"><col style="width:19.5%"></colgroup>
+          <thead><tr class="text-slate-500"><th class="text-left px-2 py-2">Country / Variable</th><th class="px-2 py-2">Annualized base pay</th><th class="px-2 py-2">Nominal</th><th class="px-2 py-2">Seniority</th><th class="px-2 py-2">Rating level</th></tr></thead>
+          <tbody id="dash-country-correlations"></tbody>
+        </table></div>
+        <div id="dash-overview-legend" class="mt-4 border-t border-slate-100 pt-4"></div>
+        <p class="text-[10px] text-slate-400 mt-3">Correlation shows association, not cause. n/a: fewer than 3 valid pairs or no variation.</p>
+      </section>
+    </div>
+
+    <div id="dash-view-detail" role="tabpanel" aria-labelledby="dash-tab-detail" class="hidden space-y-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <section class="bg-white rounded-2xl border border-slate-200 p-5 lg:col-span-2">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Achievement 2025 against annualized base pay</h2>
+        <div id="dash-scatter-legend" class="flex flex-wrap items-center gap-x-6 gap-y-2 pb-3 text-xs"></div>
+        <div class="h-[440px] sm:h-[520px]"><canvas id="dash-scatter"></canvas></div>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by rating</h2>
+        <div class="h-72"><canvas id="dash-rating"></canvas></div>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by seniority (years)</h2>
+        <div class="h-72"><canvas id="dash-seniority"></canvas></div>
+      </section>
+      <section class="bg-white rounded-2xl border border-slate-200 p-4">
+        <h2 class="font-bold text-slate-900 text-sm mb-2">Mean achievement by age</h2>
+        <div class="h-72"><canvas id="dash-age"></canvas></div>
+      </section>
+    </div>
+
+    <section class="bg-white rounded-2xl border border-slate-200 p-4 overflow-x-auto">
+      <h2 class="font-bold text-slate-900 text-sm mb-2">Correlation with Achievement 2025</h2>
+      <table class="w-full text-xs">
+        <thead>
+          <tr class="text-left text-slate-500">
+            <th class="py-1 pr-4 font-semibold">Variable</th>
+            <th class="py-1 pr-4 font-semibold">Spearman ρ</th>
+            <th class="py-1 font-semibold">n</th>
+          </tr>
+        </thead>
+        <tbody id="dash-correlations-body" class="font-mono"></tbody>
+      </table>
+      <div id="dash-detail-legend" class="mt-4 border-t border-slate-100 pt-4"></div>
+      <p class="text-[10px] text-slate-400 mt-2">Correlation shows association, not cause. Ratings are ordinal, so Spearman is the relevant value for them.</p>
+    </section>
+    </div>
+  </main>
+</body>

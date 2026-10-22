@@ -55,19 +55,6 @@
       });
     }
 
-    const PRESET_BUTTONS = [
-      ['initial', 'preset-initial'],
-      ['targetGroup', 'preset-targetGroup'],
-      ['highIncentive', 'preset-highIncentive']
-    ];
-
-    function syncPresetButtonStates(presetKey) {
-      PRESET_BUTTONS.forEach(([key, id]) => {
-        const button = document.getElementById(id);
-        if (button) button.ariaPressed = String(key === presetKey);
-      });
-    }
-
     function setView(view) {
       const isAdv = view === 'advanced';
       const isMatrix = view === 'matrix';
@@ -119,31 +106,22 @@
 
     // Presets
     function applyPreset(presetKey) {
-      syncPresetButtonStates(presetKey);
-      document.querySelectorAll('.preset-btn').forEach(b => {
-        b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
-        b.classList.add('text-slate-600');
-      });
-
       if (presetKey === 'initial') {
         state.targetIncrease = 0;
         state.overperf = 0;
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-initial').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'targetGroup') {
         // Absolute pp: mu = 110, targetIncrease = +30pp → new mu = 110 - 30 = 80%
         state.targetIncrease = 30;
         state.overperf = 0;
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-targetGroup').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       } else if (presetKey === 'highIncentive') {
         state.targetIncrease = 30;
         state.overperf = 2; // +2 pp induced overperformance
         state.muInit = 110;
         state.sigmaInit = 60;
-        document.getElementById('preset-highIncentive').classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
       }
 
       syncInputsFromState();
@@ -415,7 +393,6 @@
       appInitialized = true;
       applyProfileUi();
       syncViewButtonStates('standard');
-      syncPresetButtonStates(null);
       lucide.createIcons();
       renderBreakpointsTable();
       initChart();
